@@ -1,8 +1,8 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" Example of using the loop control in the Display class with the behaviour
-included in the pi3d.sprites.Ball class
+""" Example similar to CollisionBalls but with proximity calcualtion much
+speeded up using numpy and rendering speeded up using glScissor
 """
 
 import random
@@ -11,10 +11,11 @@ import numpy as np
 
 import demo
 import pi3d
+from pi3d.sprite.ScissorBall import ScissorBall
 
-MAX_BALLS = 30
+MAX_BALLS = 15
 MIN_BALL_SIZE = 5
-MAX_BALL_SIZE = 100
+MAX_BALL_SIZE = 50
 MAX_BALL_VELOCITY = 10.0
 
 KEYBOARD = pi3d.Keyboard()
@@ -33,7 +34,7 @@ TEXTURES = [pi3d.Texture(t) for t in TEXTURE_NAMES]
 
 def random_ball():
   """Return a ball with a random color, position and velocity."""
-  return pi3d.Ball(shader=SHADER,
+  return ScissorBall(camera=CAMERA, shader=SHADER,
                    texture=random.choice(TEXTURES),
                    radius=random.uniform(MIN_BALL_SIZE, MAX_BALL_SIZE),
                    x=random.uniform(-WIDTH / 2.0, WIDTH / 2.0),
@@ -46,9 +47,7 @@ SPRITES = [random_ball() for b in range(MAX_BALLS)]
 
 RADII = np.array([[s.radius + i.radius for s in SPRITES] for i in SPRITES])
 
-DISPLAY.add_sprites(*SPRITES)
-
-LOGGER.info('Starting CollisionBalls')
+LOGGER.info('Starting NumpyBalls')
 
 while DISPLAY.loop_running():
   a = np.array([b.unif[0:3] for b in SPRITES])
@@ -61,6 +60,7 @@ while DISPLAY.loop_running():
     for j in range(i + 1, MAX_BALLS):
       if d3[i][j] < 0:
         SPRITES[i].bounce_collision(SPRITES[j])
+    SPRITES[i].repaint(0 if i == (MAX_BALLS - 1) else 1)
 
   if KEYBOARD.read() == 27:
     DISPLAY.stop()

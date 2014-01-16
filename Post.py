@@ -7,6 +7,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 shader passed to the PostProcess class. The PostProcess.draw() method can
 have a dict of unif keys and variable passed to it which can then be used
 by the shader to create dynamic effects
+
+PostProcess also allows a scale factor to be used. This can cut down render
+time by using glScissor to only run the fragment shader on a small part of
+the screen (seems to fail with scale < 0.3 for some reason) To maintain
+the same perspective the camera scale (as used by Camera.__init__) and the
+texture scale (as used by PostProcess.__init__) need to be the same.
 """
 import math, random, time
 
@@ -19,14 +25,14 @@ DISPLAY = pi3d.Display.create(x=100, y=100, w=800, h=800, frames_per_second=40,
           mouse=True)
 DISPLAY.set_background(0.4, 0.6, 0.8, 1.0)      # r,g,b,alpha
 
-persp_cam = pi3d.Camera.instance() # default instance camera perspecive view
+persp_cam = pi3d.Camera(scale=0.5) # default instance camera perspecive view
 
 #setup textures, light position and initial model position
 pi3d.Light((0, 5, 0))
 #create shaders
 shader = pi3d.Shader("star")
 flatsh = pi3d.Shader("uv_flat")
-post = pi3d.PostProcess()
+post = pi3d.PostProcess(camera=persp_cam, scale=0.5)
 
 #Create textures
 shapeimg = pi3d.Texture("textures/straw1.jpg")

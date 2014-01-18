@@ -4,8 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from numpy import tan, radians, interp
 import random, time, fnmatch, os, threading
-import sys
-sys.path.append("/home/annon/pi3d")
+import demo
 import pi3d
 
 from six.moves import queue

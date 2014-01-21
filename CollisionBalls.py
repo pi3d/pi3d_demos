@@ -36,10 +36,10 @@ TEXTURE_NAMES = ['textures/red_ball.png',
                  'textures/blu_ball.png']
 TEXTURES = [pi3d.Texture(t) for t in TEXTURE_NAMES]
 
-def random_ball():
+def random_ball(b):
   """Return a ball with a random color, position and velocity."""
   return pi3d.Ball(shader=SHADER,
-                   texture=random.choice(TEXTURES),
+                   texture=TEXTURES[int(3 * b / MAX_BALLS) % 3],
                    radius=random.uniform(MIN_BALL_SIZE, MAX_BALL_SIZE),
                    x=random.uniform(-WIDTH / 2.0, WIDTH / 2.0),
                    y=random.uniform(-HEIGHT / 2.0, HEIGHT / 2.0), z=ZPLANE,
@@ -47,7 +47,7 @@ def random_ball():
                    vy=random.uniform(-MAX_BALL_VELOCITY, MAX_BALL_VELOCITY))
 
 
-SPRITES = [random_ball() for b in range(MAX_BALLS)]
+SPRITES = [random_ball(b) for b in range(MAX_BALLS)]
 DISPLAY.add_sprites(*SPRITES)
 
 LOGGER.info('Starting CollisionBalls')

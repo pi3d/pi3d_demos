@@ -61,7 +61,7 @@ mymap = pi3d.ElevationMap("textures/maze1.jpg",
 mymap.set_draw_details(shader, [rockimg1, rockimg2, shineimg], 128.0, 0.05)
 
 # Create fog for more realistic fade in distance. This can be turned on and off between drawing different object (i.e backgound not foggy)
-mymap.set_fog((0.1,0.1,0.1,1.0), 200.0)
+mymap.set_fog((0.1,0.1,0.2,0.6), 400.0)
 
 #Create tree models
 treeplane = pi3d.Plane(w=4.0, h=5.0)
@@ -74,12 +74,12 @@ treemodel1.add(treeplane.buf[0], 0,0,0, 0,90,0)
 mytrees1 = pi3d.MergeShape(name="trees1")
 mytrees1.cluster(treemodel1.buf[0], mymap,0.0,0.0,900.0,900.0,10,"",8.0,3.0)
 mytrees1.set_draw_details(shader, [tree2img, rockimg2], 4.0, 0.0)
-mytrees1.set_fog((0.1,0.1,0.1,1.0), 200.0)
+mytrees1.set_fog((0.1,0.1,0.2,0.6), 200.0)
 
 raspberry = pi3d.MergeShape(name="rasp")
 raspberry.cluster(treemodel1.buf[0], mymap,-250,+250,470.0,470.0,5,"",8.0,1.0)
 raspberry.set_draw_details(shader, [raspimg, raspimg], 1.0, 0.0)
-raspberry.set_fog((0.1,0.1,0.1,1.0), 200.0)
+raspberry.set_fog((0.1,0.1,0.2,0.6), 200.0)
 
 """ pi3d.MergeShape can be used to join a number of Model object for much greater
  rendering speed however, because Models can contain multiple Buffers,

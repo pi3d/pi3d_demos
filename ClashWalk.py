@@ -93,7 +93,7 @@ mytrees3.set_fog(*TFOG)
 monolith = pi3d.Sphere(radius=8.0, slices=12, sides=48,
                   sy=10.0, name="monolith")
 monolith.translate(100.0, -mymap.calcHeight(100.0, 350) + 10.0, 350.0)
-monolith.set_draw_details(shader, [rockimg, bumpimg, reflimg], 32.0, 0.3)
+monolith.set_draw_details(shader, [rockimg, bumpimg, reflimg], 32.0, 0.2)
 monolith.set_fog(*FOG)
 
 #screenshot number

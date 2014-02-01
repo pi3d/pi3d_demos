@@ -83,7 +83,7 @@ mytrees3.set_fog(*TFOG)
 #Create monument
 monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
 monument.set_shader(shader)
-monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.5)
+monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
 monument.set_fog(*FOG)
 monument.translate(100.0, -mymap.calcHeight(100.0, 230) + 5.8, 230.0)
 monument.scale(20.0, 20.0, 20.0)

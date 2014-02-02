@@ -17,6 +17,7 @@ DISPLAY = pi3d.Display.create(x=20, y=20)
 # Load shaders
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
+matsh = pi3d.Shader("mat_reflect")
 ##########################################
 # Load textures
 patimg = pi3d.Texture("textures/PATRN.PNG")
@@ -46,15 +47,17 @@ mycone = pi3d.Cone(radius=1, height=2, sides=24, name="Cone",
         x=-4, y=-1, z=10)
 mycylinder = pi3d.Cylinder(radius=0.7, height=1.5, sides=24, name="Cyli",
         x=-2, y=-1, z=10)
-myhemisphere = pi3d.Sphere(radius=1, sides=24, slices=24, hemi=0.5, name="hsphere",
-        x=0, y=-1, z=10)
-mytorus = pi3d.Torus(radius=1, thickness=0.3, ringrots=12, sides=24, name="Torus",
-        x=2, y=-1, z=10)
 # NB Lathe needs to start at the top otherwise normals are calculated in reverse,
 # also inside surfaces need to be defined otherwise normals are wrong
 mylathe = pi3d.Lathe(path=((0,1),(0.6,1.2),(0.8,1.4),(1.09,1.7), (1.1,1.7),
         (0.9, 1.4),(0.7,1.2),(0.08,1),(0.08,0.21),(0.1,0.2),(1,0.05),(1,0),(0,0)),
-         sides=24, name="Cup", x=4, y=-1, z=10, sx=0.8, sy=0.8, sz=0.8)
+         sides=24, name="Cup", x=0, y=-1, z=10, sx=0.8, sy=0.8, sz=0.8)
+mylathe.set_draw_details(matsh, [shapebump, shapeshine], 0.0, 1.0)
+mylathe.set_alpha(0.5)
+mytorus = pi3d.Torus(radius=1, thickness=0.3, ringrots=12, sides=24, name="Torus",
+        x=2, y=-1, z=10)
+myhemisphere = pi3d.Sphere(radius=1, sides=24, slices=24, hemi=0.5, name="hsphere",
+        x=4, y=-1, z=10)
 myPlane = pi3d.Plane(w=4, h=4, name="plane", z=12)
 # Load ttf font and set the font colour to 'raspberry'
 arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,0,170,255))
@@ -75,7 +78,7 @@ while DISPLAY.loop_running():
 
   myhelix.draw(shader, [patimg])
   myhelix.rotateIncY(3)
-  myhelix.rotateIncZ(1)
+  myhelix.rotateIncZ(1.1)
 
   mytube.draw(shader, [coffimg, shapebump, shapeshine], 4.0, 0.1)
   mytube.rotateIncY(3)
@@ -103,12 +106,13 @@ while DISPLAY.loop_running():
   mytorus.rotateIncY(3)
   mytorus.rotateIncZ(1)
 
-  mylathe.draw(shader, [patimg])
-  mylathe.rotateIncY(2)
-  mylathe.rotateIncZ(1)
-
   myPlane.draw(shader, [coffimg])
-  myPlane.rotateIncX(9)
+  myPlane.rotateIncX(3.1)
+
+  mylathe.draw() # draw details set previously. NB after Plane as transparent
+  mylathe.rotateIncY(0.2)
+  mylathe.rotateIncZ(0.4)
+  mylathe.rotateIncX(0.11)
 
   mystring.draw()
   mystring.rotateIncZ(0.5)

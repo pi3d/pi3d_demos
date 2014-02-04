@@ -15,7 +15,8 @@ import pi3d
 # Load diplay, nearly full screen
 DISPLAY = pi3d.Display.create(x=20, y=20)
 # Load shaders
-shader = pi3d.Shader("uv_reflect")
+shader = pi3d.Shader("uv_light")
+shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 matsh = pi3d.Shader("mat_reflect")
 ##########################################
@@ -38,10 +39,10 @@ myextrude = pi3d.Extrude(path=((-0.5, 0.5), (0.5,0.7), (0.9,0.2),
         (0.2,0.05), (1.0,0.0), (0.5,-0.7), (-0.5, -0.5)), height=0.5, name="Extrude",
         x=4, y=2, z=10)
 # Extrude can use three different textures if they are loaded prior to draw()
-myextrude.set_shader(shader)
-myextrude.buf[0].set_draw_details(shader, [coffimg, shapebump, shapeshine], 4.0, 0.2)
-myextrude.buf[1].set_draw_details(shader, [patimg, shapebump, shapeshine], 4.0, 0.2)
-myextrude.buf[2].set_draw_details(shader, [shapeshine, shapebump, shapeshine], 4.0, 0.2)
+myextrude.set_shader(shinesh)
+myextrude.buf[0].set_draw_details(shinesh, [coffimg, shapebump, shapeshine], 4.0, 0.2)
+myextrude.buf[1].set_draw_details(shinesh, [patimg, shapebump, shapeshine], 4.0, 0.2)
+myextrude.buf[2].set_draw_details(shinesh, [shapeshine, shapebump, shapeshine], 4.0, 0.2)
 
 mycone = pi3d.Cone(radius=1, height=2, sides=24, name="Cone",
         x=-4, y=-1, z=10)
@@ -80,7 +81,7 @@ while DISPLAY.loop_running():
   myhelix.rotateIncY(3)
   myhelix.rotateIncZ(1.1)
 
-  mytube.draw(shader, [coffimg, shapebump, shapeshine], 4.0, 0.1)
+  mytube.draw(shinesh, [coffimg, shapebump, shapeshine], 4.0, 0.1)
   mytube.rotateIncY(3)
   mytube.rotateIncZ(2)
 
@@ -94,7 +95,7 @@ while DISPLAY.loop_running():
   mycone.rotateIncY(-2)
   mycone.rotateIncZ(1)
 
-  mycylinder.draw(shader, [patimg, shapebump, shapeshine], 4.0, 0.1)
+  mycylinder.draw(shinesh, [patimg, shapebump, shapeshine], 4.0, 0.1)
   mycylinder.rotateIncY(2)
   mycylinder.rotateIncZ(1)
 
@@ -102,7 +103,7 @@ while DISPLAY.loop_running():
   mytcone.rotateIncY(2)
   mytcone.rotateIncZ(-1)
 
-  mytorus.draw(shader, [patimg, shapebump, shapeshine], 4.0, 0.6)
+  mytorus.draw(shinesh, [patimg, shapebump, shapeshine], 4.0, 0.6)
   mytorus.rotateIncY(3)
   mytorus.rotateIncZ(1)
 

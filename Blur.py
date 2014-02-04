@@ -54,7 +54,7 @@ defocus = pi3d.Defocus()
 
 #Create textures
 shapeimg = pi3d.Texture("textures/straw1.jpg")
-shapebump = pi3d.Texture("textures/floor_nm.jpg", True)
+shapebump = pi3d.Texture("textures/floor_nm.jpg")
 shapeshine = pi3d.Texture("textures/pong3.png")
 
 #Create shape

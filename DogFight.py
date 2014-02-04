@@ -35,7 +35,7 @@ print("""===================================
 == X jumps to location of 1st enemy in list
 ================================""")
 
-SHADER = pi3d.Shader("uv_reflect") #for objects to look 3D
+SHADER = pi3d.Shader("uv_bump") #for objects to look 3D
 FLATSH = pi3d.Shader("uv_flat") #for 'unlit' objects like the background
 
 GRAVITY = 9.8 #m/s**2
@@ -428,7 +428,7 @@ thr.start()
 ectex = pi3d.loadECfiles("textures/ecubes", "sbox")
 myecube = pi3d.EnvironmentCube(size=7000.0, maptype="FACES", camera=CAMERA)
 myecube.set_draw_details(FLATSH, ectex)
-myecube.set_fog((0.5,0.5,0.5,0.8), 4000)
+myecube.set_fog((0.5,0.5,0.5,1.0), 4000)
 # Create elevation map
 mapwidth = 10000.0
 mapdepth = 10000.0
@@ -440,7 +440,7 @@ mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      divx=64, divy=64, camera=CAMERA)
 mymap.set_draw_details(SHADER, [mountimg1, bumpimg, reflimg], 1024.0, 0.0)
-mymap.set_fog((0.5, 0.5, 0.5, 0.8), 4000)
+mymap.set_fog((0.5, 0.5, 0.5, 1.0), 4000)
 # init events
 inputs = pi3d.InputEvents()
 inputs.get_mouse_movement()

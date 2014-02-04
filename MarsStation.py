@@ -31,6 +31,7 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Mars Station demo in Pi3D',
 win = DISPLAY.tkwin
 
 shader = pi3d.Shader("uv_reflect")
+bumpsh = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")
 shade2d = pi3d.Shader('2d_flat')
 
@@ -53,7 +54,7 @@ bumpimg = pi3d.Texture("textures/mudnormal.jpg")
 mymap = pi3d.ElevationMap(mapfile='textures/mars_height.png',
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      divx=64, divy=64)
-mymap.set_draw_details(shader,[redplanet, bumpimg],128.0, 0.0)
+mymap.set_draw_details(bumpsh,[redplanet, bumpimg],128.0, 0.0)
 mymap.set_fog((0.3, 0.15, 0.1, 0.0), 1000.0)
 
 #Load Corridors sections
@@ -149,10 +150,10 @@ try:
     corridor.draw()
     pi3d.Utility.draw_level_of_detail([xm, ym, zm],[spc*4, mody, spc*5],[[opendist,cor_cross],[1000,cor_cross_doors]])
 
-    mymap.draw()  #Draw the landscape
-
     myecube.position(xm, ym, zm)
     myecube.draw()#Draw environment cube
+
+    mymap.draw()  #Draw the landscape after as transparent fog
 
     mx, my = mymouse.position()
     mouserot -= (mx-omx)*0.2

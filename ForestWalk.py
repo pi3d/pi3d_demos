@@ -23,7 +23,8 @@ pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2,
 #========================================
 
 # load shader
-shader = pi3d.Shader("uv_reflect")
+shader = pi3d.Shader("uv_bump")
+shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png")
@@ -33,8 +34,8 @@ bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
 reflimg = pi3d.Texture("textures/stars.jpg")
 rockimg = pi3d.Texture("textures/rock1.jpg")
 
-FOG = ((0.3, 0.3, 0.4, 0.5), 650.0)
-TFOG = ((0.2, 0.24, 0.22, 0.3), 150.0)
+FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
+TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
 
 #myecube = pi3d.EnvironmentCube(900.0,"HALFCROSS")
 ectex=pi3d.loadECfiles("textures/ecubes","sbox")
@@ -82,7 +83,7 @@ mytrees3.set_fog(*TFOG)
 
 #Create monument
 monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
-monument.set_shader(shader)
+monument.set_shader(shinesh)
 monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
 monument.set_fog(*FOG)
 monument.translate(100.0, -mymap.calcHeight(100.0, 230) + 5.8, 230.0)
@@ -161,8 +162,3 @@ while DISPLAY.loop_running():
       mymouse.stop()
       DISPLAY.stop()
       break
-    else:
-      print(k)
-
-  CAMERA.was_moved = False
-quit()

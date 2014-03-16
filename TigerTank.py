@@ -68,10 +68,7 @@ mymap.set_draw_details(shader, [mountimg1, bumpimg], 128.0, 0.0)
 
 FOG = (0.5, 0.5, 0.5, 0.8)
 
-def set_fog(shape):
-  shape.set_fog(FOG, 1000.0)
-
-set_fog(mymap)
+mymap.set_fog(FOG, 1000.0)
 
 #Load tank
 tank_body = pi3d.Model(file_string='models/Tiger/body.obj', sx=0.1, sy=0.1, sz=0.1)

@@ -21,7 +21,7 @@ import pi3d
 LOGGER = pi3d.Log.logger(__name__)
 
 # Create a Tkinter window
-winw, winh, bord = 1200, 600, 0     #64MB GPU memory setting
+winw, winh, bord = 1200, 800, 0     #64MB GPU memory setting
 # winw,winh,bord = 1920,1200,0   #128MB GPU memory setting
 
 DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
@@ -31,7 +31,7 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
 #inputs = InputEvents()
 #inputs.get_mouse_movement()
 
-mylight = pi3d.Light(lightpos=(0, -1, 1), lightcol =(0.8, 0.8, 0.8), lightamb=(0.30, 0.30, 0.32))
+mylight = pi3d.Light(lightpos=(1, -1, 0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.30, 0.30, 0.32))
 
 win = DISPLAY.tkwin
 
@@ -52,8 +52,8 @@ myecube = pi3d.EnvironmentCube(size=1800.0, maptype='FACES')
 myecube.set_draw_details(flatsh, ectex)
 
 # Create elevation map
-mapwidth = 1900.0
-mapdepth = 1700.0
+mapwidth = 1800.0
+mapdepth = 1800.0
 mapheight = 120.0
 mountimg1 = pi3d.Texture('textures/mountains3_512.jpg')
 bumpimg = pi3d.Texture('textures/grasstile_n.jpg')
@@ -71,37 +71,37 @@ FOG = (0.5, 0.5, 0.5, 0.8)
 def set_fog(shape):
   shape.set_fog(FOG, 1000.0)
 
-def make_model(filename, name, x=0, y=0, z=0, rx=0, ry=0, rz=0):
-  model = pi3d.Model(file_string='models/' + filename,
-                name=name, x=x, y=y, z=z, rx=rx, ry=ry, rz=rz,
-                sx=0.1, sy=0.1, sz=0.1)
-  model.set_shader(shader)
-  set_fog(model)
-  return model
-
-set_fog(mymap)
-
 #Load tank
-tank_body = make_model('Tiger/body.obj', 'TigerBody')
+tank_body = pi3d.Model(file_string='models/Tiger/body.obj', sx=0.1, sy=0.1, sz=0.1)
+tank_body.set_shader(shader)
 tank_body.set_normal_shine(tigerbmp)
 
-tank_gun = make_model('Tiger/gun.obj', 'TigerGun')
+tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj')
+tank_gun.set_shader(shader)
 
-tank_turret = make_model('Tiger/turret.obj', 'TigerTurret')
+tank_turret = pi3d.Model(file_string='models/Tiger/turret.obj')
+tank_turret.set_shader(shader)
 tank_turret.set_normal_shine(topbmp)
-
+### because these children will inherit matrix operation applied to
+#   their parent they don't need to be scaled
+tank_body.add_child(tank_turret)
+tank_turret.add_child(tank_gun)
 
 #Load church
 x, z = 20, -320
 y = mymap.calcHeight(x,z)
 
-church = make_model('AllSaints/AllSaints.obj', 'church', x, y, z)
+church = pi3d.Model(file_string='models/AllSaints/AllSaints.obj',
+          sx=0.1, sy=0.1, sz=0.1, x=x, y=y, z=z)
+church.set_shader(shader)
 
 #Load cottages
 x, z = 250,-40
 y = mymap.calcHeight(x,z)
 
-cottages = make_model('Cottages/cottages_low.obj', 'cottagesLo', x, y, z, ry=-5)
+cottages = pi3d.Model(file_string='models/Cottages/cottages_low.obj',
+          sx=0.1, sy=0.1, sz=0.1, x=x, y=y, z=z, ry=-5)
+cottages.set_shader(shader)
 
 #ShadowCaster
 myshadows = pi3d.ShadowCaster(emap=mymap, light=mylight)
@@ -125,7 +125,6 @@ sniper.set_2d_size(scw, sch, (DISPLAY.width - scw)/2,(DISPLAY.height - sch)/2)
 #corner map and dots
 smmap = pi3d.ImageSprite(mountimg1, shade2d, w=10, h=10, z=0.2)
 smmap.set_2d_size(w=200, h=200, x=DISPLAY.width - 200, y=DISPLAY.height - 200)
-#dot1tex = pi3d.Texture("textures/red_ball.png")
 dot1 = pi3d.ImageSprite("textures/red_ball.png", shade2d, w=10, h=10, z=0.1)
 dot1.set_2d_size(w=10, h=10) # 10x10 pixels
 dot2 = pi3d.ImageSprite("textures/blu_ball.png", shade2d, w=10, h=10, z=0.05)
@@ -145,7 +144,7 @@ omx, omy = mymouse.position()
 #position vars
 mouserot = 0.0
 tilt = 0.0
-avhgt = 0.2
+avhgt = 0.85
 xm, oxm = 0.0, -1.0
 zm, ozm = -200.0, -1.0
 ym = mymap.calcHeight(xm, zm) + avhgt
@@ -163,19 +162,12 @@ def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle, shadows=None):
   tank_body.rotateToX(pitch)
   tank_body.rotateToY(rot-90)
   tank_body.rotateToZ(roll)
-  tank_body.draw() if shadows == None else shadows.add_shadow(tank_body)
-  tank_turret.position(x, y, z)
-  tank_turret.rotateToX(pitch)
-  tank_turret.rotateToY(turret-90)
-  tank_turret.rotateToZ(roll)
-  tank_turret.draw() if shadows == None else shadows.add_shadow(tank_turret)
-  tank_gun.position(x, y, z)
-  # adjust gunangle for tilted plane as turret rotates
-  tank_gun.rotateToX(pitch + math.cos(math.radians(turret - 180)) * gunangle)
-  tank_gun.rotateToY(turret-90)
-  tank_gun.rotateToZ(roll - math.sin(math.radians(turret - 180)) * gunangle)
-  tank_gun.draw() if shadows == None else shadows.add_shadow(tank_gun)
-
+  tank_turret.rotateToY(turret - rot)
+  tank_gun.rotateToZ(gunangle)
+  if shadows == None:
+    tank_body.draw() # children drawn too.
+  else:
+    shadows.add_shadow(tank_body)
 
 # Update display before we begin (user might have moved window)
 win.update()
@@ -243,7 +235,7 @@ try:
     myshadows.add_shadow(church)
     myshadows.add_shadow(cottages)
     myshadows.end_cast()
-
+    
     #Tanks and buildings for real
     drawTiger(xm, ym, zm, tankrot, tankroll, tankpitch, 180 - turret,
           (tilt*-2.0 if tilt > 0.0 else 0.0))
@@ -263,7 +255,7 @@ try:
       """
       target.draw()
       sniper.draw()
-
+      
     # turns player tankt turret towards center of screen which will have a crosshairs
     if turret + 2.0 < mouserot:
       turret += 2.0

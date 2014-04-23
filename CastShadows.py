@@ -22,7 +22,8 @@ CAMERA = pi3d.Camera.instance()
 
 #========================================
 # load shader
-shader = pi3d.Shader("uv_reflect")
+shader = pi3d.Shader("uv_bump")
+shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png")
@@ -32,8 +33,8 @@ bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
 reflimg = pi3d.Texture("textures/stars.jpg")
 rockimg = pi3d.Texture("textures/rock1.jpg")
 
-FOG = ((0.3, 0.3, 0.4, 0.5), 650.0)
-TFOG = ((0.2, 0.24, 0.22, 0.3), 150.0)
+FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
+TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
 
 #myecube = pi3d.EnvironmentCube(900.0,"HALFCROSS")
 ectex=pi3d.loadECfiles("textures/ecubes","sbox")
@@ -81,7 +82,7 @@ mytrees3.set_fog(*TFOG)
 
 #is it a bird? is it a plane?
 myplane = pi3d.Plane(h=80.0, w=80.0)
-myplane.set_draw_details(shader, [rockimg, bumpimg, reflimg], 2.0, 0.6)
+myplane.set_draw_details(shinesh, [rockimg, bumpimg, reflimg], 2.0, 0.6)
 xrot, yrot, zrot = 90.0, 0.0, 0.0 #degrees
 dxrot, dyrot, dzrot = 0.01, 0.22, 0.061
 radius = 100.0

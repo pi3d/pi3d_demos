@@ -16,6 +16,7 @@ import pi3d
 DISPLAY = pi3d.Display.create(x=50, y=50, w=-100, h=-100,
                          background=(0.4, 0.8, 0.8, 1))
 shader = pi3d.Shader("uv_reflect")
+bumpsh = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")
 #############################
 
@@ -36,8 +37,8 @@ bumpimg = pi3d.Texture("textures/mudnormal.jpg")
 mymap = pi3d.ElevationMap(mapfile="textures/mars_height.png",
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      divx=128, divy=128)
-mymap.set_draw_details(shader,[mountimg1, bumpimg],128.0, 0.0)
-mymap.set_fog((0.3,0.15,0.1,0.1), 300.0)
+mymap.set_draw_details(bumpsh,[mountimg1, bumpimg],128.0, 0.0)
+mymap.set_fog((0.3,0.15,0.1,0.7), 700.0)
 
 
 #create robot
@@ -63,10 +64,10 @@ station.add(ssphere.buf[0], 20, 0, 20)
 station.add(ssphere.buf[0], 20, 0, -20)
 station.add(ssphere.buf[0], -20, 0, -20)
 station.add(scorrid.buf[0], -20, 0, 0, 90, 0, 0)
-station.add(scorrid.buf[0], 0, 0, -20, 90, 90, 0)
-station.add(scorrid.buf[0], 0, 0, 20, 90, 90, 0)
-station.set_draw_details(shader, [metalimg, metalimg], 0.0)
-station.set_fog((0.3,0.15,0.1,0.1), 300.0)
+station.add(scorrid.buf[0], 0, 0, -20, 0, 0, 90)
+station.add(scorrid.buf[0], 0, 0, 20, 0, 0, 90)
+station.set_draw_details(bumpsh, [metalimg, metalimg], 0.0)
+station.set_fog((0.3,0.15,0.1,0.7), 700.0)
 
 #avatar camera
 rot = 0.0

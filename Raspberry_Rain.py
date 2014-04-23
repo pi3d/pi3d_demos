@@ -15,11 +15,11 @@ import pi3d
 BACKGROUND = (0.0, 0.0, 0.0, 0.0)
 
 # Setup display and initialise pi3d and a shader.
-DISPLAY = pi3d.Display.create(background=BACKGROUND)
+DISPLAY = pi3d.Display.create(background=BACKGROUND, frames_per_second=20)
 SHADER = pi3d.Shader('uv_flat')
 
 TEXTURE = pi3d.Texture('textures/Raspi256x256.png')
-BERRY_COUNT = 15
+BERRY_COUNT = 20
 
 # Setup array of random x,y,z coords and initial rotation
 RASPBERRIES = []
@@ -44,7 +44,7 @@ KEYBOARD = pi3d.Keyboard()
 
 while DISPLAY.loop_running():
   for b in RASPBERRIES:
-    b.translateY(-0.3)
+    b.translateY(-0.1)
     b.rotateIncZ(1)
     if b.y() < -2 * b.z():
       b.positionX((random.uniform(0.0, 2.0) - 1) * b.z())

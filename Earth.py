@@ -12,7 +12,8 @@ import pi3d
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=50, y=50)
 DISPLAY.set_background(0,0,0,1)    	# r,g,b,alpha
-shader = pi3d.Shader("uv_reflect")
+shader = pi3d.Shader("uv_light")
+shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 #========================================
 # Setting 2nd param to True renders 'True' Blending
@@ -53,8 +54,8 @@ while DISPLAY.loop_running():
   mymoon2.rotateIncZ(-0.61)
 
   mysphere.draw(shader, [earthimg])
-  mymoon.draw(shader, [moonimg, moonbmp], 6.0, 0.0)
-  mymoon2.draw(shader, [watimg, moonbmp, starsimg], 3.0, 0.8)
+  mymoon.draw(shinesh, [moonimg, moonbmp], 6.0, 0.0)
+  mymoon2.draw(shinesh, [watimg, moonbmp, starsimg], 3.0, 0.8)
   myplane.draw(flatsh,[starsimg])
   mysphere2.draw(shader, [cloudimg]) # this has to be last as blend = True
 

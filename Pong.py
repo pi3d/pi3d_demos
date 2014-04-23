@@ -3,11 +3,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 """ Demonstrates first person movment using the mouse but constrained, physics
 of bouncing off an elevation map using normal vectors. Also writing using the
-Font class. This demo also uses the Defoucs class to blur things in the
-distance. The monster is not blurred as it is at a constant distance and could have
-been blurred in the actual png image file using gimp or shuchlike.
-The Display.frames_per_second has been throttled to 20 as there is a big change in
-speed depending on camera movement which effects game play.
+Font class. 
+
+This demo also used the Defoucs class to blur things in the distance, but this
+has been commented out. The monster is not blurred as it is at a constant
+distance and could have been blurred in the actual png image file using gimp
+or shuchlike. The Display.frames_per_second has been throttled to 20 as
+there is a big change in speed depending on camera movement which effects
+game play.
 """
 
 import math, random
@@ -29,7 +32,7 @@ light = pi3d.Light((10, -10, 20))
 # load shader
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
-defocus = pi3d.Defocus()
+#defocus = pi3d.Defocus() #<<<<<<<<<<<<<<<
 #========================================
 
 # Setting 2nd param to True renders 'True' Blending
@@ -181,15 +184,15 @@ while DISPLAY.loop_running():
 
   ball.rotateIncX(dsz/radius*50)
 
-  defocus.start_blur()
+  #defocus.start_blur() #<<<<<<<<<<<<<<<
   ball.draw()
   mymap.draw()
   myecube.draw()
-  defocus.end_blur()
+  #defocus.end_blur() #<<<<<<<<<<<<<<<
 
-  defocus.blur(ball, 4, 15, 2)
-  defocus.blur(mymap, 4, 15, 2)
-  defocus.blur(myecube, 4, 15, 2)
+  #defocus.blur(ball, 4, 15, 2) #<<<<<<<<<<<<<<<
+  #defocus.blur(mymap, 4, 15, 2) #<<<<<<<<<<<<<<<
+  #defocus.blur(myecube, 4, 15, 2) #<<<<<<<<<<<<<<<
 
   monster.draw()
 
@@ -203,7 +206,7 @@ while DISPLAY.loop_running():
   k = mykeys.read()
 
   if k==27: #Escape key
-    defocus.delete_buffers()
+    #defocus.delete_buffers() #<<<<<<<<<<<<<<<
     DISPLAY.destroy()
     mykeys.close()
     mymouse.stop()

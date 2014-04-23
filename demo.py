@@ -1,3 +1,3 @@
 import sys
-sys.path.append('/home/annon/pi3d')
+sys.path.insert(1, '/home/pi/pi3d')
 

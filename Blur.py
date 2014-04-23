@@ -20,7 +20,9 @@ from the centre of the screen
 import math, random, time
 
 import demo
-import six
+import sys
+if sys.version_info[0] == 3:
+  unichr = chr
 
 import pi3d
 
@@ -32,7 +34,7 @@ distance!
 justified
 multiline
 unicode æ ö ¼
-Strings """ + six.unichr(255) + ' ' + six.unichr(256) + ' ' + six.unichr(257)
+Strings """ + unichr(255) + ' ' + unichr(256) + ' ' + unichr(257)
 
 # character 255 should appear, character 256 should not.
 
@@ -52,7 +54,7 @@ defocus = pi3d.Defocus()
 
 #Create textures
 shapeimg = pi3d.Texture("textures/straw1.jpg")
-shapebump = pi3d.Texture("textures/floor_nm.jpg", True)
+shapebump = pi3d.Texture("textures/floor_nm.jpg")
 shapeshine = pi3d.Texture("textures/pong3.png")
 
 #Create shape
@@ -72,6 +74,7 @@ next_time = time.time()+2.0
 #load ttf font and set the font colour to 'raspberry'
 arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf",  (221,0,170,255),
                     add_codepoints=[256])
+arialFont.blend = True #much better anitaliased look but must String.draw() after everything else      
 mystring = pi3d.String(font=arialFont, string=MESSAGE,
                   camera=ortho_cam, z=1.0, is_3d=False, justify="r") # orthographic view
 mystring.set_shader(flatsh)

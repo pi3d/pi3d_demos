@@ -60,12 +60,12 @@ myshape.position(0.0, 0.0, 5)
 myshape.set_draw_details(shader, [shapeimg, shapebump, shapeshine], 1.0, 0.1)
 myshape.set_material((1.0, 0.5, 0.2, 0.5))
 
-mywater = pi3d.Plane(w=130.0, h=130.0)
-mywater.set_draw_details(matsh, [waterbump[0], shapeshine], 12.0, 0.6)
-mywater.set_material((0.0, 0.05, 0.1))
-mywater.set_fog((0.4, 0.6, 0.8, 0.0),150)
-mywater.rotateToX(90.001)
-mywater.position(0.0, -2.0, 0.0)
+mywater = pi3d.LodSprite(w=250.0, h=250.0, n=6)
+mywater.set_draw_details(matsh, [waterbump[0], shapeshine], 14.0, 0.6)
+mywater.set_material((0.1, 0.25, 0.3))
+mywater.set_fog((0.4, 0.6, 0.8, 0.0),100)
+mywater.rotateToX(85.0)
+mywater.position(10.0, -2.0, 0.0)
 
 arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,0,170,255))   #load ttf font and set the font colour to 'raspberry'
 mystring = pi3d.String(font=arialFont, string="Now the Raspberry Pi really does rock")

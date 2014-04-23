@@ -1,16 +1,17 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" Example of using the loop control in the Display class with the behaviour
-included in the pi3d.sprites.Ball class
+""" Example similar to CollisionBalls but with proximity calcualtion much
+speeded up using numpy and rendering speeded up using glScissor
 """
 
 import random
 import sys
-import math
+import numpy as np
 
 import demo
 import pi3d
+from pi3d.sprite.ScissorBall import ScissorBall
 
 MAX_BALLS = 15
 MIN_BALL_SIZE = 5
@@ -23,12 +24,7 @@ LOGGER = pi3d.Log.logger(__name__)
 BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
 DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
 WIDTH, HEIGHT = DISPLAY.width, DISPLAY.height
-ZPLANE = 1000
-fov = 2.0 * math.degrees(math.atan(HEIGHT/2.0/ZPLANE))
-
-CAMERA = pi3d.Camera((0, 0, 0), (0, 0, -1.0),
-                (1, 1100, fov,
-                 WIDTH / float(HEIGHT)))
+CAMERA = pi3d.Camera(is_3d=False)
 SHADER = pi3d.Shader('uv_flat')
 
 TEXTURE_NAMES = ['textures/red_ball.png',
@@ -38,24 +34,33 @@ TEXTURES = [pi3d.Texture(t) for t in TEXTURE_NAMES]
 
 def random_ball(b):
   """Return a ball with a random color, position and velocity."""
-  return pi3d.Ball(shader=SHADER,
+  return ScissorBall(camera=CAMERA, shader=SHADER,
                    texture=TEXTURES[int(3 * b / MAX_BALLS) % 3],
                    radius=random.uniform(MIN_BALL_SIZE, MAX_BALL_SIZE),
                    x=random.uniform(-WIDTH / 2.0, WIDTH / 2.0),
-                   y=random.uniform(-HEIGHT / 2.0, HEIGHT / 2.0), z=ZPLANE,
+                   y=random.uniform(-HEIGHT / 2.0, HEIGHT / 2.0),
                    vx=random.uniform(-MAX_BALL_VELOCITY, MAX_BALL_VELOCITY),
                    vy=random.uniform(-MAX_BALL_VELOCITY, MAX_BALL_VELOCITY))
 
 
 SPRITES = [random_ball(b) for b in range(MAX_BALLS)]
-DISPLAY.add_sprites(*SPRITES)
 
-LOGGER.info('Starting CollisionBalls')
+RADII = np.array([[s.radius + i.radius for s in SPRITES] for i in SPRITES])
+
+LOGGER.info('Starting NumpyBalls')
 
 while DISPLAY.loop_running():
-  for i, ball1 in enumerate(SPRITES):
-    for ball2 in SPRITES[0:i]:
-      ball1.bounce_collision(ball2)
+  a = np.array([b.unif[0:3] for b in SPRITES])
+  b = np.copy(a)
+  d0 = np.subtract.outer(a[:,0], b[:,0])
+  d1 = np.subtract.outer(a[:,1], b[:,1])
+  d3 = np.hypot(d0, d1) - RADII
+  
+  for i in range(0, MAX_BALLS):
+    for j in range(i + 1, MAX_BALLS):
+      if d3[i][j] < 0:
+        SPRITES[i].bounce_collision(SPRITES[j])
+    SPRITES[i].repaint(0 if i == (MAX_BALLS - 1) else 1)
 
   if KEYBOARD.read() == 27:
     DISPLAY.stop()

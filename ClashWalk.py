@@ -31,6 +31,7 @@ pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.7), lightamb=(0.15, 0.1,
 
 # load shader
 shader = pi3d.Shader("uv_reflect")
+bumpsh = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png")
@@ -42,8 +43,8 @@ rockimg = pi3d.Texture("textures/rock1.jpg")
 
 clash = pi3d.Clashtest()
 
-FOG = ((0.3, 0.3, 0.4, 0.5), 650.0)
-TFOG = ((0.1, 0.14, 0.12, 0.3), 150.0)
+FOG = ((0.3, 0.3, 0.4, 0.9), 650.0)
+TFOG = ((0.1, 0.14, 0.12, 1.0), 150.0)
 
 #myecube = pi3d.EnvironmentCube(900.0,"HALFCROSS")
 ectex=pi3d.loadECfiles("textures/ecubes","sbox")
@@ -58,7 +59,7 @@ mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
 mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      divx=32, divy=32) #testislands.jpg
-mymap.set_draw_details(shader, [mountimg1, bumpimg, reflimg], 128.0, 0.0)
+mymap.set_draw_details(bumpsh, [mountimg1, bumpimg, reflimg], 128.0, 0.0)
 mymap.set_fog(*FOG)
 
 #Create tree models
@@ -93,7 +94,7 @@ mytrees3.set_fog(*TFOG)
 monolith = pi3d.Sphere(radius=8.0, slices=12, sides=48,
                   sy=10.0, name="monolith")
 monolith.translate(100.0, -mymap.calcHeight(100.0, 350) + 10.0, 350.0)
-monolith.set_draw_details(shader, [rockimg, bumpimg, reflimg], 32.0, 0.3)
+monolith.set_draw_details(shader, [rockimg, bumpimg, reflimg], 32.0, 0.2)
 monolith.set_fog(*FOG)
 
 #screenshot number

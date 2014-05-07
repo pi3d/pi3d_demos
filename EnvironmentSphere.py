@@ -9,7 +9,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=50, y=50)
+DISPLAY = pi3d.Display.create(w=480, h=240)
 
 shader = pi3d.Shader('uv_flat')
 #========================================
@@ -29,7 +29,7 @@ omx, omy = mymouse.position()
 
 CAMERA = pi3d.Camera.instance()
 
-# Display scene and rotate cuboid
+# Display scene and rotate sphere
 while DISPLAY.loop_running():
 
   CAMERA.reset()

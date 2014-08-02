@@ -61,13 +61,15 @@ radio = pi3d.Radio(gui, ww -20, hh - 32,
                 label="unhides menu!", label_pos="left", callback=cbx)
 xi = -ww
 yi = hh
-for b in ['tool_estop.gif', 'tool_power.gif', 'tool_open.gif',
-          'tool_reload.gif', 'tool_run.gif', 'tool_step.gif',
-          'tool_pause.gif', 'tool_stop.gif', 'tool_blockdelete.gif',
-          'tool_optpause.gif', 'tool_zoomin.gif', 'tool_zoomout.gif',
-          'tool_axis_z.gif', 'tool_axis_z2.gif', 'tool_axis_x.gif',
-          'tool_axis_y.gif', 'tool_axis_p.gif', 'tool_rotate.gif',
-          'tool_clear.gif']:
+for b in ['tool_estop.gif', 'tool_power.gif', 'tool_open.gif']:
+  #       'tool_reload.gif', 'tool_run.gif', 'tool_step.gif',
+  #       'tool_pause.gif', 'tool_stop.gif', 'tool_blockdelete.gif',
+  #       'tool_optpause.gif', 'tool_zoomin.gif', 'tool_zoomout.gif',
+  #       'tool_axis_z.gif', 'tool_axis_z2.gif', 'tool_axis_x.gif',
+  #       'tool_axis_y.gif', 'tool_axis_p.gif', 'tool_rotate.gif',
+  #       'tool_clear.gif']: 
+  """ these other images are available but 
+  too many objects will be slow in python on pi - keep it lean """
   g = pi3d.Button(gui, b, xi, yi, shortcut='d', callback=cb)
   xi = xi + 32
 

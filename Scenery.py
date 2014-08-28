@@ -12,13 +12,20 @@ import pi3d
 import pickle
 import time
 
-print('''W key for each oar stroke. You must row between 20 and 30 strokes
+print('''
+
+
+W key for each oar stroke. You must row between 20 and 30 strokes
 per minute to go in a straight line. Faster than that and you will turn
 left, slower and you will turn right
 
 A and D also turn and ' and / move the camera up and down
 delete scenery/map00.pkl to re-generate the pickle files
 Esc to quit
+
+NB THE FIRST TIME THIS RUNS IT WILL RE-GENERATE ALL THE PICKLE FILES
+WHICH TAKES A COUPLE OF MINUTES ON THE RPi. DON'T START PANICING UNTIL
+IT SEEMS TO HAVE BEEN DEAD FOR TEN MINUTES OR SO!!!
 ''')
 
 from pi3d.util.Scenery import Scene, SceneryItem

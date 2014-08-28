@@ -1,7 +1,11 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" Example showing use of FixedString. ESC to quit"""
+""" Example showing use of FixedString. ESC to quit
+
+FixedString should be faster for rendering large quantities of text as
+it only requires two triangles for the whole text rather than two triangles
+for each letter"""
 import demo
 import pi3d
 

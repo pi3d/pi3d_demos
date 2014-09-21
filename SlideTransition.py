@@ -94,7 +94,7 @@ class Carousel:
     self.focus = (self.focus + step) % nSli
     self.focus_fi = (self.focus_fi + step) % nFi
     sbg = self.slides[self.focus] #background
-    self.canvas.set_textures([sfg.tex, sbg.tex])
+    self.canvas.set_draw_details(self.canvas.shader,[sfg.tex, sbg.tex])
     self.canvas.set_2d_size(sbg.dimensions[0], sbg.dimensions[1], sbg.dimensions[2], sbg.dimensions[3])
     self.canvas.unif[48:54] = self.canvas.unif[42:48] #need to pass shader dimensions for both textures
     self.canvas.set_2d_size(sfg.dimensions[0], sfg.dimensions[1], sfg.dimensions[2], sfg.dimensions[3])

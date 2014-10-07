@@ -2,12 +2,21 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from numpy import tan, radians, interp
+from math import tan, radians
 import random, time, fnmatch, os, threading
 import demo
 import pi3d
 
 from six.moves import queue
+
+def interp(x, xp, yp):
+  for i, val in enumerate(xp):
+    if x < val:
+      if i == 0:
+        return val
+      else:
+        return yp[i-1] + (yp[i] - yp[i-1]) * (x - xp[i-1]) / float(xp[i] - xp[i-1])
+  return yp[-1]
 
 print("""#########################################################
 press ESC to escape
@@ -197,28 +206,28 @@ while DISPLAY.loop_running():
       DISPLAY.stop()
       break
     # left arrow go back a picture
-    elif k==134 or k==136: 
+    elif k==134 or k==136:
       crsl.prev()
     # pgdn go forward 10 pictures
-    elif k==133: 
+    elif k==133:
       crsl.next(10)
     # pgup go back 10 pictures
-    elif k==130: 
+    elif k==130:
       crsl.prev(10)
     # + increase magnification
-    elif k==61: 
+    elif k==61:
       MAG /= 1.25
     # - decrease magnification
-    elif k==45: 
+    elif k==45:
       MAG *= 1.25
     # 1to5 slow down
     elif k >= 49 and k <= 53: 
       NSTEPS *= 1.25
     # 6to0 speed up
-    elif (k >= 54 and k <= 57) or k==48: 
+    elif (k >= 54 and k <= 57) or k==48:
       NSTEPS /= 1.25
     # p or space pause
-    elif k==112 or k==32: 
+    elif k==112 or k==32:
       PAUSE = (PAUSE + 1) % 2
     #all other keys load next picture
     else:

@@ -39,7 +39,7 @@ mymap = pi3d.ElevationMap(mapfile="textures/mountainsHgt2.png",
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      divx=64, divy=64)
 mymap.set_draw_details(shader,[floorimg, bumpimg],128.0, 0.0)
-mymap.set_fog((0.3,0.25,0.1,0.2), 500.0)
+mymap.set_fog((0.3,0.25,0.1,0.8), 500.0)
 
 #Create some random block models elsewhere on the map!
 pi3d.corridor(
@@ -79,7 +79,7 @@ details = [
 building = pi3d.Building(
   "textures/silo_map.png", 0, 0, mymap,
   width=15.0, depth=15.0, height=70.0, name="", draw_details=details,
-  yoff=-15, scheme=openSectionSchemeMultimodel)
+  yoff=-13, scheme=openSectionSchemeMultimodel)
 
 outLight = pi3d.Light(lightpos=(10, -10, 20), lightcol =(1.0, 1.0, 0.7), lightamb=(0.35, 0.35, 0.4))
 inLight = pi3d.Light(lightpos=(10, -10, 20), lightcol =(0.1, 0.1, 0.15), lightamb=(0.05, 0.15, 0.1))

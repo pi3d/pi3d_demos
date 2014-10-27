@@ -85,9 +85,12 @@ while DISPLAY.loop_running():
 
   # 3. redraw these two objects applying a shader effect ###############
   #read several lines so the video frame rate doesn't restrict the music
-  #TODO ought to be a better way of doing this.
-  for i in range(11):
+  flg = True
+  while flg:
+    st_read = time.time()
     l = p.stdout.readline()
+    if (time.time() - st_read) > 0.01:# poss pause in animation waiting for mpg321 info
+      flg = False
     if b'@P' in l:
       iMusic = (iMusic + 1) % nMusic
       p.stdin.write(b'LOAD ' + mFiles[iMusic] + b'\n')

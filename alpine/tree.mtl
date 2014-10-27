@@ -1,0 +1,11 @@
+# Blender MTL File: 'tree.blend'
+# Material Count: 1
+
+newmtl None
+Ns 0
+Ka 0.000000 0.000000 0.000000
+Kd 0.8 0.8 0.8
+Ks 0.8 0.8 0.8
+d 1
+illum 2
+map_Kd /home/jill/pi3d_demos/textures/hornbeam2.png

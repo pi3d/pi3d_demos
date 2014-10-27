@@ -13,9 +13,9 @@ import demo
 import pi3d
 from pi3d.sprite.ScissorBall import ScissorBall
 
-MAX_BALLS = 15
+MAX_BALLS = 25
 MIN_BALL_SIZE = 5
-MAX_BALL_SIZE = 50
+MAX_BALL_SIZE = 40
 MAX_BALL_VELOCITY = 10.0
 
 KEYBOARD = pi3d.Keyboard()

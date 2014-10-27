@@ -14,8 +14,6 @@ to the ambient light.
 
 There is also demonstration of the point_at method of Camera, press the D key
 """
-from __future__ import absolute_import
-
 import math, random
 
 import demo

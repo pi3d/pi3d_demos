@@ -10,8 +10,8 @@ import demo #which does the same as..
 #import sys
 #sys.path.insert(1, '/home/pi/pi3d')
 import pi3d
-# set to true to run in tk window (have to start x server)
-tk = False # NB there is no
+
+tk = False # set to true to run in tk window (have to start x server)
 
 def tex_load(fname):
   ''' return a slide object
@@ -105,8 +105,7 @@ while DISPLAY.loop_running():
         pass
       break
     if win.ev == 'resized':
-      print('resized')
-      DISPLAY.resize(win.winx, win.winy, win.width, win.height-bord)
+      DISPLAY.resize(win.winx, win.winy, win.width, win.height)
       win.resized = False
       win.ev = ''
 

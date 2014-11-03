@@ -10,8 +10,8 @@ import demo #which does the same as..
 #import sys
 #sys.path.insert(1, '/home/pi/pi3d')
 import pi3d
-
-tk = True #set to true to run in tk window (have to start x server)
+# set to true to run in tk window (have to start x server)
+tk = False # NB there is no
 
 def tex_load(fname):
   ''' return a slide object
@@ -48,6 +48,7 @@ shader = [pi3d.Shader("shaders/blend_star"),
           pi3d.Shader("shaders/blend_false"),
           pi3d.Shader("shaders/blend_burn"),
           pi3d.Shader("shaders/blend_bump")]
+num_sh = len(shader)
 
 iFiles = glob.glob("textures/*.*")
 #iFiles = glob.glob("/home/pi/Pictures/*/*.*") # eg actual location 
@@ -82,9 +83,9 @@ while DISPLAY.loop_running():
     canvas.unif[48:54] = canvas.unif[42:48] #need to pass shader dimensions for both textures
     canvas.set_2d_size(sfg.dimensions[0], sfg.dimensions[1], sfg.dimensions[2], sfg.dimensions[3])
     pictr += 1
-    if pictr > 3:# shader change only happens after 4 pictures
+    if pictr >= num_sh:# shader change only happens after 4 pictures
       pictr = 0
-      shnum = (shnum + 1) % 1
+      shnum = (shnum + 1) % num_sh
       canvas.set_shader(shader[shnum])
 
   if fade < 1.0:
@@ -103,6 +104,11 @@ while DISPLAY.loop_running():
       except:
         pass
       break
+    if win.ev == 'resized':
+      print('resized')
+      DISPLAY.resize(win.winx, win.winy, win.width, win.height-bord)
+      win.resized = False
+      win.ev = ''
 
   else:
     k = mykeys.read()

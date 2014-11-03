@@ -14,8 +14,8 @@ varying vec2 pix_invf;
 varying vec2 pix_invb;
 
 void main(void) {
-  float tm = unif[14][2]; // countdown tm 1 to 0
-  float n = 40.0; ///// NB if you increase this to make bigger holes you need to reduce * 0.02 in line 41 proportionately
+  float tm = unif[14][2]; // 0.0 to 1.0
+  vec2 mid = unif[14].xy + unif[15].xy * 0.5;
   vec2 coord;
   vec2 coordsc;
   vec4 texf;
@@ -38,8 +38,13 @@ void main(void) {
     coordsc *=  pix_invb; // really dividing to scale 0-1 i.e. (x/w, y/h)
     texb = texture2D(tex1, coordsc);
   }
-  float x = length(coord - floor(coord / n + 0.5) * n) * 0.02;
-  gl_FragColor = mix(texf, texb, smoothstep(-0.2, 0.2, tm - x));
+  // angle and radial distance from mid point
+  float a = atan(tm * (coord.y - unif[16].y * 0.5), tm * (coord.x - unif[16].x * 0.5)) + tm;
+  float r = length(coord - mid);
+  float x = 0.001 * r; // these 'magic' numbers give a reasonble transition
+  x *= 0.5 * (1.0 + cos(a * 40.0 + 3.0 * sin(tm + 0.05 * r)));
+  
+  gl_FragColor = mix(texb, texf, smoothstep(-0.45, 0.15, x - tm));
   gl_FragColor.a *= unif[5][2];
 }
 

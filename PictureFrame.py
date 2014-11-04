@@ -54,7 +54,7 @@ iFiles = glob.glob("textures/*.*")
 #iFiles = glob.glob("/home/pi/Pictures/*/*.*") # eg actual location 
 iFiles.sort() # sort by name, otherwise random
 nFi = len(iFiles) # number of pictures
-fade_step = 0.015 # smaller number for slower transition
+fade_step = 0.01 # smaller number for slower transition NB MUST BE A DIVISOR OF 1.0 FOR SOME SHADERS
 fade = 0.0
 pic_num = nFi - 1
 
@@ -83,7 +83,7 @@ while DISPLAY.loop_running():
     canvas.unif[48:54] = canvas.unif[42:48] #need to pass shader dimensions for both textures
     canvas.set_2d_size(sfg.dimensions[0], sfg.dimensions[1], sfg.dimensions[2], sfg.dimensions[3])
     pictr += 1
-    if pictr >= num_sh:# shader change only happens after 4 pictures
+    if pictr >= 3:# shader change only happens after 4 pictures
       pictr = 0
       shnum = (shnum + 1) % num_sh
       canvas.set_shader(shader[shnum])

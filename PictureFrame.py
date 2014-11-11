@@ -15,22 +15,25 @@ import pi3d
 # set the user variables here
 ########################################################################
 PIC_DIR = '/home/pi/pi3d_demos/textures/' # for filtering subdirectories
-               # and file names alter lines c. 68 and 72 below
+               # and file names alter lines c. 52 and 56 below
 TMDELAY = 5.0  # time between slides This needs to be big enough for
                # texture loading and fading
 FPS = 20       # animation frames per second
 FADE_TM = 2.0  # time for fading
 TK = False     # set to true to run in tk window (have to start x server)
-MIPMAP = True  # whether to anti-alias map screen pixels to image pixels
+MIPMAP = False # whether to anti-alias map screen pixels to image pixels
                # set False if no scaling required
 SHUFFLE = True # randomly shuffle the pictures
 PPS = 1        # how many pictures to show before changing shader
+CHKNUM = 30    # number of picture between re-loading file list
 ########################################################################
 
 def tex_load(fname):
   ''' return a slide object
   '''
   slide = Slide()
+  if not os.path.isfile(fname):
+    return None
   tex = pi3d.Texture(fname, blend=True, mipmap=MIPMAP)
   xrat = DISPLAY.width/tex.ix
   yrat = DISPLAY.height/tex.iy
@@ -42,6 +45,21 @@ def tex_load(fname):
   slide.tex = tex
   slide.dimensions = (wi, hi, xi, yi)
   return slide
+
+def get_files():
+  global SHUFFLE, PIC_DIR
+  file_list = []
+  extensions = ['.png','.jpg','.jpeg'] # can add to these
+  for root, dirnames, filenames in os.walk(PIC_DIR):
+      for filename in filenames:
+          ext = os.path.splitext(filename)[1].lower()
+          if ext in extensions and not 'water' in root and not filename.startswith('.'):
+              file_list.append(os.path.join(root, filename)) 
+  if SHUFFLE:
+    random.shuffle(file_list) # randomize pictures
+  else:
+    file_list.sort() # if not suffled; sort by name
+  return file_list, len(file_list) # tuple of file list, number of pictures
 
 class Slide(object):
   def __init__(self):
@@ -64,18 +82,7 @@ shader = [pi3d.Shader("shaders/blend_star"),
           pi3d.Shader("shaders/blend_bump")]
 num_sh = len(shader)
 
-iFiles = []
-extensions = ['.png','.jpg','.jpeg'] # can add to these
-for root, dirnames, filenames in os.walk(PIC_DIR):
-    for filename in filenames:
-        ext = os.path.splitext(filename)[1].lower()
-        if ext in extensions and not 'water' in root and not filename.startswith('.'):
-            iFiles.append(os.path.join(root, filename)) 
-if SHUFFLE:
-  random.shuffle(iFiles) # randomize pictures
-else:
-  iFiles.sort() # if not suffled; sort by name
-nFi = len(iFiles) # number of pictures
+iFiles, nFi = get_files()
 fade = 0.0
 pic_num = nFi - 1
 
@@ -98,9 +105,12 @@ while DISPLAY.loop_running():
     fade = 0.0 # reset fade to beginning
     sfg = sbg # foreground Slide set to old background
     pic_num = (pic_num + 1) % nFi # wraps to start
-    if pic_num == 0 and SHUFFLE:
-      random.shuffle(iFiles)
-    sbg = tex_load(iFiles[pic_num]) # background Slide load.
+    if (pic_num % CHKNUM) == 0: # this will shuffle as well
+      iFiles, nFi = get_files()
+      pic_num = pic_num % nFi # just in case list is severly shortened
+    tmp_slide = tex_load(iFiles[pic_num]) # background Slide load.
+    if tmp_slide != None: # checking in case file deleted
+      sbg = tmp_slide
     canvas.set_draw_details(canvas.shader,[sfg.tex, sbg.tex]) # reset two textures
     canvas.set_2d_size(sbg.dimensions[0], sbg.dimensions[1], sbg.dimensions[2], sbg.dimensions[3])
     canvas.unif[48:54] = canvas.unif[42:48] #need to pass shader dimensions for both textures

@@ -41,7 +41,7 @@ warp_plan = np.array(([3]*8 + [3,0,2]*2 + [4,4])*3 + [0]*7 + [5])
 weft_plan = np.array(([2]*8 + [1,5,4]*2 + [6,5])*3 + [0,1]*3 + [0,5])
 # heald, heddle, shaft, frame: the set of wires attached to a liftable frame
 # position in the array corresponds to warp thread number is the 'column' of the peg_plan
-heald_plan = np.array([0,1,2,3, 0,1,2,3, 1,0,3,2, 1,0,3,2]) # simple herringbone
+draft_plan = np.array([0,1,2,3, 0,1,2,3, 1,0,3,2, 1,0,3,2]) # simple herringbone
 # rows are weft insertions, column are shafts, 0 is down 1 is up
 peg_plan = np.array([
 [0,1,1,0],
@@ -50,19 +50,19 @@ peg_plan = np.array([
 [0,0,1,1]])
 
 pick_rpt = peg_plan.shape[0]
-heald_rpt = heald_plan.size
+draft_rpt = draft_plan.size
 weft_rpt = weft_plan.size
 warp_rpt = warp_plan.size
-wv_width = lcm(warp_rpt, heald_rpt) # lowest common multiple
+wv_width = lcm(warp_rpt, draft_rpt) # lowest common multiple
 wv_height = lcm(weft_rpt, pick_rpt)
 
 warp_plan = np.tile(warp_plan, (wv_width // warp_rpt))
 weft_plan = weft_plan.reshape((weft_rpt, 1)) # make into vertical array
 weft_plan = np.tile(weft_plan, (wv_height // weft_rpt, 1))
-heald_plan = np.tile(heald_plan, (wv_width // heald_rpt))
+draft_plan = np.tile(draft_plan, (wv_width // draft_rpt))
 peg_plan = np.tile(peg_plan, (wv_height // pick_rpt, 1))
 
-lifts = peg_plan[:,heald_plan[:]] # generate an up/down map for the plan
+lifts = peg_plan[:,draft_plan[:]] # generate an up/down map for the plan
 # then fill it with the yarn for warp if it's up or weft if it's down
 yarn_plan = lifts[:,:] * warp_plan[:] + (lifts * -1 + 1)[:,:] * weft_plan[:]
 wv = yarn_colours[yarn_plan[:,:]].astype(np.uint8) # wv takes the [R,G,B] from yarn colours

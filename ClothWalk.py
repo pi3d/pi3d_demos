@@ -73,7 +73,7 @@ clothimg = pi3d.Texture(im)
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100)
-DISPLAY.set_background(0.4, 0.8, 0.8, 0.0)      # r,g,b,alpha
+DISPLAY.set_background(0.4, 0.8, 0.8, 1.0)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
 
@@ -95,7 +95,7 @@ TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
 ectex=pi3d.loadECfiles("textures/ecubes","skybox_hall")
 myecube = pi3d.EnvironmentCube(size=900.0, maptype="FACES", name="cube")
 myecube.set_draw_details(flatsh, ectex)
-myecube.set_alpha(0.5)
+
 
 # Create elevation map
 mapwidth = 1000.0

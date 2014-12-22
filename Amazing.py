@@ -35,6 +35,7 @@ DISPLAY = pi3d.Display.create(x=100, y=100, background=(0.4, 0.8, 0.8, 1))
 
 shader = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")
+light = pi3d.Light((1,1,1), (400.0, 400.0, 350.0), (0.03, 0.03, 0.05), True)
 #========================================
 
 # load Textures
@@ -182,6 +183,8 @@ while DISPLAY.loop_running():
   omy = my
   oxm = xm
   ozm = zm
+  light.position((xm, ym + 3.0, zm))
+  mymap.set_light(light)
 
   myecube.position(xm, ym, zm)
   myecube.draw()
@@ -226,9 +229,11 @@ while DISPLAY.loop_running():
   mSz += mDz
   monst.position(mSx, mSy, mSz)
 
-  # draw the sheds
-  for g in shedgp:
-    g.draw()
+  # draw the sheds, slight hack as only need to do this if near middle!
+  if abs(xm) < 100 and abs(zm) < 100:
+    for g in shedgp:
+      g.set_light(light)
+      g.draw()
 
   #key press ESCAPE to terminate
   k = mykeys.read()

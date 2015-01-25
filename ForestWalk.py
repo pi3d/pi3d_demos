@@ -47,9 +47,9 @@ mapwidth = 1000.0
 mapdepth = 1000.0
 mapheight = 60.0
 mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
-mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
+mymap = pi3d.ElevationMap("textures/mountainsHgt.png", name="map",
                      width=mapwidth, depth=mapdepth, height=mapheight,
-                     divx=32, divy=32) #testislands.jpg
+                     divx=32, divy=32) 
 mymap.set_draw_details(shader, [mountimg1, bumpimg, reflimg], 128.0, 0.0)
 mymap.set_fog(*FOG)
 
@@ -115,6 +115,7 @@ while DISPLAY.loop_running():
   CAMERA.reset()
   CAMERA.rotate(tilt, rot, 0)
   CAMERA.position((xm, ym, zm))
+  myecube.position(xm, ym, zm)
 
   # for opaque objects it is more efficient to draw from near to far as the
   # shader will not calculate pixels already concealed by something nearer
@@ -123,6 +124,16 @@ while DISPLAY.loop_running():
   mytrees2.draw()
   mytrees3.draw()
   mymap.draw()
+  if abs(xm) > 300:
+    mymap.position(math.copysign(1000,xm), 0.0, 0.0)
+    mymap.draw()
+  if abs(zm) > 300:
+    mymap.position(0.0, 0.0, math.copysign(1000,zm))
+    mymap.draw()
+    if abs(xm) > 300:
+      mymap.position(math.copysign(1000,xm), 0.0, math.copysign(1000,zm))
+      mymap.draw()
+  mymap.position(0.0, 0.0, 0.0)
   myecube.draw()
 
   mx, my = mymouse.position()
@@ -162,3 +173,6 @@ while DISPLAY.loop_running():
       mymouse.stop()
       DISPLAY.stop()
       break
+
+    xm = (xm + 500) % 1000 - 500
+    zm = (zm + 500) % 1000 - 500

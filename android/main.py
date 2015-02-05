@@ -88,7 +88,7 @@ class Main(object):
   monument.set_shader(shinesh)
   monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
   monument.set_fog(*FOG)
-  monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 9.0, 235.0)
+  monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 12.0, 235.0)
   monument.scale(20.0, 20.0, 20.0)
   monument.rotateToY(65)
 

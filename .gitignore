@@ -3,6 +3,8 @@
 
 *.py[co]
 
+*.pkl
+
 # Packages
 *.egg
 *.egg-info

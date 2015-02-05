@@ -18,7 +18,7 @@ import pi3d
 DISPLAY = pi3d.Display.create(x=200, y=200)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
-pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
+pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
 
 #========================================
 
@@ -43,13 +43,12 @@ myecube = pi3d.EnvironmentCube(size=900.0, maptype="FACES", name="cube")
 myecube.set_draw_details(flatsh, ectex)
 
 # Create elevation map
-mapwidth = 1000.0
-mapdepth = 1000.0
+mapsize = 1000.0
 mapheight = 60.0
 mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
-mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
-                     width=mapwidth, depth=mapdepth, height=mapheight,
-                     divx=32, divy=32) #testislands.jpg
+mymap = pi3d.ElevationMap("textures/mountainsHgt.png", name="map",
+                     width=mapsize, depth=mapsize, height=mapheight,
+                     divx=32, divy=32) 
 mymap.set_draw_details(shader, [mountimg1, bumpimg, reflimg], 128.0, 0.0)
 mymap.set_fog(*FOG)
 
@@ -86,7 +85,7 @@ monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
 monument.set_shader(shinesh)
 monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
 monument.set_fog(*FOG)
-monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 9.0, 235.0)
+monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 12.0, 235.0)
 monument.scale(20.0, 20.0, 20.0)
 monument.rotateToY(65)
 
@@ -115,19 +114,32 @@ while DISPLAY.loop_running():
   CAMERA.reset()
   CAMERA.rotate(tilt, rot, 0)
   CAMERA.position((xm, ym, zm))
+  myecube.position(xm, ym, zm)
 
-  # for opaque objects it is more efficient to draw from near to far as the
-  # shader will not calculate pixels already concealed by something nearer
+  # For opaque objects it is more efficient to draw from near to far as the
+  # shader will not calculate pixels already concealed by something nearer.
+  # In this case the partially transparent trees have to be drawn after
+  # things behind them.
   monument.draw()
+  mymap.draw()
+  if abs(xm) > 300:
+    mymap.position(math.copysign(1000,xm), 0.0, 0.0)
+    mymap.draw()
+  if abs(zm) > 300:
+    mymap.position(0.0, 0.0, math.copysign(1000,zm))
+    mymap.draw()
+    if abs(xm) > 300:
+      mymap.position(math.copysign(1000,xm), 0.0, math.copysign(1000,zm))
+      mymap.draw()
+  mymap.position(0.0, 0.0, 0.0)
+  myecube.draw()
   mytrees1.draw()
   mytrees2.draw()
   mytrees3.draw()
-  mymap.draw()
-  myecube.draw()
 
   mx, my = mymouse.position()
+  buttons = mymouse.button_status()
 
-  #if mx>display.left and mx<display.right and my>display.top and my<display.bottom:
   rot -= (mx-omx)*0.2
   tilt += (my-omy)*0.2
   omx=mx
@@ -135,30 +147,39 @@ while DISPLAY.loop_running():
 
   #Press ESCAPE to terminate
   k = mykeys.read()
-  if k >-1:
-    if k==119:  #key W
-      xm -= math.sin(math.radians(rot))
+  if k >-1 or buttons > mymouse.BUTTON_UP:
+    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key W
+      '''these values have actually already been calculated in the Camera
+      and could be efficiently substituted for
+      xm += CAMERA.mtrx[0, 3]
+      zm += CAMERA.mtrx[2, 3]
+      '''
+      xm -= math.sin(math.radians(rot)) 
       zm += math.cos(math.radians(rot))
       ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k==115:  #kry S
+    elif k == 115 or buttons == mymouse.RIGHT_BUTTON:  #kry S
       xm += math.sin(math.radians(rot))
       zm -= math.cos(math.radians(rot))
       ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k==39:   #key '
+    elif k == 39:   #key '
       tilt -= 2.0
-    elif k==47:   #key /
+    elif k == 47:   #key /
       tilt += 2.0
-    elif k==97:   #key A
+    elif k == 97:   #key A
       rot -= 2
-    elif k==100:  #key D
+    elif k == 100:  #key D
       rot += 2
-    elif k==112:  #key P
+    elif k == 112:  #key P
       pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
       scshots += 1
-    elif k==10:   #key RETURN
+    elif k == 10:   #key RETURN
       mc = 0
-    elif k==27:  #Escape key
+    elif k == 27:  #Escape key
       mykeys.close()
       mymouse.stop()
       DISPLAY.stop()
       break
+
+    halfsize = mapsize / 2.0
+    xm = (xm + halfsize) % mapsize - halfsize # wrap location to stay on map -500 to +500
+    zm = (zm + halfsize) % mapsize - halfsize

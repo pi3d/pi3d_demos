@@ -70,7 +70,7 @@ while DISPLAY.loop_running():
     b = ice.buf[0] #alias to tidy code
     for i in range(33): #number of slices + 1
       b.vertices[33*i + 32][:] = b.vertices[33*i][:] #attempt to re-align edges of mesh
-    b.normals = b._calc_normals()
+    b.normals = b.calc_normals()
     b.re_init(normals = b.normals)
     nextnormal = tm + dnormal
 

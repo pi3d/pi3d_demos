@@ -171,6 +171,6 @@ while DISPLAY.loop_running():
       b = terrain.buf[0]
       b.vertices[s1:s2:s3,1] = b.vertices[s4:s5:s6,1]
       b.vertices[s7:s8:s9,1] = newedge
-      b.normals = b._calc_normals()
+      b.normals = b.calc_normals()
       b.re_init(pts=b.vertices, normals = b.normals)
 

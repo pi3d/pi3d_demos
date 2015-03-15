@@ -24,10 +24,11 @@ try:
   with open('models/teapot.pkl', 'rb') as f: #python3 requires binary
     import pickle
     mymodel = pickle.load(f)
-except Exception:
+except Exception as e:
+  print("exception was {}".format(e))
   """ could be IOError for missing file or various errors from trying to
   load a file pickled with a different version of python or pickle etc"""
-  mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4)
+  mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4.0)
   # load bump and reflection textures
   bumptex = pi3d.Texture("textures/floor_nm.jpg")
   shinetex = pi3d.Texture("textures/stars.jpg")

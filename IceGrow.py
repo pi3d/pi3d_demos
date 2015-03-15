@@ -54,22 +54,22 @@ while DISPLAY.loop_running():
 
   if tm  > nextgrow: # can't do this inside the tetra for loop otherwise only first one updated
     b = ice.buf[0] #alias to tidy code. NB there may be issues with multi Buffer Shapes
-    n = len(b.vertices)
+    n = len(b.array_buffer)
     f = random.randint(0, n-5) #from 
     e = min(random.randint(f+1, n-1), f + 50) #end
     vmod = []
     nmod = []
     tmod = []
     for j in range(f, e): # nb only
-      vmod.append(tuple(b.vertices[j][i] * (0.995 + random.random() / 50.0) for i in range(3)))
-      tmod.append(tuple(b.tex_coords[j][i] * (0.99 + random.random() / 50.0) for i in range(2)))
+      vmod.append(tuple(b.array_buffer[j,i] * (0.995 + random.random() / 50.0) for i in range(0,3)))
+      tmod.append(tuple(b.array_buffer[j,i] * (0.99 + random.random() / 50.0) for i in range(6,8)))
     b.re_init(pts=vmod, texcoords=tmod, offset=f)
     nextgrow += dgrow
 
   if tm > nextnormal:
     b = ice.buf[0] #alias to tidy code
     for i in range(33): #number of slices + 1
-      b.vertices[33*i + 32][:] = b.vertices[33*i][:] #attempt to re-align edges of mesh
+      b.array_buffer[33*i + 32,0:3] = b.array_buffer[33*i,0:3] #attempt to re-align edges of mesh
     b.normals = b.calc_normals()
     b.re_init(normals = b.normals)
     nextnormal = tm + dnormal

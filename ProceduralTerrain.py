@@ -167,8 +167,8 @@ while DISPLAY.loop_running():
 
     if flg: # i.e. one of above keys pressed
       b = terrain.buf[0]
-      b.vertices[s1:s2:s3,1] = b.vertices[s4:s5:s6,1]
-      b.vertices[s7:s8:s9,1] = newedge
-      b.normals = b.calc_normals()
-      b.re_init(pts=b.vertices, normals = b.normals)
+      b.array_buffer[s1:s2:s3,1] = b.array_buffer[s4:s5:s6,1]
+      b.array_buffer[s7:s8:s9,1] = newedge
+      b.array_buffer[:,3:6] = b.calc_normals()
+      b.re_init(pts=b.array_buffer[:,0:3], normals = b.array_buffer[:,3:6])
 

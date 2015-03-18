@@ -1,44 +1,29 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-""" An example of making objects change shape by re-creating them inside the while loop
-the textures are also offset by a different amount each frame.
+""" An example of making objects change shape using Buffer.re_init().
+It shows how a subset of vertices can be altered
 """
 from math import sin, cos, radians
 from time import time
+import random
 
 import demo
 import pi3d
 
-DISPLAY = pi3d.Display.create(x=250, y=250, frames_per_second=16)
+DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20)
 shader = pi3d.Shader("uv_reflect")
 tex = pi3d.Texture("textures/metalhull.jpg")
 bump = pi3d.Texture("textures/rocktile2.jpg")
 shine = pi3d.Texture("textures/stars2.jpg")
 
-tetras = [] 
-# tetras[n][0] is a Tetrahedron object
-# tetras[n][1] is an array of [time, (position tables for each tetrahedron)]
-tetras.append([None,[[0.0, ((-0.3,0,-0.1),(0.2,0,-0.2),(-0.1,0,0.3),(-0.2,0,0))],
-                    [70.0, ((-0.6,0,-0.2),(0.4,0,-0.4),(-0.2,0,0.6),(-0.6,0.5,1.0))],
-                    [150.0, ((-3,0,-1),(2,0,-2),(-1,0,3),(-1.3,0.6,0.5))],
-                    [260.0, ((-3,0,-1),(2,0,-2),(-1,0,3),(-2,4.0,0))],
-                    [300.0, ((-0.3,0,-0.1),(0.2,0,-0.2),(-0.1,0,0.3),(-0.2,0,0))]]])
-tetras.append([None,[[0.0, ((-0.1,0,-0.2),(0.1,0,-0.2),(0,0,0.3),(0,0,0))],
-                    [50.0, ((-0.1,0,-0.2),(0.1,0,-0.9),(0,0,0.3),(0,0.5,0))],
-                    [150.0, ((-0.1,0,-0.5),(0.4,0,-1.4),(0,0,0.9),(0.4,1,0.4))],
-                    [240.0, ((-1,0,-2),(1,0,-2),(0,0,3),(1.5,3,1))],
-                    [300.0, ((-0.1,0,-0.2),(0.1,0,-0.2),(0,0,0.3),(0,0,0))]]])
-tetras.append([None,[[0.0, ((0,0,-0.1),(0.15,0,-0.1),(0.1,0,0.1),(0.1,0.2,0.0))],
-                    [150.0, ((0,0,-1),(1.5,0,-1),(1,0,1),(1,4.2,0))],
-                    [200.0, ((0,0,-0.5),(1.5,0,-0.5),(1,0,1),(1,6.2,0))],
-                    [300.0, ((0,0,-0.1),(0.15,0,-0.1),(0.1,0,0.1),(0.1,0.2,0.0))]]])
+ice = pi3d.Sphere(slices=32, sides=32)
+ice.set_draw_details(shader, [tex, bump, shine], 1.0, 0.8)
 
 tm = time()
-st_tm = tm # start time for this sequence
-sc = 0.0 # offset for texture
-ds = -0.0001 # offset change per frame
-dgrow = 0.1 # time between 'growing' the shapes
+dgrow = 0.05 # time between 'growing' the shapes
 nextgrow = 0.0 # time to do next growing
+dnormal = 0.5 # time between recalculating all normals
+nextnormal = 0.0 # time to do next normals
 camRad = 4.0 # radius of camera position
 mouserot = 0.0 # rotation of camera
 tilt = 5.0 # tilt of camera
@@ -51,33 +36,9 @@ omx, omy = mymouse.position()
 mykeys = pi3d.Keyboard()
 CAMERA = pi3d.Camera.instance()
 
-###################################
-#function for interpolating vertex values at a given time
-###################################
-def interpolate(v_arr, tm):
-  plast = None
-  found_flg = False
-  for p in v_arr: # each p is animation data for a tetrahedron
-    if p[0] > tm:
-      found_flg = True
-      pthis = p
-      break
-    plast = p
-  if not found_flg:
-    return plast[1]
-  else:
-    r = (tm - plast[0]) / (pthis[0] - plast[0])
-    rval = []
-    for i in range(4):
-      rval.append([])
-      for j in range(3):
-        rval[i].append(plast[1][i][j] + r * (pthis[1][i][j] - plast[1][i][j]))
-    return tuple(tuple(x) for x in rval)
-###################################
-
 # main display loop
 while DISPLAY.loop_running():
-  tm = time() - st_tm
+  tm = time()
   mx, my = mymouse.position() # camera can move around object with mouse move
   mouserot -= (mx-omx)*0.2
   tilt -= (my-omy)*0.1
@@ -89,25 +50,29 @@ while DISPLAY.loop_running():
                    camRad * sin(radians(tilt)), 
                    -camRad * cos(radians(mouserot)) * cos(radians(tilt))))
 
-  for tetra in tetras:
-    #as moving slowly only need to regenerate shapes now and then
-    if tm  > nextgrow: #need to make sure this happens first time round loop!
-      tetra[0] = pi3d.Tetrahedron(x=0.0, y=0.0, z=0.0, 
-          corners=interpolate(tetra[1], tm))
-      tetra[0].set_draw_details(shader,[tex, bump, shine], 1.0, 0.4)
-        
-    tetra[0].set_offset((0.0, sc))
-    tetra[0].draw()
+  ice.draw()
 
   if tm  > nextgrow: # can't do this inside the tetra for loop otherwise only first one updated
+    b = ice.buf[0] #alias to tidy code. NB there may be issues with multi Buffer Shapes
+    n = len(b.array_buffer)
+    f = random.randint(0, n-5) #from 
+    e = min(random.randint(f+1, n-1), f + 50) #end
+    vmod = []
+    nmod = []
+    tmod = []
+    for j in range(f, e): # nb only
+      vmod.append(tuple(b.array_buffer[j,i] * (0.995 + random.random() / 50.0) for i in range(0,3)))
+      tmod.append(tuple(b.array_buffer[j,i] * (0.99 + random.random() / 50.0) for i in range(6,8)))
+    b.re_init(pts=vmod, texcoords=tmod, offset=f)
     nextgrow += dgrow
 
-  if tm > 305.0:
-    st_tm = time()
-    nextgrow = 0.0
-    tm = 0.0
-
-  sc = (sc + ds) % 10.0 # increase the offset
+  if tm > nextnormal:
+    b = ice.buf[0] #alias to tidy code
+    for i in range(33): #number of slices + 1
+      b.array_buffer[33*i + 32,0:3] = b.array_buffer[33*i,0:3] #attempt to re-align edges of mesh
+    b.normals = b.calc_normals()
+    b.re_init(normals = b.normals)
+    nextnormal = tm + dnormal
 
   if mykeys.read() == 27:
     mykeys.close()

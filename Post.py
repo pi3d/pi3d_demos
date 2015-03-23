@@ -62,7 +62,8 @@ dx = 0.001
 while DISPLAY.loop_running():
   tm = tm + dt
   sc = (sc + ds) % 10.0
-  myshape.set_custom_data(48, [tm, sc, -0.5 * sc])
+  myshape.set_custom_data(16, [tm, sc, -0.5 * sc]) 
+  # NB NB for pi3d prior to v1.15 the array index would be 48 rather than 16
   post.start_capture()
   # 1. drawing objects now renders to an offscreen texture ####################
 
@@ -74,7 +75,8 @@ while DISPLAY.loop_running():
 
   # 3. redraw these two objects applying a shader effect ###############
   x = (x + dx) % 5.0
-  post.draw({48:(2.0 + x)})
+  post.draw({16:(2.0 + x, 0.0, 0.0)})
+  # NB NB for pi3d prior to v1.15 the array index would be 48 rather than 16
 
   mx, my = DISPLAY.mouse.position()
   myshape.scale(1.0 + mx/1000.0, 1.0 + my/1000.0, 1.0 + mx/1000.0)

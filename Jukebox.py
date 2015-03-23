@@ -64,16 +64,21 @@ random.shuffle(mFiles)
 nMusic = len(mFiles)
 iMusic = 0
 
-p = Popen(['mpg321', '-R', '-F', 'testPlayer'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-p.stdin.write(b'LOAD ' + mFiles[iMusic] + b'\n')
-rgb = {48:0.0, 49:0.0, 50:0.0}
+p = Popen([b"mpg321", b"-R", b"-F", b"testPlayer"], stdout=PIPE, stdin=PIPE)
+p.stdin.write(bytearray("LOAD {}\n".format(mFiles[iMusic]), "ascii"))
+#p.stdin.write(b"LOAD music/60miles.mp3\n")
+p.stdin.flush()
+rgb = [0.0, 0.0, 0.0]
 mx, my = 1.0, 1.0
 dx, dy = 1.0, 1.0
 # Display scene and rotate shape
 while DISPLAY.loop_running():
   tm = tm + dt
   sc = (sc + ds) % 10.0
-  myshape.set_custom_data(48, [tm, sc, -0.5 * sc])
+  myshape.set_custom_data(16, [[tm, sc, -0.5 * sc]])
+  """NB prior to pi3d v1.15 this would have been a 1D array to index 48 rather than 16
+  also passed as shape (n, 3) 2D array
+  """
   post.start_capture()
   # 1. drawing objects now renders to an offscreen texture ####################
 
@@ -93,13 +98,14 @@ while DISPLAY.loop_running():
       flg = False
     if b'@P' in l:
       iMusic = (iMusic + 1) % nMusic
-      p.stdin.write(b'LOAD ' + mFiles[iMusic] + b'\n')
+      p.stdin.write(bytearray("LOAD {}\n".format(mFiles[iMusic]), "ascii"))
+      p.stdin.flush()
   if b'FFT' in l: #frequency analysis
     val_str = l.split()
-    rgb[48] = float(val_str[2]) / 115.0
-    rgb[49] = float(val_str[6]) / 115.0
-    rgb[50] = float(val_str[10]) / 115.0
-  post.draw(rgb)
+    rgb[0] = float(val_str[2]) / 115.0
+    rgb[1] = float(val_str[6]) / 115.0
+    rgb[2] = float(val_str[10]) / 115.0
+  post.draw({16:rgb})
 
   if mx > 3.0:
     dx = -1.0
@@ -109,11 +115,11 @@ while DISPLAY.loop_running():
     dy = -1.0
   elif  my < 0.0:
     dy = 1.0
-  mx += dx * rgb[49] / 100.0
-  my += dy * rgb[50] / 50.0 
+  mx += dx * rgb[1] / 100.0
+  my += dy * rgb[2] / 50.0 
   myshape.scale(mx, my, mx)
-  myshape.rotateIncY(0.6471 + rgb[48])
-  myshape.rotateIncX(0.513 - rgb[50])
+  myshape.rotateIncY(0.6471 + rgb[0])
+  myshape.rotateIncX(0.513 - rgb[2])
   mysprite.rotateIncZ(0.5)
 
   if tm > pic_next:

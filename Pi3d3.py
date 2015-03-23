@@ -20,8 +20,10 @@ ASPECT = DISPLAY.width / DISPLAY.height
 camera1 = pi3d.Camera((0,0,0), (0,0,-0.1), (1, 1000, 45, ASPECT), is_3d=True)
 camera2 = pi3d.Camera(is_3d=False)
 while DISPLAY.loop_running():
-  box.set_custom_data(48, [tm, sc, -0.5 * sc])
-  """Three custom unif values used by star shader to animate image"""
+  box.set_custom_data(16, [[tm, sc, -0.5 * sc]])
+  """Three custom unif values used by star shader to animate image
+  NB NB in versions of pi3d prior to v1.15 the subscript was 48 rather than 16
+  Also the data is now shape = (n, 3) 2D array"""
   tm += dt
   sc = (sc + ds) % 10.0
   box.rotateIncX(0.1)

@@ -1,9 +1,12 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" Sprites rendered using the Points class and special shader uv_sprite
-This is intended for use with an orthographic camera rather than the
-perspective camera used to control point size in the other shaders.
+""" Sprites rendered using a diy points class and special shader uv_spriterot.
+
+This demo builds on the SpriteBalls demo but adds sprite image rotation, thanks
+to Joel Murphy on stackoverflow. The rotation position is passed as x
+component of the normal vector. Other vertex specific info could be passed
+to the shader using the other components.
 
 The movement of the vertices is calculated using numpy which makes it very
 fast but it is quite hard to understand as all the iteration is done
@@ -21,8 +24,8 @@ import demo
 import pi3d
 
 MAX_BALLS = 100
-MIN_BALL_SIZE = 15 # z value is used to determine point size
-MAX_BALL_SIZE = 75
+MIN_BALL_SIZE = 30 # z value is used to determine point size
+MAX_BALL_SIZE = 150
 MAX_BALL_VELOCITY = 3.0
 
 min_dist = 1.001
@@ -48,7 +51,7 @@ vel = np.random.uniform(-MAX_BALL_VELOCITY, MAX_BALL_VELOCITY, (MAX_BALLS, 2))
 dia = (MIN_BALL_SIZE + (max_dist - loc[:,2]) /
                 (max_dist - min_dist) * (MAX_BALL_SIZE - MIN_BALL_SIZE))
 mass = dia * dia
-radii = np.add.outer(dia, dia) / 3.0 # should be / 2.0 this will make balls 'touch' when nearer
+radii = np.add.outer(dia, dia) / 6.0 # should be / 2.0 this will make balls 'touch' when nearer
 
 rot = np.zeros((MAX_BALLS, 3)) # :,0 for rotation, :,1 for speed of rot
 rot[:,1] = np.random.uniform(-0.1, 0.1, MAX_BALLS) # all start at 0.0
@@ -62,7 +65,8 @@ balls.set_point_size(MAX_BALL_SIZE)
 balls.set_draw_details(shader, [ballimg])
 
 temperature = 0.9
-interact = False
+interact = True
+spin = False
 
 while DISPLAY.loop_running():
   balls.draw()
@@ -78,7 +82,10 @@ while DISPLAY.loop_running():
   vel[:,1] -= 0.01 # slight downward drift
   loc[:,0:2] += vel[:,:] # adjust x,y positions by velocities
   ##### rotate
-  rot[:,0] += rot[:,1]
+  if spin:
+    rot[:,0] += rot[:,1]
+  else:
+    rot[:,0] = rot[:,0] * 0.85 + (np.arctan2(vel[:,1], vel[:,0]) + 1.5708) * 0.15
   ##### re_init
   balls.buf[0].re_init(pts=loc, normals=rot) # reform opengles array_buffer
   ##### trend towards net cooling
@@ -114,6 +121,8 @@ while DISPLAY.loop_running():
     vel *= np.random.uniform(1.01, 1.03, vel.shape)
     if k == ord('i'):
       interact = not interact
+    if k == ord('s'):
+      spin = not spin
     if k == 27:
       KEYBOARD.close()
       DISPLAY.stop()

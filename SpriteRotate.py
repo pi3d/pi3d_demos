@@ -20,7 +20,7 @@ import numpy as np
 import demo
 import pi3d
 
-MAX_BALLS = 100
+MAX_BALLS = 6000
 MIN_BALL_SIZE = 15 # z value is used to determine point size
 MAX_BALL_SIZE = 75
 MAX_BALL_VELOCITY = 3.0
@@ -36,9 +36,9 @@ DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 
 CAMERA = pi3d.Camera(is_3d=False)
-shader = pi3d.Shader("shaders/uv_sprite")
+shader = pi3d.Shader("shaders/uv_spriterot")
 
-ballimg = pi3d.Texture("textures/red_ball.png")
+ballimg = pi3d.Texture("textures/raspi_rot.png")
 
 loc = np.zeros((MAX_BALLS, 3))
 loc[:,0] = np.random.uniform(-HWIDTH, HWIDTH, MAX_BALLS)
@@ -50,7 +50,15 @@ dia = (MIN_BALL_SIZE + (max_dist - loc[:,2]) /
 mass = dia * dia
 radii = np.add.outer(dia, dia) / 3.0 # should be / 2.0 this will make balls 'touch' when nearer
 
-balls = pi3d.Points(vertices=loc, point_size=MAX_BALL_SIZE)
+rot = np.zeros((MAX_BALLS, 3)) # :,0 for rotation, :,1 for speed of rot
+rot[:,1] = np.random.uniform(-0.1, 0.1, MAX_BALLS) # all start at 0.0
+
+#balls = pi3d.Points(vertices=loc, point_size=MAX_BALL_SIZE)
+balls = pi3d.Shape(CAMERA, None, "points", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                1.0, 1.0, 1.0, 0.0, 0.0, 0.0)
+indices = [(a, a + 1, a + 2) for a in range(0, MAX_BALLS, 3)]
+balls.buf = [pi3d.Buffer(balls, loc, [], indices, rot, smooth=False)]
+balls.set_point_size(MAX_BALL_SIZE)
 balls.set_draw_details(shader, [ballimg])
 
 temperature = 0.9
@@ -69,10 +77,13 @@ while DISPLAY.loop_running():
   vel[ix,1] = np.abs(vel[ix,1]) * -temperature
   vel[:,1] -= 0.01 # slight downward drift
   loc[:,0:2] += vel[:,:] # adjust x,y positions by velocities
-  
-  balls.buf[0].re_init(pts=loc) # reform opengles array_buffer
-
+  ##### rotate
+  rot[:,0] += rot[:,1]
+  ##### re_init
+  balls.buf[0].re_init(pts=loc, normals=rot) # reform opengles array_buffer
+  ##### trend towards net cooling
   temperature = temperature * 0.99 + 0.009 # exp smooth towards 0.9
+
 
   ##### bounce off each other. Work increases as square of N
   if interact:

@@ -20,7 +20,7 @@ import numpy as np
 import demo
 import pi3d
 
-MAX_BALLS = 6000
+MAX_BALLS = 100
 MIN_BALL_SIZE = 15 # z value is used to determine point size
 MAX_BALL_SIZE = 75
 MAX_BALL_VELOCITY = 3.0

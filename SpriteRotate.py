@@ -84,8 +84,9 @@ while DISPLAY.loop_running():
   ##### rotate
   if spin:
     rot[:,0] += rot[:,1]
-  else:
-    rot[:,0] = rot[:,0] * 0.85 + (np.arctan2(vel[:,1], vel[:,0]) + 1.5708) * 0.15
+  else: # tween towards direction of travel
+    rot[:,0] +=  ((np.arctan2(vel[:,1], vel[:,0]) + 4.712 - rot[:,0])
+                        % 6.283 - 3.142) * 0.2
   ##### re_init
   balls.buf[0].re_init(pts=loc, normals=rot) # reform opengles array_buffer
   ##### trend towards net cooling

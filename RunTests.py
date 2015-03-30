@@ -28,12 +28,12 @@ test_list = [["Amazing", 10], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
             ["Conway", 5], ["DogFight", 10], ["Earth", 4], ["EnvironmentSphere", 4],
             ["FilterDemo", 10], ["FixedString", 4], ["ForestQuickNumbers", 6],
             ["ForestWalk", 6], ["Gui", 6], ["IceGrow", 6], ["LoadModelObj", 5],
-            ["LoadModelPickle", 4], ["MarsStation", 10], ["Minimal_2d", 4],
+            ["LoadModelPickle", 4], ["MarsStation", 12], ["Minimal_2d", 4],
             ["Minimal", 4], ["NumpyBalls", 5], ["Orbit", 5], ["Pi3d2", 4],
-            ["Pi3d3", 4], ["PictureFrame", 10], ["Pong", 5], ["Post", 5],
-            ["ProceduralTerrain", 10], ["RobotWalkabout", 6], ["Scenery", 15],
-            ["Shapes", 5], ["Silo", 10], ["Slideshow_2d", 10], ["Slideshow_3d", 10],
-            ["Slideshow", 10], ["Snake", 6], ["SpriteBalls", 6], ["TigerShadow", 10],
+            ["Pi3d3", 4], ["PictureFrame", 10], ["Pong", 5], ["Post", 8],
+            ["ProceduralTerrain", 10], ["RobotWalkabout", 8], ["Scenery", 10],
+            ["Shapes", 5], ["Silo", 10], ["Slideshow_2d", 8], ["Slideshow_3d", 8],
+            ["Slideshow", 8], ["Snake", 6], ["SpriteBalls", 6], ["TigerShadow", 10],
             ["TigerTank", 10], ["Water", 6]]
 
 for t in test_list:

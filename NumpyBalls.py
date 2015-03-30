@@ -50,7 +50,7 @@ RADII = np.array([[s.radius + i.radius for s in SPRITES] for i in SPRITES])
 LOGGER.info('Starting NumpyBalls')
 
 while DISPLAY.loop_running():
-  a = np.array([b.unif[0] for b in SPRITES])
+  a = np.array([b.unif[0:3] for b in SPRITES])
   b = np.copy(a)
   d0 = np.subtract.outer(a[:,0], b[:,0])
   d1 = np.subtract.outer(a[:,1], b[:,1])

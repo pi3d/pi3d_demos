@@ -110,31 +110,28 @@ CAMERA = pi3d.Camera(scale=0.5)
 CAM2D = pi3d.Camera(is_3d=False)
 
 font = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,221,128,255))
-# list [[name, [nx3 list of lists of custom vals -> unif[16:]], [list increments each frame]]]
-"""NB prior to pi3d v1.15 this would have been a 1D array to index 48 rather than 16
-"""
-filter_list =   [ ["shaders/filter_toon", [[0.0, 0.0, 0.0]]], # outline_colour_r, g, b
-                  ["shaders/filter_patterns", [[1.0, 0.3, 0.0]],[0.01, 0.001, 0.0]], # time, size
-                  ["shaders/filter_displace", [[14.0, 0.0, 0.0]],[0.05, 0.0, 0.0]], # time
-                  ["shaders/filter_space_dist", [[2.0, 0.0, 0.0]],[0.01, 0.0, 0.0]], # time
-                  ["shaders/filter_color_dist", [[21.0, 3.0, 7.0]],[0.002, -0.002, 0.0]], # distortion_r, g, b
-                  ["shaders/filter_outline", [[0.0, 0.0, 0.0]]], # outline_colour_r, g, b
-                  ["shaders/filter_colorize", [[1.0, 0.5, 0.0], [0.0, 1.0, 0.5], [0.5, 0.0, 1.0]]], # colour0_r, g, b, colour1_r, g, b, colour2_r, g, b
-                  ["shaders/filter_neg", [[0.0, 0.0, 0.0]]], #NA
-                  ["shaders/filter_charcoal", [[0.0, 0.0, 0.0], [1.0, 1.0, 0.7]]], # charcoal_colour_r, g, b, paper_colour_r, g, b
-                  ["shaders/filter_blur", [[0.0075, 0.0, 0.0]]], # NA
-                  ["shaders/filter_noise", [[15.0, 100.0, 0.25]], [0.01, 0.0, 0.0]], # time,  NB slow on the raspberry pi
-                  ["shaders/filter_crystalog", [[10.0, 100.0, 0.25]], [0.0005, 0.0, 0.0]], # time, scale, limit
-                  ["post_base", [[2.5, 0.0, 0.0]]], # sampling distance for convolution sampling
-                  ["shaders/filter_sepia", [[0.0, 0.0, 0.0]]], # NA
-                  ["shaders/filter_lens", [[-0.2, -0.2, 0.3]]], # centre_x, y, radius
-                  ["shaders/filter_blurradial", [[0.0, 0.0, 0.0], [0.0, 0.1, 0.0]]], # centre_x, y, NA, radial_amount, rotation_amount
-                  ["shaders/filter_shiftrgb", [[0.25, 0.3, 0.1]]], # direction, shift, hue
-                  ["shaders/filter_hatch", [[0.1, 0.0, 0.0]]]] # solid_colour_r, g, b
+# list [[name, [list of custom vals -> unif[48:]], [list increments each frame]]]
+filter_list =   [ ["shaders/filter_toon", [0.0, 0.0, 0.0]], # outline_colour_r, g, b
+                  ["post_base", [2.5]], # sampling distance for convolution sampling
+                  ["shaders/filter_sepia", [0.0, 0.0, 0.0]], # NA
+                  ["shaders/filter_lens", [-0.2, -0.2, 0.3]], # centre_x, y, radius
+                  ["shaders/filter_blurradial", [0.0, 0.0, 0.0, 0.0, 0.1]], # centre_x, y, NA, radial_amount, rotation_amount
+                  ["shaders/filter_shiftrgb", [0.25, 0.3, 0.1]], # direction, shift, hue
+                  ["shaders/filter_noise", [15.0, 100.0, 0.25], [0.01]], # time,  NB slow on the raspberry pi
+                  ["shaders/filter_crystalog", [10.0, 100.0, 0.25], [0.0005]], # time, scale, limit
+                  ["shaders/filter_patterns", [1.0, 0.3],[0.01, 0.001]], # time, size
+                  ["shaders/filter_displace", [14.0],[0.05]], # time
+                  ["shaders/filter_space_dist", [2.0],[0.01]], # time
+                  ["shaders/filter_color_dist", [21.0, 3.0, 7.0],[0.002, -0.002]], # distortion_r, g, b
+                  ["shaders/filter_outline", [0.0, 0.0, 0.0]], # outline_colour_r, g, b
+                  ["shaders/filter_colorize", [1.0, 0.5, 0.0, 0.0, 1.0, 0.5, 0.5, 0.0, 1.0]], # colour0_r, g, b, colour1_r, g, b, colour2_r, g, b
+                  ["shaders/filter_neg", [0.0, 0.0, 0.0]], #NA
+                  ["shaders/filter_charcoal", [0.0, 0.0, 0.0, 1.0, 1.0, 0.7]], # charcoal_colour_r, g, b, paper_colour_r, g, b
+                  ["shaders/filter_blur", [0.0075]], # NA
+                  ["shaders/filter_hatch", [0.1, 0.0, 0.0]]] # solid_colour_r, g, b
                   
 n_filter = len(filter_list)
 i_filter = -1 # as incremented prior to loading
-filt = None
 cx, cz = 70.0, 190.0
 c_rad = 80.0
 frame = 0
@@ -144,19 +141,16 @@ while DISPLAY.loop_running():
     LOGGER.info("{} FPS was {:.5}".format(filter_list[i_filter % n_filter][0],
                   360.0 / (time.time() - st_time)))
     i_filter = (i_filter + 1) % n_filter
-    filt = filter_list[i_filter]
     texetc = [reflimg] if (i_filter < 3) else None
-    post = pi3d.PostProcess(filt[0], add_tex=texetc, scale=0.5)
-    post.sprite.set_custom_data(16, filt[1])
-    string = pi3d.String(font=font, string=filt[0],
+    post = pi3d.PostProcess(filter_list[i_filter][0], add_tex=texetc, scale=0.5)
+    post.sprite.set_custom_data(48, filter_list[i_filter][1])
+    string = pi3d.String(font=font, string=filter_list[i_filter][0],
               camera=CAM2D, is_3d=False, x=0, y=-220, z=0.5)
     string.set_shader(flatsh)
     st_time = time.time()
-  if len(filt) > 2:
-    post.sprite.set_custom_data(16, [[filt[1][0][i] + rot * filt[2][i]] for i in range(3)])
-    """NB prior to pi3d v1.15 this would have been a 1D array to index 48 rather than 16
-    also passed as shape (n, 3) 2D array
-    """
+  if len(filter_list[i_filter]) > 2:
+    for i, delta in enumerate(filter_list[i_filter][2]):
+      post.sprite.set_custom_data(48 + i, [filter_list[i_filter][1][i] + rot * delta])
   xm = cx + math.sin(math.radians(rot)) * c_rad
   zm = cz - math.cos(math.radians(rot)) * c_rad
   ym = mymap.calcHeight(xm, zm) + avhgt

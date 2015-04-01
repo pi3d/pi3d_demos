@@ -4,9 +4,21 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 """ Sprites rendered using a diy points class and special shader uv_spriterot.
 
 This demo builds on the SpriteBalls demo but adds sprite image rotation, thanks
-to Joel Murphy on stackoverflow. The rotation position is passed as x
-component of the normal vector. Other vertex specific info could be passed
-to the shader using the other components.
+to Joel Murphy on stackoverflow. The information is used by the uv_spritemult
+shader as follows
+
+  vertices[0]   x position of centre of point relative to centre of screen in pixels
+  vertices[1]   y position
+  vertices[2]   z depth but fract(z) is used as a multiplier for point size
+  normals[0]    rotation in radians
+  normals[1]    alpha
+  normals[2]    the size of the sprite square to use for texture sampling
+                in this case each sprite has a patch 0.125x0.125 as there
+                are 8x8 on the sheet. However normals[2] is set to 0.1 to
+                leave a margin of 0.0125 around each sprite.
+  tex_coords[0] distance of left side of sprite square from left side of
+                texture in uv scale 0.0 to 1.0
+  tex_coords[1] distance of top of sprite square from top of texture
 
 The movement of the vertices is calculated using numpy which makes it very
 fast but it is quite hard to understand as all the iteration is done
@@ -26,8 +38,8 @@ import random
 import demo
 import pi3d
 
-MAX_BUGS = 150
-MIN_BUG_SIZE = 20.0 # z value is used to determine point size
+MAX_BUGS = 100
+MIN_BUG_SIZE = 40.0 # z value is used to determine point size
 MAX_BUG_SIZE = 150.0
 MAX_BUG_VELOCITY = 3.0
 
@@ -38,7 +50,7 @@ KEYBOARD = pi3d.Keyboard()
 LOGGER = pi3d.Log.logger(__name__)
 
 BACKGROUND_COLOR = (0.0, 0.0, 0.0, 0.0)
-DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
+DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 
 CAMERA = pi3d.Camera(is_3d=False)
@@ -53,8 +65,8 @@ loc[:,2] = np.random.normal((min_size + max_size) / 2.0,
                             (max_size - min_size) / 5.0,
                             MAX_BUGS) + np.random.randint(1, 8, MAX_BUGS)
 vel = np.random.uniform(-MAX_BUG_VELOCITY, MAX_BUG_VELOCITY, (MAX_BUGS, 2))
-dia = (MIN_BUG_SIZE + (max_size - np.remainder(loc[:,2], 1.0)) /
-                (max_size - min_size) * (MAX_BUG_SIZE - MIN_BUG_SIZE))
+
+dia = np.remainder(loc[:,2], 1.0) * MAX_BUG_SIZE
 mass = dia * dia
 radii = np.add.outer(dia, dia) / 7.0 # should be / 2.0 this will make bugs 'touch' when nearer
 
@@ -93,7 +105,7 @@ while DISPLAY.loop_running():
   loc[:,0:2] += vel[:,:] # adjust x,y positions by velocities
   ##### rotate
   if spin:
-    rot[:,0] += rot[:,1] * 0.2
+    rot[:,0] += rot[:,1] * 0.4
   else: # tween towards direction of travel
     rot[:,0] +=  ((np.arctan2(vel[:,1], vel[:,0]) + 1.571 - rot[:,0])
                         % 6.283 - 3.142) * 0.2

@@ -68,20 +68,18 @@ corners overlapping other images as they are rotated.
 uv = np.zeros((MAX_BUGS, 2)) # u picnum.u v
 uv[:,:] = 0.0125 # all start off same. uv is top left corner of square
 
-#bugs = pi3d.Points(vertices=loc, point_size=MAX_BUG_SIZE)
-bugs = pi3d.Shape(CAMERA, None, "points", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                1.0, 1.0, 1.0, 0.0, 0.0, 0.0)
-indices = [(a, a + 1, a + 2) for a in range(0, MAX_BUGS, 3)]
-bugs.buf = [pi3d.Buffer(bugs, loc, uv, indices, rot, smooth=False)]
-bugs.set_point_size(MAX_BUG_SIZE)
+bugs = pi3d.Points(camera=CAMERA, vertices=loc, normals=rot, tex_coords=uv,
+                   point_size=MAX_BUG_SIZE)
 bugs.set_draw_details(shader, [img])
 
 temperature = 0.9
 interact = True
 spin = False
+frame_num = 0
 
 while DISPLAY.loop_running():
   bugs.draw()
+  frame_num += 1
   ##### bounce off walls
   ix = np.where(loc[:,0] < -HWIDTH) # off left side
   vel[ix,0] = np.abs(vel[ix,0]) * temperature # x component +ve
@@ -127,9 +125,10 @@ while DISPLAY.loop_running():
     vel[ix[0],1] += delta1y
     vel[ix[1],0] += delta2x
     vel[ix[1],1] += delta2y
-    # change image
-    uv[ix[0],:] = np.random.randint(0, 7, (ix[0].shape[0], 2)) * 0.125 + 0.0125
-    rot[ix[1],1] = np.random.uniform(0.5, 1.0)
+    # change image occasionally
+    if frame_num % 10 == 0:
+      uv[ix[0],:] = np.random.randint(0, 7, (ix[0].shape[0], 2)) * 0.125 + 0.0125
+      rot[ix[1],1] = np.random.uniform(0.5, 1.0)
 
   k = KEYBOARD.read()
   if k > -1:

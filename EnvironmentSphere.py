@@ -1,24 +1,28 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-
-""" PhotoSphere image mapped to inverted sphere. NB the image has to be
-flipped to stop mirroring, this will put it upside down so it needs to be
-rotated!
+""" Wavefront obj model loading. Material properties set in mtl file.
+Uses the import pi3d method to load *everything*
 """
 import demo
 import pi3d
+from math import cos, sin, radians
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(w=480, h=240)
-
-shader = pi3d.Shader('uv_flat')
+DISPLAY = pi3d.Display.create(x=100, y=100,
+                         background=(0.2, 0.4, 0.6, 1))
+shader = pi3d.Shader("uv_reflect")
+flatsh = pi3d.Shader('uv_flat')
 #========================================
-tex = pi3d.Texture('textures/photosphere.jpg', flip=True)
-mysphere = pi3d.Sphere(radius=400.0, rx=180, invert=True)
-mysphere.set_draw_details(shader, [tex])
+# load bump and reflection textures
+bumptex = pi3d.Texture("textures/floor_nm.jpg")
+shinetex = pi3d.Texture("textures/photosphere.jpg")
+# load model_loadmodel
+mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot')
+mymodel.set_shader(shader)
+mymodel.set_normal_shine(bumptex, 4.0, shinetex, 0.3)
 
-rot = 0.0
-tilt = 0.0
+mysphere = pi3d.Sphere(radius=400.0, rx=0, invert=True)
+mysphere.set_draw_details(flatsh, [shinetex])
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
@@ -29,33 +33,37 @@ omx, omy = mymouse.position()
 
 CAMERA = pi3d.Camera.instance()
 
-# Display scene and rotate sphere
+dist = 4.0
+rot = 0.0
+tilt = 0.0
+
 while DISPLAY.loop_running():
-
-  CAMERA.reset()
-  CAMERA.rotate(tilt, 0, 0)
-  CAMERA.rotate(0, rot, 0)
-
-  mysphere.draw()
+  k = mykeys.read()
+  if k >-1:
+    if k==ord('w'):
+      dist += 0.02
+    if k==ord('s'):
+      dist -= 0.02
+    elif k==27:
+      mykeys.close()
+      DISPLAY.destroy()
+      break
 
   mx, my = mymouse.position()
-
   rot -= (mx - omx)*0.4
   tilt += (my - omy)*0.4
   omx = mx
   omy = my
-
-  #Press ESCAPE to terminate
-  k = mykeys.read()
-  if k >-1:
-    if k==112:  #key P
-      pi3d.screenshot('envsphere.jpg')
-    elif k==27:    #Escape key
-      mykeys.close()
-      mymouse.stop()
-      DISPLAY.stop()
-      break
-    else:
-      print(k)
+  CAMERA.reset()
+  CAMERA.rotate(-tilt, rot, 0)
+  CAMERA.position((dist * sin(radians(rot)) * cos(radians(tilt)), 
+                   dist * sin(radians(tilt)), 
+                   -dist * cos(radians(rot)) * cos(radians(tilt))))
+  
+  mymodel.draw()
+  mysphere.draw()
+  mymodel.rotateIncY(0.41)
+  mymodel.rotateIncZ(0.12)
+  mymodel.rotateIncX(0.23)
 
 

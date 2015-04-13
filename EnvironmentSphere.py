@@ -13,13 +13,18 @@ DISPLAY = pi3d.Display.create(x=100, y=100,
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader('uv_flat')
 #========================================
+# this is a bit of a one off because the texture has transparent parts
+# comment out and google to see why it's included here.
+from pi3d import opengles, GL_CULL_FACE
+opengles.glDisable(GL_CULL_FACE)
+#========================================
 # load bump and reflection textures
 bumptex = pi3d.Texture("textures/floor_nm.jpg")
 shinetex = pi3d.Texture("textures/photosphere.jpg")
 # load model_loadmodel
 mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot')
 mymodel.set_shader(shader)
-mymodel.set_normal_shine(bumptex, 4.0, shinetex, 0.3)
+mymodel.set_normal_shine(bumptex, 0.0, shinetex, 0.4)
 
 mysphere = pi3d.Sphere(radius=400.0, rx=0, invert=True)
 mysphere.set_draw_details(flatsh, [shinetex])

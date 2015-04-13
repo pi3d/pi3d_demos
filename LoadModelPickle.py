@@ -18,6 +18,11 @@ DISPLAY = pi3d.Display.create(x=100, y=100,
                          background=(0.2, 0.4, 0.6, 1))
 shader = pi3d.Shader("uv_reflect")
 #========================================
+# this is a bit of a one off because the texture has transparent parts
+# comment out and google to see why it's included here.
+from pi3d import opengles, GL_CULL_FACE
+opengles.glDisable(GL_CULL_FACE)
+#========================================
 
 # load model
 try:

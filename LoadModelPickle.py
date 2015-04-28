@@ -20,8 +20,10 @@ shader = pi3d.Shader("uv_reflect")
 #========================================
 # this is a bit of a one off because the texture has transparent parts
 # comment out and google to see why it's included here.
-from pi3d import opengles, GL_CULL_FACE
-opengles.glDisable(GL_CULL_FACE)
+#from pi3d import opengles, GL_CULL_FACE
+#opengles.glDisable(GL_CULL_FACE)
+from pi3d import opengles, GL_ALPHA_TEST
+opengles.glDisable(GL_ALPHA_TEST)
 #========================================
 
 # load model

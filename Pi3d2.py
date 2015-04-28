@@ -17,7 +17,8 @@ ds = 0.001
 mykeys = pi3d.Keyboard()
 while DISPLAY.loop_running():
   box.set_custom_data(48, [tm, sc, -0.5 * sc])
-  """Three custom unif values used by star shader to animate image"""
+  """Three custom unif values used by star shader to animate image
+  """
   tm += dt
   sc = (sc + ds) % 10.0
   box.rotateIncX(0.01)

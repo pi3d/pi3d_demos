@@ -36,7 +36,7 @@ W, H, P = 480, 270, 3 # video width, height, bytes per pixel (3 = RGB)
 command = [ 'ffmpeg', '-i', 'exercise01.mpg', '-f', 'image2pipe',
                       '-pix_fmt', 'rgb24', '-vcodec', 'rawvideo', '-']
 flag = False # use to signal new texture
-image = None
+image = np.zeros((H, W, P), dtype='uint8')
 
 def pipe_thread():
   global flag, image
@@ -45,17 +45,17 @@ def pipe_thread():
     st_tm = time.time()
     if pipe is None:
       pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE, bufsize=-1)
-    im_str =  np.fromstring(pipe.stdout.read(H * W * P), dtype='uint8')
+    image =  np.fromstring(pipe.stdout.read(H * W * P), dtype='uint8')
     pipe.stdout.flush() # presumably nothing else has arrived since read()
     pipe.stderr.flush() # ffmpeg sends commentary to stderr
-    if len(im_str) < H * W * P: # end of video, reload
+    if len(image) < H * W * P: # end of video, reload
       pipe.terminate()
       pipe = None
     else:
-      image =  im_str.reshape((H, W, P))
+      image.shape = (H, W, P)
       flag = True
     step = time.time() - st_tm
-    time.sleep(max(0.04 - step, 0.0))
+    time.sleep(max(0.04 - step, 0.0)) # adding fps info to ffmpeg doesn't seem to have any effect
 
 
 t = threading.Thread(target=pipe_thread)

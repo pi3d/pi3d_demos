@@ -186,22 +186,22 @@ while DISPLAY.loop_running():
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1:
-    if (k == 27): #esc
+    if k == 27: #esc
       break
-    elif (k == 261): # rgt (other keyboard 137)
+    elif k == 261 or k == 137: # rgt
       CAMERA.direction = TURN_RIGHT[CAMERA.direction]
       rot_target = rot_target - 90
       snake.change_direction(CAMERA.direction)
-    elif (k == 260): # lft (other keyboard 136)
+    elif k == 260 or k == 136: # lft
       CAMERA.direction = TURN_LEFT[CAMERA.direction]
       rot_target = rot_target + 90
       snake.change_direction(CAMERA.direction)
-    elif (k == 259): # up (other keyboard 134)
+    elif k == 259 or k == 134: # up
       if snake.direction == DOWN or snake.direction == UP:
         snake.change_direction(CAMERA.direction)
       else:
         snake.change_direction(UP)
-    elif (k == 258): # dwn (other keyboard 135)
+    elif k == 258 or k == 135: # dwn
       if snake.direction == DOWN or snake.direction == UP:
         snake.change_direction(CAMERA.direction)
       else:

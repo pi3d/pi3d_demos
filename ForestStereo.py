@@ -2,6 +2,15 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 """ ForestWalk but with binocular view - i.e. for google cardboard
+
+NB in this example the cameras have been set with a negative separation i.e.
+for viewing cross-eyed as most people find this easier without a viewer!!!
+If a viewer is used then the line defining CAMERA would need to be changed
+to an appropriate +ve separation.
+
+NB also, no camera has been explicitly assigned to the objects so they all
+use the default instance and this will be CAMERA.camera_3d so long as the
+StereoCam instance was created before any other Camera instance.
 """
 
 import math,random

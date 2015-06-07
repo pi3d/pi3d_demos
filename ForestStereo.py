@@ -15,7 +15,7 @@ DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
 
-CAMERA = pi3d.Binocular(separation=-0.5) # negative for cross-eyed!
+CAMERA = pi3d.StereoCam(separation=-0.5) # negative for cross-eyed!
 #========================================
 
 # load shader

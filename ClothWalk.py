@@ -7,7 +7,7 @@ import demo
 import pi3d
 
 import numpy as np
-from PIL import Image
+#from PIL import Image
 
 ########################################################################
 # cloth generation section
@@ -66,8 +66,7 @@ lifts = peg_plan[:,draft_plan] # generate an up/down map for the plan
 yarn_plan = lifts * warp_plan + (lifts * -1 + 1) * weft_plan
 wv = yarn_colours[yarn_plan].astype(np.uint8) # wv takes the [R,G,B] from yarn colours
 
-im = Image.fromarray(wv, 'RGB')
-clothimg = pi3d.Texture(im)
+clothimg = pi3d.Texture(wv)
 ########################################################################
 
 # Setup display and initialise pi3d

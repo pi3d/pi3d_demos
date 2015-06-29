@@ -53,7 +53,7 @@ radii = np.add.outer(dia, dia) / 3.0 # should be / 2.0 this will make balls 'tou
 balls = pi3d.Points(vertices=loc, point_size=MAX_BALL_SIZE)
 balls.set_draw_details(shader, [ballimg])
 
-temperature = 0.9
+temperature = 0.6
 interact = False
 
 while DISPLAY.loop_running():
@@ -79,7 +79,7 @@ while DISPLAY.loop_running():
     d1 = np.subtract.outer(loc[:,0], loc[:,0]) # array of all the x diffs
     d2 = np.subtract.outer(loc[:,1], loc[:,1]) # array of all the y diffs
     ix = np.where((np.hypot(d1, d2) - radii) < 0.0) # index of all overlaps
-    non_dup = np.where(ix[0] < ix[1]) # remove double count and 'self' overlaps
+    non_dup = np.where(ix[0] > ix[1]) # remove double count and 'self' overlaps
     ix = (ix[0][non_dup], ix[1][non_dup]) # remake slimmed down index
     dx = d1[ix[0], ix[1]] # separation x component
     dy = d2[ix[0], ix[1]] # sep y
@@ -88,7 +88,7 @@ while DISPLAY.loop_running():
     # minor fudge factor to stop them sticking to each other if dx or dy == 0
     delta2y = 2 * (D * vel[ix[0],0] + vel[ix[0],1] -
                    D * vel[ix[1],0] - vel[ix[1],1]) / (
-                  (1.0 + D * D) * (R + 1)) * temperature - dy * 0.01
+                  (1.0 + D * D) * (R + 1)) * temperature - dy * 0.05
     delta2x = D * delta2y - dx * 0.01 # x component from direction
     delta1y = -1.0 * R * delta2y # other ball using mass ration
     delta1x = -1.0 * R * D * delta2y

@@ -1,0 +1,4 @@
+\Program Files (x86)\Google\Chrome\Application\42.0.2311.135
+\Program Files (x86)\Google\Chrome\Application\42.0.2311.90
+\Users\Default\AppData\Local\Pokki\Engine
+\OEM\Preload\Autorun\DRV\Intel Intel VGA UMA\Graphics

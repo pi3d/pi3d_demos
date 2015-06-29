@@ -7,7 +7,6 @@ import demo
 import pi3d
 
 import numpy as np
-#from PIL import Image
 
 ########################################################################
 # cloth generation section

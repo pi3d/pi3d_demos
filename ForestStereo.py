@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" ForestWalk but with binocular view - i.e. for google cardboard
+""" ForestWalk but with stereoscopic view - i.e. for google cardboard
 
 NB in this example the cameras have been set with a negative separation i.e.
 for viewing cross-eyed as most people find this easier without a viewer!!!
@@ -19,13 +19,19 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=200, y=200)
+DISPLAY = pi3d.Display.create(w=1200, h=600)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
+CAMERA = pi3d.StereoCam(separation=-0.5, interlace=0)
+""" If CAMERA is set with interlace <= 0 (default) then CAMERA.draw() will produce
+two images side by side (each viewed from `separation` apart) i.e. -ve
+requires viewing slightly cross-eyed.
 
-CAMERA = pi3d.StereoCam(separation=-0.5) # negative for cross-eyed!
-#========================================
+If interlace is set to a positive value then the two images are interlaced
+in vertical stripes this number of pixels wide. The resultant image needs
+to be viewed through a grid. See https://github.com/pi3d/pi3d_demos/make_grid.py
+"""
 
 # load shader
 shader = pi3d.Shader("uv_bump")

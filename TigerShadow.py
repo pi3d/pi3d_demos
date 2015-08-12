@@ -1,17 +1,7 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" Landscape from ElevationMap with model tanks and buildings. Demonstrates using
-a function to draw the various parts of the tank and the ElevationMap.pitch_roll()
-method to make models conform (aproximately) to the surface of an ElevationMap.
-The tank gun is raised as the mouse view point to looking up. This shows how to
-combine various rotations about different axes without the objects falling apart!
-This demo also uses a tkinter tkwindow but creates it as method of pi3d.Display. Compare
-with the system used in demos/MarsStation.py
-Also look out for:
-2D shader usage. Drawing onto an ImageSprite canvas placed in front of the camera
-imediately after reset() This is used to generate a splash screed during file
-loading and to draw a telescopic site view and a navigation map
+""" TigerTank demo but with cast shadows
 """
 import math, random, time, traceback
 
@@ -31,13 +21,15 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
 #inputs = InputEvents()
 #inputs.get_mouse_movement()
 
-mylight = pi3d.Light(lightpos=(1, -1, 0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.30, 0.30, 0.32))
+mylight = pi3d.Light(lightpos=(1.0, -1.0, 1.0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.10, 0.10, 0.12))
 
 win = DISPLAY.tkwin
 
-shader = pi3d.Shader('uv_bump')
+shader = pi3d.Shader('shadow_uv_bump')
 flatsh = pi3d.Shader('uv_flat')
 shade2d = pi3d.Shader('2d_flat')
+
+CAMERA = pi3d.Camera()
 
 #========================================
 # create splash screen and draw it
@@ -75,7 +67,14 @@ def set_fog(shape):
 tank_body = pi3d.Model(file_string='models/Tiger/body.obj', sx=0.1, sy=0.1, sz=0.1)
 tank_body.set_shader(shader)
 tank_body.set_normal_shine(tigerbmp)
-
+""" NB the shadow texture must be the third texture in Buffer.textures
+but OffscreenTextures textures don't exists until after they have been
+drawn to. This isn't a problem where the textures can be passed to the
+draw() method as with the ElevationMap see line 260. However for Model
+drawing the diffuse texture is loaded automatically so the botch is to
+check if there are still only two texttures and add the shadow map as
+the third one see line 177
+"""
 tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj')
 tank_gun.set_shader(shader)
 
@@ -103,9 +102,6 @@ cottages = pi3d.Model(file_string='models/Cottages/cottages_low.obj',
           sx=0.1, sy=0.1, sz=0.1, x=x, y=y, z=z, ry=-5)
 cottages.set_shader(shader)
 
-#ShadowCaster
-myshadows = pi3d.ShadowCaster(emap=mymap, light=mylight)
-
 #cross-hairs in gun sight
 targtex = pi3d.Texture("textures/target.png", blend=True)
 target = pi3d.ImageSprite(targtex, shade2d, w=10, h=10, z=0.4)
@@ -122,19 +118,11 @@ if scy > scx:
 scw, sch = sniptex.ix * scx, sniptex.iy * scx
 sniper.set_2d_size(scw, sch, (DISPLAY.width - scw)/2,(DISPLAY.height - sch)/2)
 
-#corner map and dots
-smmap = pi3d.ImageSprite(mountimg1, shade2d, w=10, h=10, z=0.2)
-smmap.set_2d_size(w=200, h=200, x=DISPLAY.width - 200, y=DISPLAY.height - 200)
-dot1 = pi3d.ImageSprite("textures/red_ball.png", shade2d, w=10, h=10, z=0.1)
-dot1.set_2d_size(w=10, h=10) # 10x10 pixels
-dot2 = pi3d.ImageSprite("textures/blu_ball.png", shade2d, w=10, h=10, z=0.05)
-dot2.set_2d_size(w=10, h=10)
-
 #player tank vars
 tankrot = 180.0
 turret = 0.0
 tankroll = 0.0     #side-to-side roll of tank on ground
-tankpitch = 0.0   #too and fro pitch of tank on ground lol catface
+tankpitch = 0.0   #too and fro pitch of tank on ground
 
 #key presses
 mymouse = pi3d.Mouse(restrict = False)
@@ -145,14 +133,17 @@ omx, omy = mymouse.position()
 mouserot = 0.0
 tilt = 0.0
 avhgt = 0.85
-xm, oxm = 0.0, -1.0
-zm, ozm = -200.0, -1.0
+xm, oxm = 5.0, -1.0
+zm, ozm = -185.0, -1.0
 ym = mymap.calcHeight(xm, zm) + avhgt
 
+#ShadowCaster
+myshadows = pi3d.ShadowCaster([xm, ym, zm], mylight, scale=5.0)
+
 #enemy tank vars
-etx = 120
-etz = -120
-etr = 0.0
+etx = 20
+etz = -100
+etr = 70.0
 
 ltm = 0.0 #last pitch roll check
 smode = False #sniper mode
@@ -165,16 +156,18 @@ def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle, shadows=None):
   tank_turret.rotateToY(turret - rot)
   tank_gun.rotateToZ(gunangle)
   if shadows == None:
-    tank_body.draw() # children drawn too.
+    if len(tank_body.buf[0].textures) == 2: # i.e. first time drawn add shadow texture
+      tank_body.buf[0].textures.append(myshadows)
+      tank_turret.buf[0].textures.append(myshadows)
+    tank_body.draw(light_camera=myshadows.LIGHT_CAM)
   else:
-    shadows.add_shadow(tank_body)
+    shadows.cast_shadow(tank_body)
 
 # Update display before we begin (user might have moved window)
 win.update()
 DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 is_running = True
-CAMERA = pi3d.Camera.instance()
 
 try:
   while DISPLAY.loop_running():
@@ -185,14 +178,6 @@ try:
     omy=my
 
     CAMERA.reset()
-    dot1.set_2d_location(DISPLAY.width - 105.0 + 200.0*xm/mapwidth,
-                        DISPLAY.height - 105.0 - 200.0*zm/mapdepth)
-    dot2.set_2d_location(DISPLAY.width - 105.0 + 200.0*etx/mapwidth,
-                        DISPLAY.height - 105.0 - 200.0*etz/mapdepth)
-    dot1.draw()
-    dot2.draw()
-    smmap.draw()
-    # tilt can be used to prevent the view from going under the landscape!
     sf = 60 - 55.0 / abs(tilt) if tilt < -1 else 5.0
     xoff = sf * math.sin(math.radians(mouserot))
     yoff = abs(1.25 * sf * math.sin(math.radians(tilt))) + 3.0
@@ -210,7 +195,7 @@ try:
     CAMERA.position((xm + xoff, ym + yoff + 5, zm + zoff))
     oxm, ozm = xm, zm
 
-    myshadows.start_cast((xm, -ym, zm))
+    myshadows.start_cast([xm, ym, zm])
     #shadows player tank with smoothing on pitch and roll to lessen jerkiness
     tmnow = time.time()
     if tmnow > (ltm + 0.5):
@@ -221,30 +206,33 @@ try:
           (tilt*-2.0 if tilt > 0.0 else 0.0), shadows=myshadows)
 
     #shadows enemy tank
-    etdx = -math.sin(math.radians(etr))
-    etdz = -math.cos(math.radians(etr))
-    etx += etdx
-    etz += etdz
+    difx = etx - xm # distance from self
+    difz = etz - zm
+    difd = (difx**2 + difz**2)**0.5
+    detx = 1.5 * difz / difd - 0.005 * (difd - etr) * difx / difd
+    detz = -1.5 * difx / difd - 0.005 * (difd - etr) * difz / difd
+    etx += detx # gradually turns to circle player tank
+    etz += detz
     ety = mymap.calcHeight(etx, etz) + avhgt
-    etr += 0.5
     if tmnow > (ltm + 0.5):
       pitch, roll = mymap.pitch_roll(etx, etz)
       ltm = tmnow # updating this here but not for users tank relies on everything
                   # being done in the right order
-    drawTiger(etx, ety, etz, etr, roll, pitch, etr, 0, shadows=myshadows)
-    myshadows.add_shadow(church)
-    myshadows.add_shadow(cottages)
+    drawTiger(etx, ety, etz, math.degrees(math.atan2(detx, detz)), roll, pitch, math.degrees(math.atan2(-detz, detx)), 0, shadows=myshadows)
+    myshadows.cast_shadow(church)
+    myshadows.cast_shadow(cottages)
+    myshadows.cast_shadow(mymap)
     myshadows.end_cast()
-    
+
     #Tanks and buildings for real
     drawTiger(xm, ym, zm, tankrot, tankroll, tankpitch, 180 - turret,
           (tilt*-2.0 if tilt > 0.0 else 0.0))
-    drawTiger(etx, ety, etz, etr, roll, pitch, etr, 0)
+    drawTiger(etx, ety, etz, math.degrees(math.atan2(-detx, -detz)), roll, pitch, math.degrees(math.atan2(-detz, detx)), 0)
     church.draw()
     cottages.draw()
 
     #mymap.draw()           # Draw the landscape
-    myshadows.draw_shadow()
+    mymap.draw(shader, [mountimg1, bumpimg, myshadows], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
 
     myecube.position(xm, ym, zm)
     myecube.draw()  #Draw environment cube

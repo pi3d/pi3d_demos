@@ -13,7 +13,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=0, y=0, w=800, h=600)
+DISPLAY = pi3d.Display.create()
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 #TODO doesn't cope with z direction properly
@@ -22,7 +22,7 @@ CAMERA = pi3d.Camera.instance()
 
 #========================================
 # load shader
-shader = pi3d.Shader("uv_bump")
+shader = pi3d.Shader("shadow_uv_bump")
 shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 
@@ -34,7 +34,7 @@ reflimg = pi3d.Texture("textures/stars.jpg")
 rockimg = pi3d.Texture("textures/rock1.jpg")
 
 FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
-TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
+TFOG = ((0.2, 0.24, 0.22, 1.0), 350.0)
 
 #myecube = pi3d.EnvironmentCube(900.0,"HALFCROSS")
 ectex=pi3d.loadECfiles("textures/ecubes","sbox")
@@ -90,18 +90,18 @@ angle = 0.0
 rotn = 0.012 #radians
 elev = 80.0
 
-myshadows = pi3d.ShadowCaster(emap=mymap, light=mylight)
-
 #screenshot number
 scshots = 1
 
 #avatar camera
 rot = 0.0
 tilt = 0.0
-avhgt = 3.5
+avhgt = 7.0
 xm = 0.0
 zm = 0.0
 ym = mymap.calcHeight(xm, zm) + avhgt
+
+myshadows = pi3d.ShadowCaster(position=[xm, ym, zm], light=mylight)
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
@@ -126,20 +126,20 @@ while DISPLAY.loop_running():
   myplane.rotateToZ(zrot)
 
   # put the shadows onto the shadowcaster texture
-  myshadows.start_cast((xm, ym, zm))
-  myshadows.add_shadow(mytrees1)
-  myshadows.add_shadow(mytrees2)
-  myshadows.add_shadow(mytrees3)
-  myshadows.add_shadow(myplane)
+  myshadows.start_cast([xm, ym, zm])
+  myshadows.cast_shadow(mytrees1)
+  myshadows.cast_shadow(mytrees2)
+  myshadows.cast_shadow(mytrees3)
+  myshadows.cast_shadow(myplane)
+  myshadows.cast_shadow(mymap)
   myshadows.end_cast()
 
   myplane.draw()
-  mytrees1.draw()
+  mymap.draw(shader, [mountimg1, bumpimg, myshadows], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
+  myecube.draw()
   mytrees2.draw()
   mytrees3.draw()
-
-  myshadows.draw_shadow() # this draws the elevation map passed to it in constructor
-  myecube.draw()
+  mytrees1.draw()
 
   mx, my = mymouse.position()
 

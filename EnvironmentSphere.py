@@ -26,7 +26,7 @@ mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot')
 mymodel.set_shader(shader)
 mymodel.set_normal_shine(bumptex, 0.0, shinetex, 0.4)
 
-mysphere = pi3d.Sphere(radius=400.0, rx=0, invert=True)
+mysphere = pi3d.Sphere(radius=400.0, rx=180, ry=180, invert=True)
 mysphere.set_draw_details(flatsh, [shinetex])
 
 # Fetch key presses

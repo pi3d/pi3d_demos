@@ -51,8 +51,9 @@ mycylinder = pi3d.Cylinder(radius=0.7, height=1.5, sides=24, name="Cyli",
         x=-2, y=-1, z=10)
 # NB Lathe needs to start at the top otherwise normals are calculated in reverse,
 # also inside surfaces need to be defined otherwise normals are wrong
-mylathe = pi3d.Lathe(path=((0,1),(0.6,1.2),(0.8,1.4),(1.09,1.7), (1.1,1.7),
-        (0.9, 1.4),(0.7,1.2),(0.08,1),(0.08,0.21),(0.1,0.2),(1,0.05),(1,0),(0,0)),
+mylathe = pi3d.Lathe(path=((0.0, 1.0), (0.6, 1.2), (0.8, 1.4), (1.09, 1.7),
+                      (1.1, 1.7), (0.9, 1.4), (0.7, 1.2), (0.08, 1), (0.08, 0.21),
+                      (0.1, 0.2), (1.0, 0.05), (1.0, 0.0), (0.001, 0.0), (0.0, 0.0)),
          sides=24, name="Cup", x=0, y=-1, z=10, sx=0.8, sy=0.8, sz=0.8)
 mylathe.set_draw_details(matsh, [shapebump, shapeshine], 0.0, 1.0)
 mylathe.set_alpha(0.5)

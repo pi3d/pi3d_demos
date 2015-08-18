@@ -40,3 +40,6 @@ documentation/_build/html/*
 documentation/conf.py
 documentation/Makefile
 
+# ms db files
+*.db
+

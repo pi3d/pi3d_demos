@@ -8,6 +8,11 @@ perspective camera used to control point size in the other shaders.
 The movement of the vertices is calculated using numpy which makes it very
 fast but it is quite hard to understand as all the iteration is done
 automatically.
+
+There are two methods of working out the texture to use for each ball in
+the shaders/uv_sprite.fs fragment shader. The obvious method uses if
+statements but these can be slow on the Raspberry Pi so check out the
+frame rate using the complicated looking "step" alternative.
 """
 print("""
 ESC to quit
@@ -19,6 +24,7 @@ import numpy as np
 
 import demo
 import pi3d
+import time
 
 MAX_BALLS = 100
 MIN_BALL_SIZE = 15 # z value is used to determine point size
@@ -38,7 +44,9 @@ HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 CAMERA = pi3d.Camera(is_3d=False)
 shader = pi3d.Shader("shaders/uv_sprite")
 
-ballimg = pi3d.Texture("textures/red_ball.png")
+ballimg = [pi3d.Texture("textures/red_ball.png"),
+           pi3d.Texture("textures/blu_ball.png"),
+           pi3d.Texture("textures/grn_ball.png")]
 
 loc = np.zeros((MAX_BALLS, 3))
 loc[:,0] = np.random.uniform(-HWIDTH, HWIDTH, MAX_BALLS)
@@ -50,12 +58,15 @@ dia = (MIN_BALL_SIZE + (max_dist - loc[:,2]) /
 mass = dia * dia
 radii = np.add.outer(dia, dia) / 3.0 # should be / 2.0 this will make balls 'touch' when nearer
 
-balls = pi3d.Points(vertices=loc, point_size=MAX_BALL_SIZE)
-balls.set_draw_details(shader, [ballimg])
+color = np.floor(np.random.uniform(0.0, 2.99999, (MAX_BALLS, 3))) 
+
+balls = pi3d.Points(vertices=loc, point_size=MAX_BALL_SIZE, normals=color)
+balls.set_draw_details(shader, ballimg)
 
 temperature = 0.6
-interact = False
-
+interact = True
+n = 0.0
+l_tm = time.time()
 while DISPLAY.loop_running():
   balls.draw()
   ##### bounce off walls
@@ -96,6 +107,11 @@ while DISPLAY.loop_running():
     vel[ix[0],1] += delta1y
     vel[ix[1],0] += delta2x
     vel[ix[1],1] += delta2y
+  n += 1.0
+  if n > 240.0:
+    print(n / (time.time() - l_tm))
+    n = 0.0
+    l_tm = time.time()
 
   k = KEYBOARD.read()
   if k > -1:

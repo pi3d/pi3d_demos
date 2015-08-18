@@ -7,15 +7,11 @@ has been put into a method of a class (unimaginatively called Main)
 This results in lots of self. prefixes to the variables, but that is a
 feature of python.
 
-An additional feature that isn't in ForestWalk is that the ElevationMap
-has been made seamless and saved as a png 33x33 this allows the Camera
-to run from one tile to the next (it actually jumps back to the other side,
-so it's always on the same tile). The colours at the edges don't match
-because of lighting effects due to the way normals are calculated to smooth
-maps (May be fixed at some stage...)
+The w key toggles movement rather than each press moving a unit distance
+and on android a tap does the same thing. Steering is with the mouse on
+computer and with touch-move on android.
 '''
-import sys
-sys.path.insert(1,'/home/pi/pi3d')
+import demo
 import math,random
 import pi3d
 import ctypes
@@ -23,7 +19,7 @@ from pi3d.constants import *
 
 class Main(object):
   # Setup display and initialise pi3d
-  DISPLAY = pi3d.Display.create()
+  DISPLAY = pi3d.Display.create(depth=16)
   pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
   # load shader
   shader = pi3d.Shader("uv_bump")

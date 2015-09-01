@@ -13,6 +13,10 @@ time by using glScissor to only run the fragment shader on a small part of
 the screen (seems to fail with scale < 0.3 for some reason) To maintain
 the same perspective the camera scale (as used by Camera.__init__) and the
 texture scale (as used by PostProcess.__init__) need to be the same.
+
+There is also a facility in PostProcess (inherited from OffScreenTexture)
+that allow the clearing on start() to be toggled on and off. Any key
+apart from p or escape will show this effect.
 """
 import math, random, time
 
@@ -57,14 +61,14 @@ sc = 0.0
 ds = 0.001
 x = 0.0
 dx = 0.001
-
+clear = True
 # Display scene and rotate shape
 while DISPLAY.loop_running():
   tm = tm + dt
   sc = (sc + ds) % 10.0
   myshape.set_custom_data(48, [tm, sc, -0.5 * sc]) 
   # NB NB for pi3d prior to v1.15 the array index would be 48 rather than 16
-  post.start_capture()
+  post.start_capture(clear=clear)
   # 1. drawing objects now renders to an offscreen texture ####################
 
   mysprite.draw()
@@ -83,9 +87,11 @@ while DISPLAY.loop_running():
   myshape.rotateIncX(0.0613)
 
   k = mykeys.read()
-  if k==112:
+  if k==ord('p'): # take screen shot
     pi3d.screenshot("post.jpg")
-  elif k==27:
+  elif k==27: # escape
     mykeys.close()
     DISPLAY.destroy()
     break
+  elif k > -1: # any other key toggle OffScreenTexture clear
+    clear = not clear

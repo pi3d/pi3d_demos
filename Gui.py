@@ -45,7 +45,7 @@ class jogger(object):
   def rotm(self, *args):
     self.callback(-self.delta)
 
-DISPLAY = pi3d.Display.create(w=640, h=480, frames_per_second=30)
+DISPLAY = pi3d.Display.create(w=640, h=480, frames_per_second=30, use_pygame=True)
 DISPLAY.set_background(0.8,0.8,0.8,1.0) # r,g,b,alpha
 
 shader = pi3d.Shader("uv_reflect")
@@ -105,19 +105,27 @@ textbox = pi3d.TextBox(gui, "type here", 100, -180, callback=cb, label='TextBox 
                         shortcut='t')
 
 mx, my = 0, 0
-inputs = pi3d.InputEvents()
-inputs.get_mouse_movement()
-while DISPLAY.loop_running() and not inputs.key_state("KEY_ESC"):
-  inputs.do_input_events()
-  imx, imy, mv, mh, butt = inputs.get_mouse_movement()
-  mx += imx
-  my -= imy
+#inputs = pi3d.InputEvents()
+mouse = pi3d.Mouse(use_x=True, restrict=True)
+#inputs.get_mouse_movement()
+mouse.start()
+keyboard = pi3d.Keyboard()
+
+while DISPLAY.loop_running(): #and not inputs.key_state("KEY_ESC"):
+  #inputs.do_input_events()
+  #imx, imy, mv, mh, butt = inputs.get_mouse_movement()
+  #mx += imx
+  #my -= imy
+  mx, my = mouse.position()
+  buttons = mouse.button_status()
   model.draw()
   gui.draw(mx, my)
-  if inputs.key_state("BTN_MOUSE"):
+  if buttons == mouse.LEFT_BUTTON: #inputs.key_state("BTN_MOUSE"):
     gui.check(mx, my)
-  kk = inputs.get_keys()
-  if kk:
+  kk = keyboard.read() #inputs.get_keys()
+  if kk == 27:
+    break
+  if False: #kk:
     sh = False
     this_key = None
     for k in kk:
@@ -132,5 +140,6 @@ while DISPLAY.loop_running() and not inputs.key_state("KEY_ESC"):
         this_key = this_key.lower()
       gui.checkkey(this_key)
 
-inputs.release()
+#inputs.release()
+mouse.stop()
 DISPLAY.destroy()

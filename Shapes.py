@@ -74,7 +74,8 @@ angl = 0.0
 while DISPLAY.loop_running():
 
   mysphere.draw(shader, [patimg])
-  mysphere.rotateIncY( 0.5 )
+  mysphere.rotateIncY(2.5)
+  mysphere.rotateIncX(0.6101)
 
   myhemisphere.draw(shader, [coffimg])
   myhemisphere.rotateIncY( .5 )

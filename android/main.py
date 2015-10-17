@@ -15,7 +15,11 @@ import demo
 import math,random
 import pi3d
 import ctypes
-from pi3d.constants import *
+
+TILT_F = 0.002
+SLOPE_F = 0.01
+FRICTION = 0.99
+OFFSET = 8.0
 
 class Main(object):
   # Setup display and initialise pi3d
@@ -25,18 +29,13 @@ class Main(object):
   shader = pi3d.Shader("uv_bump")
   shinesh = pi3d.Shader("uv_reflect")
   flatsh = pi3d.Shader("uv_flat")
-
-  tree2img = pi3d.Texture("textures/tree2.png")
-  tree1img = pi3d.Texture("textures/tree1.png")
-  hb2img = pi3d.Texture("textures/hornbeam2.png")
+  
   bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
   reflimg = pi3d.Texture("textures/stars.jpg")
   rockimg = pi3d.Texture("textures/rock1.jpg")
 
   FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
-  TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
 
-  #myecube = pi3d.EnvironmentCube(900.0,"HALFCROSS")
   ectex=pi3d.loadECfiles("textures/ecubes","sbox")
   myecube = pi3d.EnvironmentCube(size=900.0, maptype="FACES", name="cube")
   myecube.set_draw_details(flatsh, ectex)
@@ -51,34 +50,6 @@ class Main(object):
   mymap.set_draw_details(shader, [mountimg1, bumpimg, reflimg], 128.0, 0.0)
   mymap.set_fog(*FOG)
 
-  #Create tree models
-  treeplane = pi3d.Plane(w=4.0, h=5.0)
-
-  treemodel1 = pi3d.MergeShape(name="baretree")
-  treemodel1.add(treeplane.buf[0], 0,0,0)
-  treemodel1.add(treeplane.buf[0], 0,0,0, 0,90,0)
-
-  treemodel2 = pi3d.MergeShape(name="bushytree")
-  treemodel2.add(treeplane.buf[0], 0,0,0)
-  treemodel2.add(treeplane.buf[0], 0,0,0, 0,60,0)
-  treemodel2.add(treeplane.buf[0], 0,0,0, 0,120,0)
-
-  #Scatter them on map using Merge shape's cluster function
-  mytrees1 = pi3d.MergeShape(name="trees1")
-  mytrees1.cluster(treemodel1.buf[0], mymap,0.0,0.0,200.0,200.0,20,"",8.0,3.0)
-  mytrees1.set_draw_details(flatsh, [tree2img], 0.0, 0.0)
-  mytrees1.set_fog(*TFOG)
-
-  mytrees2 = pi3d.MergeShape(name="trees2")
-  mytrees2.cluster(treemodel2.buf[0], mymap,0.0,0.0,200.0,200.0,20,"",6.0,3.0)
-  mytrees2.set_draw_details(flatsh, [tree1img], 0.0, 0.0)
-  mytrees2.set_fog(*TFOG)
-
-  mytrees3 = pi3d.MergeShape(name="trees3")
-  mytrees3.cluster(treemodel2, mymap,0.0,0.0,300.0,300.0,20,"",4.0,2.0)
-  mytrees3.set_draw_details(flatsh, [hb2img], 0.0, 0.0)
-  mytrees3.set_fog(*TFOG)
-
   #Create monument
   monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
   monument.set_shader(shinesh)
@@ -88,30 +59,50 @@ class Main(object):
   monument.scale(20.0, 20.0, 20.0)
   monument.rotateToY(65)
 
+  #Ball
+  ball = pi3d.Triangle(corners=((-0.01,0.0),(0.0,0.01),(0.01,0.0)))
+  sphere = pi3d.Sphere()
+  sphere.set_draw_details(shader, [rockimg, bumpimg], 1.0)
+  ball.add_child(sphere)
+
   #avatar camera
   rot = 0.0
   tilt = 0.0
-  avhgt = 3.5
+  avhgt = 1.0
   xm = 0.0
   zm = 0.0
   ym = mymap.calcHeight(xm, zm) + avhgt
 
   go_flag = False
-  go_speed = 0.2
+  vx, vz = 0.0, 0.0
+  gx, gz = 0.0, 0.0
 
   CAMERA = pi3d.Camera.instance()
+  CAMERA2D = pi3d.Camera(is_3d=False)
+  font = pi3d.Pngfont("fonts/GillSansMT.png", (200, 30, 10, 255))
+  font.blend = True
+  txt = None
+  
+  if pi3d.PLATFORM == pi3d.PLATFORM_ANDROID: #*****************************
+    from jnius import autoclass
+    Hardware = autoclass(b'org.renpy.android.Hardware')
+    Hardware.accelerometerEnable(True)
 
   def pi3dloop(self, dt):
     self.DISPLAY.loop_running()
     self.CAMERA.reset()
     self.CAMERA.rotate(self.tilt, self.rot, 0)
-    self.CAMERA.position((self.xm, self.ym, self.zm))
+    self.CAMERA.position((self.xm - self.CAMERA.mtrx[0, 3] * OFFSET,
+                          self.ym - self.CAMERA.mtrx[1, 3] * OFFSET,
+                          self.zm - self.CAMERA.mtrx[2, 3] * OFFSET))
     self.myecube.position(self.xm, self.ym, self.zm)
+    self.ball.position(self.xm, self.ym, self.zm)
 
     # for opaque objects it is more efficient to draw from near to far as the
     # shader will not calculate pixels already concealed by something nearer
-    self.myecube.draw()
+    self.ball.draw()
     self.mymap.draw()
+    self.myecube.draw()
     dx = math.copysign(self.mapsize, self.xm)
     dz = math.copysign(self.mapsize, self.zm)
     mid = 0.3 * self.mapsize
@@ -126,22 +117,30 @@ class Main(object):
         self.mymap.draw()
     self.mymap.position(0.0, 0.0, 0.0)
     self.monument.draw()
-    self.mytrees1.draw()
-    self.mytrees2.draw()
-    self.mytrees3.draw()
 
-    if pi3d.PLATFORM == PLATFORM_ANDROID: #*****************************
+    if pi3d.PLATFORM == pi3d.PLATFORM_ANDROID: #*****************************
       if self.DISPLAY.android.screen.moved:
         self.rot -= self.DISPLAY.android.screen.touch.dx * 0.25
         self.tilt += self.DISPLAY.android.screen.touch.dy * 0.25
         self.DISPLAY.android.screen.moved = False
         self.DISPLAY.android.screen.tapped = False
-      elif self.DISPLAY.android.screen.tapped:
-        self.go_speed *= 1.5
-        self.DISPLAY.android.screen.tapped = False
       elif self.DISPLAY.android.screen.double_tapped:
         self.go_flag = not self.go_flag
         self.DISPLAY.android.screen.double_tapped = False
+        from kivy.network.urlrequest import UrlRequest
+        def url_success(req, results):
+          self.txt = pi3d.String(camera=self.CAMERA2D, font=self.font, string=results,
+                        is_3d=False, y=self.DISPLAY.height / 2.0 + 30.0)
+          self.txt.set_shader(self.flatsh)
+          self.monument.rotateIncY(4) # rotate by some random amount
+        req = UrlRequest("http://www.eldwick.org.uk/files/rogo/test2.php?num=1", url_success)
+      if self.txt is not None:
+        self.txt.draw()
+        (x, y, z) = self.Hardware.accelerometerReading()
+        sr = self.CAMERA.mtrx[0, 3]
+        cr = self.CAMERA.mtrx[2, 3]
+        self.gx = y * cr + (z - x) * sr
+        self.gz = (z - x) * cr - y * sr # i.e. hold at 45 degrees for neutral
     else:
       mx, my = self.mymouse.position()
 
@@ -154,27 +153,52 @@ class Main(object):
       #Press ESCAPE to terminate
       k = self.mykeys.read()
       if k >-1:
+        sr = self.CAMERA.mtrx[0, 3]
+        cr = self.CAMERA.mtrx[2, 3]
         if k==ord('w'):  #key W
           self.go_flag = not self.go_flag
+        elif k == 261 or k == 137: # rgt
+          self.gx += 0.5 * cr
+          self.gz -= 0.5 * sr
+        elif k == 260 or k == 136: # lft
+          self.gx -= 0.5 * cr
+          self.gz += 0.5 * sr
+        elif k == 259 or k == 134: # up
+          self.gz += 0.5 * cr
+          self.gx += 0.5 * sr
+        elif k == 258 or k == 135: # dwn
+          self.gz -= 0.5 * cr
+          self.gx -= 0.5 * sr
         elif k==27:  #Escape key
           return False
 
     if self.go_flag:
-      self.xm -= math.sin(math.radians(self.rot)) * self.go_speed
-      self.zm += math.cos(math.radians(self.rot)) * self.go_speed
-      self.ym = self.mymap.calcHeight(self.xm, self.zm) + self.avhgt
+      self.xm += self.vx
+      self.zm += self.vz
+      ht, norm = self.mymap.calcHeight(self.xm, self.zm, True)
+      self.ym =  ht + self.avhgt
+      self.vx += norm[0] * SLOPE_F + self.gx * TILT_F
+      self.vz += norm[2] * SLOPE_F + self.gz * TILT_F
+      self.vx *= FRICTION
+      self.vz *= FRICTION
+      self.ball.rotateToY(math.degrees(math.atan2(self.vx, self.vz)))
+      self.sphere.rotateIncX(math.degrees((self.vx ** 2 + self.vz ** 2) ** 0.5))
       halfmap = self.mapsize / 2.0 # save doing this four times!
       self.xm = (self.xm + halfmap) % self.mapsize - halfmap
       self.zm = (self.zm + halfmap) % self.mapsize - halfmap
 
     else:
-      self.go_speed = 0.2
+      self.vx = 0.0
+      self.vz = 0.0
+      self.gx = 0.0
+      self.gz = 0.0
     return True
 
   def run(self):
-    if pi3d.PLATFORM == PLATFORM_ANDROID: #*****************************
+    if pi3d.PLATFORM == pi3d.PLATFORM_ANDROID: #*****************************
       self.DISPLAY.android.set_loop(self.pi3dloop)
       self.DISPLAY.android.run()
+      self.Hardware.accelerometerEnable(False)
     else:
       # Fetch key presses
       self.mykeys = pi3d.Keyboard()

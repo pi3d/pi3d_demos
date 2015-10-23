@@ -215,4 +215,3 @@ while DISPLAY.loop_running():
 print("you grew to a length of {} Earths".format(snake.length))
 mykeys.close()
 DISPLAY.stop()
-

@@ -59,7 +59,7 @@ class Noise3D():
     return val
 
 DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20,
-                  background=(0.6, 0.5, 0.0, 1.0), samples=4)
+                  background=(0.6, 0.5, 0.0, 1.0))
 
 opengles.glDisable(GL_CULL_FACE) # do this as it will be possible to look under terrain, has to done after Display.create()
 

@@ -134,7 +134,7 @@ text.add_text_block(alphaGradientText)
 everythingColour = pi3d.TextBlockColourGradient((1-textAlpha,0.0,textAlpha,1.0),
           (textAlpha,0.0,1-textAlpha,1.0))
 everythingText = pi3d.TextBlock(100, 200, 0.1, textRotation, 15, data_obj=eg_object,
-          attr="angle", text_format="Angle: {:3.0f}", size=0.7, spacing="F", space=0.05,
+          attr="angle", text_format="Angle: {:4.0f}", size=0.7, spacing="F", space=0.05,
           colour=everythingColour, justify=0.5 )
 #everythingText = TextBlock(100, 200, 0.1, textRotation, 15, data_obj=eg_object,
 #          attr="angle", text_format="Angle: {:2.3f}", size=0.7, spacing="C", space=0.6,

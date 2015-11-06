@@ -5,8 +5,7 @@ import sys
 import demo
 import pi3d
 # use tab for backspace and carriage return for delete
-CHARS = {'KEY_SPACE':' ', 'KEY_BACKSPACE':'\t', 'KEY_DELETE':'\r',
-        'KEY_ENTER':'\n', 'KEY_COMMA':',', 'KEY_DOT':'.'}
+CHARS = {'space':' ', 'BackSpace':'\t', 'DEL':'\r', 'Return':'\n'}
 
 def cbx(*args):
   if radio.clicked:
@@ -45,7 +44,7 @@ class jogger(object):
   def rotm(self, *args):
     self.callback(-self.delta)
 
-DISPLAY = pi3d.Display.create(w=640, h=480, frames_per_second=30, use_pygame=True)
+DISPLAY = pi3d.Display.create(x=50, y=50, w=640, h=480, frames_per_second=30)
 DISPLAY.set_background(0.8,0.8,0.8,1.0) # r,g,b,alpha
 
 shader = pi3d.Shader("uv_reflect")
@@ -107,37 +106,41 @@ textbox = pi3d.TextBox(gui, "type here", 100, -180, callback=cb, label='TextBox 
 mx, my = 0, 0
 #inputs = pi3d.InputEvents()
 mouse = pi3d.Mouse(use_x=True, restrict=True)
+if pi3d.PLATFORM == pi3d.PLATFORM_PI:
+  x_off = -DISPLAY.left - DISPLAY.width / 2
+  y_off = DISPLAY.top + DISPLAY.height / 2 - DISPLAY.max_height
 #inputs.get_mouse_movement()
 mouse.start()
 keyboard = pi3d.Keyboard()
+shifted = False
+caps = False
 
 while DISPLAY.loop_running(): #and not inputs.key_state("KEY_ESC"):
-  #inputs.do_input_events()
-  #imx, imy, mv, mh, butt = inputs.get_mouse_movement()
-  #mx += imx
-  #my -= imy
   mx, my = mouse.position()
+  if pi3d.PLATFORM == pi3d.PLATFORM_PI:
+    mx += x_off
+    my += y_off
   buttons = mouse.button_status()
   model.draw()
   gui.draw(mx, my)
-  if buttons == mouse.LEFT_BUTTON: #inputs.key_state("BTN_MOUSE"):
+  if buttons == mouse.LEFT_BUTTON:
     gui.check(mx, my)
-  kk = keyboard.read() #inputs.get_keys()
-  if kk == 27:
-    break
-  if False: #kk:
-    sh = False
-    this_key = None
-    for k in kk:
-      if 'SHIFT' in k:
-        sh = True 
-      if len(k) == 5:
-        this_key = k[4]
-      elif k in CHARS:
-        this_key = CHARS[k]
-    if this_key:
-      if not sh:
-        this_key = this_key.lower()
+  kc = keyboard.read_code()
+  if len(kc) > 0:
+    if kc == chr(27) or kc == "Escape":
+      break
+    if "Shift" in kc:
+      shifted = True
+    elif "Caps" in kc:
+      caps = not caps
+    else:
+      if kc in CHARS:
+        this_key = CHARS[kc]
+      else:
+        this_key = kc
+        if shifted or caps:
+          this_key = this_key.upper()
+        shifted = False
       gui.checkkey(this_key)
 
 #inputs.release()

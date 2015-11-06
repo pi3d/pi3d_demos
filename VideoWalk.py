@@ -1,12 +1,5 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-<<<<<<< HEAD
-import math,random
-
-import demo
-import pi3d
-import random
-=======
 """
 This demo shows how numpy arrays can be patched into a Texture using the
 Texture.update_ndarray() method. Also Textures can be initialised by passing
@@ -31,21 +24,11 @@ cope with it
 
 import demo
 import pi3d
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 import numpy as np
 from PIL import Image, ImageDraw
 import subprocess as sp
 import threading
 import time
-<<<<<<< HEAD
-
-W, H, P = 480, 270, 3 # video with, height, bytes per pixel (3 = RGB)
-
-command = [ 'ffmpeg/bin/ffmpeg.exe', '-i', 'exercise01.mpg', '-f', 'image2pipe',
-                      '-pix_fmt', 'rgb24', '-vcodec', 'rawvideo', '-']
-flag = False # use to signal new texture
-image = None
-=======
 import math
 
 W, H, P = 480, 270, 3 # video width, height, bytes per pixel (3 = RGB)
@@ -54,7 +37,6 @@ command = [ 'ffmpeg', '-i', 'exercise01.mpg', '-f', 'image2pipe',
                       '-pix_fmt', 'rgb24', '-vcodec', 'rawvideo', '-']
 flag = False # use to signal new texture
 image = np.zeros((H, W, P), dtype='uint8')
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 
 def pipe_thread():
   global flag, image
@@ -63,19 +45,6 @@ def pipe_thread():
     st_tm = time.time()
     if pipe is None:
       pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE, bufsize=-1)
-<<<<<<< HEAD
-    im_str =  np.fromstring(pipe.stdout.read(H*W*P), dtype='uint8')
-    pipe.stdout.flush()
-    pipe.stderr.flush()
-    if len(im_str) < H*W*P: # end of video, reload
-      pipe.terminate()
-      pipe = None
-    else:
-      image =  im_str.reshape((H, W, P))
-      flag = True
-    step = time.time() - st_tm
-    time.sleep(max(0.04 - step, 0.0))
-=======
     image =  np.fromstring(pipe.stdout.read(H * W * P), dtype='uint8')
     pipe.stdout.flush() # presumably nothing else has arrived since read()
     pipe.stderr.flush() # ffmpeg sends commentary to stderr
@@ -87,7 +56,6 @@ def pipe_thread():
       flag = True
     step = time.time() - st_tm
     time.sleep(max(0.04 - step, 0.0)) # adding fps info to ffmpeg doesn't seem to have any effect
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 
 
 t = threading.Thread(target=pipe_thread)
@@ -107,10 +75,6 @@ pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 
 
 # load shader
 shader = pi3d.Shader("uv_bump")
-<<<<<<< HEAD
-shinesh = pi3d.Shader("uv_reflect")
-=======
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png")
@@ -170,11 +134,7 @@ mytrees3.set_fog(*TFOG)
 tex = pi3d.Texture(image) # can pass numpy array or PIL.Image rather than path as string
 monument = pi3d.Sphere(sx=W/100.0, sy=H/20.0, sz=W/20.0)
 monument.set_draw_details(shader, [tex, bumpimg], 4.0, umult=2.0)
-<<<<<<< HEAD
-monument.set_fog(*FOG)
-=======
 monument.set_fog(*TFOG)
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 25.0, 235.0)
 
 #screenshot number
@@ -184,13 +144,8 @@ scshots = 1
 rot = 0.0
 tilt = 0.0
 avhgt = 3.5
-<<<<<<< HEAD
-xm = 80.0
-zm = 200.0
-=======
 xm = 0.0
 zm = 0.0
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
 ym = mymap.calcHeight(xm, zm) + avhgt
 
 # Fetch key presses
@@ -241,34 +196,6 @@ while DISPLAY.loop_running():
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1 or buttons > mymouse.BUTTON_UP:
-<<<<<<< HEAD
-    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key W
-      '''these values have actually already been calculated in the Camera
-      and could be efficiently substituted for
-      xm += CAMERA.mtrx[0, 3]
-      zm += CAMERA.mtrx[2, 3]
-      '''
-      xm -= math.sin(math.radians(rot)) 
-      zm += math.cos(math.radians(rot))
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 115 or buttons == mymouse.RIGHT_BUTTON:  #kry S
-      xm += math.sin(math.radians(rot))
-      zm -= math.cos(math.radians(rot))
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 39:   #key '
-      tilt -= 2.0
-    elif k == 47:   #key /
-      tilt += 2.0
-    elif k == 97:   #key A
-      rot -= 2
-    elif k == 100:  #key D
-      rot += 2
-    elif k == 112:  #key P
-      pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
-      scshots += 1
-    elif k == 10:   #key RETURN
-      mc = 0
-=======
     if k == ord("w") or buttons == mymouse.LEFT_BUTTON:  #key W
       xm += CAMERA.mtrx[0, 3]
       zm += CAMERA.mtrx[2, 3]
@@ -280,7 +207,6 @@ while DISPLAY.loop_running():
     elif k == 112:  #key P
       pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
       scshots += 1
->>>>>>> d369ed069192784b5b20c13a4077a44d779ddfc2
     elif k == 27:  #Escape key
       mykeys.close()
       mymouse.stop()

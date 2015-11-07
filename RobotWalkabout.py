@@ -7,7 +7,6 @@ The landscape can be navigated with the w and s keys to move forward and back.
 The robot demostrates the same texture as the buildings but with higher shiny
 value
 """
-import math
 
 import demo
 import pi3d
@@ -82,21 +81,14 @@ mykeys = pi3d.Keyboard()
 mymouse = pi3d.Mouse(restrict=False)
 mymouse.start()
 
-omx, omy = mymouse.position()
+#omx, omy = mymouse.position()
 
 # Display scene and rotate cuboid
 CAMERA = pi3d.Camera.instance()
 while DISPLAY.loop_running():
 
-  CAMERA.reset()
-  #tilt can be used as a means to prevent the view from going under the landscape!
-  if tilt < -1: sf = 15 - 12.5/abs(tilt)
-  else: sf = 2.5
-  xoff = sf*math.sin(math.radians(rot))
-  yoff = abs(1.25*sf*math.sin(math.radians(tilt))) + 3.25
-  zoff = -sf*math.cos(math.radians(rot))
-  CAMERA.rotate(tilt, rot, 0)
-  CAMERA.position((xm + xoff, ym + yoff, zm + zoff))   #zoom CAMERA out so we can see our robot
+  sf = 15.0 - 12.5 / abs(tilt) if tilt < -1.0 else 2.5
+  CAMERA.relocate(rot, tilt, [xm, ym + 1.0, zm], [-sf, -sf, -sf])
 
   #draw robot
   robot.position(xm, ym, zm)
@@ -111,31 +103,27 @@ while DISPLAY.loop_running():
   mx, my = mymouse.position()
 
   #if mx>DISPLAY.left and mx<DISPLAY.right and my>DISPLAY.top and my<DISPLAY.bottom:
-  rot -= (mx-omx) * 0.2
-  tilt += (my-omy) * 0.1
-  omx = mx
-  omy = my
+  rot = -mx * 0.2
+  tilt = my * 0.1 -10.0
+  if tilt > 5.0:
+    tilt = 5.0
 
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1:
+    cam_vec = CAMERA.get_direction()
     if k==119:    #key W
-      xm-=math.sin(math.radians(rot))
-      zm+=math.cos(math.radians(rot))
-      ym = (mymap.calcHeight(xm,zm)+avhgt)
+      xm += cam_vec[0]
+      zm += cam_vec[2]
     elif k==115:  #kry S
-      xm+=math.sin(math.radians(rot))
-      zm-=math.cos(math.radians(rot))
-      ym = (mymap.calcHeight(xm,zm)+avhgt)
-    elif k==39:   #key '
-      tilt -= 2.0
-      print(tilt)
-    elif k==47:   #key /
-      tilt += 2.0
+      xm -= cam_vec[0]
+      zm -= cam_vec[2]
     elif k==97:   #key A
-        rot -= 2
+      xm -= cam_vec[2] * 0.25
+      zm += cam_vec[0] * 0.25
     elif k==100:  #key D
-        rot += 2
+      xm += cam_vec[2] * 0.25
+      zm -= cam_vec[0] * 0.25
     elif k==112:  #key P
         pi3d.screenshot("walkaboutRobot.jpg")
     elif k==27:    #Escape key
@@ -145,3 +133,4 @@ while DISPLAY.loop_running():
       break
     else:
         print(k)
+    ym = mymap.calcHeight(xm, zm) + avhgt

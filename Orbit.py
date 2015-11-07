@@ -21,10 +21,10 @@ class Planet(pi3d.Sphere):
     generated and drawn as points every 1200 call of the position_and_draw()
     method.
     
-    The code for the trace_shape is a little obscure. Basically it saves
-    the position of the Planet in a list of vertex (x,y,z) tuples and adds
-    dummy normal and texture coordinates because there is no way to create
-    a Buffer without (at the moment this will be addressed in future)
+    The code for the track has been much improved in this version. It now
+    uses a Lines object which has re_init() called every third frame.
+    
+    The Camera method relocate() is also used to make the code tidier.
     """
     super(Planet, self).__init__(radius=radius, slices=24, sides=24,
                                  x=pos[0], y=pos[1], z=pos[2])
@@ -87,7 +87,7 @@ class Planet(pi3d.Sphere):
         b = self.track.buf[0] # short cut pointer to reduce typing
         b.array_buffer[1:, 0:3] = b.array_buffer[:-1,0:3] # shunt them back one
         b.array_buffer[0, 0:3] = self.pos # add this location
-        b.re_init(pts=b.array_buffer[:, 0:3])
+        b.re_init()
         self.f = 0
 
 
@@ -131,20 +131,15 @@ mykeys = pi3d.Keyboard()
 # Mouse ----------------------------------
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
-omx, omy = mymouse.position()
 # Camera variables -----------------------
 rot = 0
 tilt = 0
 rottilt = True
-camRad = 13.5
+camRad = [-13.5, -13.5, -13.5]
 # Display scene
 while DISPLAY.loop_running():
   if rottilt:
-    CAMERA.reset()
-    CAMERA.rotate(-tilt, rot, 0)
-    CAMERA.position((camRad * math.sin(math.radians(rot)) * math.cos(math.radians(tilt)), 
-                     camRad * math.sin(math.radians(tilt)), 
-                    -camRad * math.cos(math.radians(rot)) * math.cos(math.radians(tilt))))
+    CAMERA.relocate(rot, tilt, [0.0, 0.0, 0.0], camRad)
     rottilt = False
   for i in range(5): # make time interval for physics fifth of frame time
     sun.pull([earth, moon, jupiter])
@@ -158,10 +153,9 @@ while DISPLAY.loop_running():
   myecube.draw()
 
   mx, my = mymouse.position()
-  if mx != omx or my != omy:
-    rot -= (mx - omx) * 0.1
-    tilt -= (my - omy) * 0.1
-    omx, omy = mx, my
+  if rot != (mx * -0.1) or tilt != (my * 0.1):
+    rot = mx * -0.1
+    tilt = my * 0.1
     rottilt = True
 
   k = mykeys.read()
@@ -169,18 +163,10 @@ while DISPLAY.loop_running():
     rottilt = True
     if k==112:
       pi3d.screenshot("orbit.jpg")
-    elif k==119:  #key W rotate camera up
-      tilt += 2.0
-    elif k==115:  #kry S down
-      tilt -= 2.0
-    elif k==97:   #key A left
-      rot -= 2
-    elif k==100:  #key D right
-      rot += 2
     elif k==61:   #key += in
-      camRad -= 0.5
+      camRad = [r + 0.5 for r in camRad]
     elif k==45:   #key _- out
-      camRad += 0.5
+      camRad = [r - 0.5 for r in camRad]
     elif k==27:
       mykeys.close()
       DISPLAY.destroy()

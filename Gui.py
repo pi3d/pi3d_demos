@@ -5,7 +5,12 @@ import sys
 import demo
 import pi3d
 # use tab for backspace and carriage return for delete
-CHARS = {'space':' ', 'BackSpace':'\t', 'DEL':'\r', 'Return':'\n'}
+CHARS = {'space':' ', 'BackSpace':'\t', 'DEL':'\r', 'Return':'\n',
+         chr(263):'\t', chr(330):'\r'} 
+"""for some reason these last two are the codes returned by this keyboard
+using curses on the raspberry pi (for BackSpace and DEL - you might need 
+to fine tune this look-up dictionary system
+"""
 
 def cbx(*args):
   if radio.clicked:
@@ -127,6 +132,7 @@ while DISPLAY.loop_running(): #and not inputs.key_state("KEY_ESC"):
     gui.check(mx, my)
   kc = keyboard.read_code()
   if len(kc) > 0:
+    ### print(kc, ord(kc)) # for debugging key codes!
     if kc == chr(27) or kc == "Escape":
       break
     if "Shift" in kc:

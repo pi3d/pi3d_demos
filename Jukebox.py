@@ -71,7 +71,7 @@ p = Popen([b"mpg321", b"-R", b"-F", b"testPlayer"], stdout=PIPE, stdin=PIPE)
 p.stdin.write(bytearray("LOAD {}\n".format(mFiles[iMusic]), "ascii"))
 #p.stdin.write(b"LOAD music/60miles.mp3\n")
 p.stdin.flush()
-rgb = [0.0, 0.0, 0.0]
+rval, gval, bval = 0.0, 0.0, 0.0
 mx, my = 1.0, 1.0
 dx, dy = 1.0, 1.0
 # Display scene and rotate shape

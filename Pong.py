@@ -28,7 +28,7 @@ print()
 DISPLAY = pi3d.Display.create(x=100, y=50, frames_per_second=20)
 DISPLAY.set_background(0.4,0.8,0.8,1) # r,g,b,alpha
 camera = pi3d.Camera((0, 0, 0), (0, 0, -1), (1, 1000, 30.0, DISPLAY.width/DISPLAY.height))
-light = pi3d.Light((10, -10, 20))
+light = pi3d.Light((10, -20, -10))
 # load shader
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")

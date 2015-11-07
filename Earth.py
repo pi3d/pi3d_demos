@@ -15,6 +15,7 @@ DISPLAY.set_background(0,0,0,1)    	# r,g,b,alpha
 shader = pi3d.Shader("uv_light")
 shinesh = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
+light = pi3d.Light(lightpos=(1.0, 0.0, 0.1))
 #========================================
 # Setting 2nd param to True renders 'True' Blending
 # (this can be changed later to 'False' with 'cloudimg.blend = False')

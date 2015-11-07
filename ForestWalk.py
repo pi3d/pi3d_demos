@@ -6,7 +6,16 @@ undulating surface, MergeShape.cluster to create a forest that renders quickly,
 uv_reflect shader is used give texture and reflection to a monument, fog is
 applied to objects so that their details become masked with distance.
 The lighting is also defined with a yellow directional tinge and an indigo tinge
-to the ambient light
+to the ambient light.
+
+The ElevationMap is designed to "tile" as the Camera moves towards an edge.
+Notice that the height image mountainsHgt.png is not jpeg which would cause
+compression inaccuracies and has an extra row of pixels duplicating the
+opposite edge (33x33) so that there are no "cracks"
+
+In this version the Camera positioning is done using the relocate() method
+which can be used to take into account steepness of the slope by altering
+the slope_factor argument.
 """
 
 import math,random
@@ -32,7 +41,7 @@ tree1img = pi3d.Texture("textures/tree1.png")
 hb2img = pi3d.Texture("textures/hornbeam2.png")
 bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
 reflimg = pi3d.Texture("textures/stars.jpg")
-rockimg = pi3d.Texture("textures/rock1.jpg")
+floorimg = pi3d.Texture("textures/floor_nm.jpg")
 
 FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
 TFOG = ((0.2, 0.24, 0.22, 1.0), 150.0)
@@ -83,7 +92,7 @@ mytrees3.set_fog(*TFOG)
 #Create monument
 monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
 monument.set_shader(shinesh)
-monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
+monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4, bump_factor=0.05)
 monument.set_fog(*FOG)
 monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 12.0, 235.0)
 monument.scale(20.0, 20.0, 20.0)
@@ -99,21 +108,25 @@ avhgt = 3.5
 xm = 0.0
 zm = 0.0
 ym = mymap.calcHeight(xm, zm) + avhgt
+step = [0.0, 0.0, 0.0]
+norm = None
+crab = False
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
 
-omx, omy = mymouse.position()
-
-CAMERA = pi3d.Camera.instance()
+CAMERA = pi3d.Camera()
 
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
-  CAMERA.reset()
-  CAMERA.rotate(tilt, rot, 0)
-  CAMERA.position((xm, ym, zm))
+  xm, ym, zm = CAMERA.relocate(rot, tilt, point=[xm, ym, zm], distance=step, 
+                              normal=norm, crab=crab, slope_factor=1.5)
+  if step != [0.0, 0.0, 0.0]: #i.e. previous loop set movmement
+    ym, norm = mymap.calcHeight(xm, zm, True)
+    ym += avhgt
+    step = [0.0, 0.0, 0.0]
   myecube.position(xm, ym, zm)
 
   # For opaque objects it is more efficient to draw from near to far as the
@@ -140,37 +153,26 @@ while DISPLAY.loop_running():
   mx, my = mymouse.position()
   buttons = mymouse.button_status()
 
-  rot -= (mx-omx)*0.2
-  tilt += (my-omy)*0.2
-  omx=mx
-  omy=my
+  rot = - mx * 0.2
+  tilt = my * 0.2
 
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1 or buttons > mymouse.BUTTON_UP:
-    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key W
-      '''these values have actually already been calculated in the Camera
-      and could be efficiently substituted for
-      xm += CAMERA.mtrx[0, 3]
-      zm += CAMERA.mtrx[2, 3]
-      '''
-      xm -= math.sin(math.radians(rot)) 
-      zm += math.cos(math.radians(rot))
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 115 or buttons == mymouse.RIGHT_BUTTON:  #kry S
-      xm += math.sin(math.radians(rot))
-      zm -= math.cos(math.radians(rot))
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 39:   #key '
-      tilt -= 2.0
-    elif k == 47:   #key /
-      tilt += 2.0
-    elif k == 97:   #key A
-      rot -= 2
-    elif k == 100:  #key D
-      rot += 2
-    elif k == 112:  #key P
-      pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
+    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key w forward
+      step = [0.5, 0.0, 0.5]
+      crab = False
+    elif k == 115 or buttons == mymouse.RIGHT_BUTTON:  #kry s back
+      step = [-0.25, 0.0, -0.25]
+      crab = False
+    elif k == 97:   #key a crab left
+      step = [0.25, 0.0, 0.25]
+      crab = True
+    elif k == 100:  #key d crab right
+      step = [-0.25, 0.0, -0.25]
+      crab = True
+    elif k == 112:  #key p picture
+      pi3d.screenshot("forestWalk" + str(scshots) + ".jpg")
       scshots += 1
     elif k == 10:   #key RETURN
       mc = 0
@@ -179,6 +181,7 @@ while DISPLAY.loop_running():
       mymouse.stop()
       DISPLAY.stop()
       break
+
 
     halfsize = mapsize / 2.0
     xm = (xm + halfsize) % mapsize - halfsize # wrap location to stay on map -500 to +500

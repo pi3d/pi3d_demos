@@ -21,7 +21,7 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
 #inputs = InputEvents()
 #inputs.get_mouse_movement()
 
-mylight = pi3d.Light(lightpos=(1.0, -1.0, 1.0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.10, 0.10, 0.12))
+mylight = pi3d.Light(lightpos=(1.0, -1.0, 1.0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.20, 0.20, 0.22))
 
 win = DISPLAY.tkwin
 

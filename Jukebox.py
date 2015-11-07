@@ -2,7 +2,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 """ Music and animation with changing images. Needs some mp3 files in the
-music subdirectory and mpg321 installed
+music subdirectory and mpg321 installed. You may need to do some tweaking
+with the alsa configuration. On jessie I had to edit a line in 
+/usr/share/alsa/alsa.conf and sudo amixer cset numid=3 1
+to get sound from the 3.5mm jack plug. Google "raspberry pi getting audio working"
 """
 import math, random, time, glob, threading
 from subprocess import Popen, PIPE, STDOUT
@@ -75,10 +78,8 @@ dx, dy = 1.0, 1.0
 while DISPLAY.loop_running():
   tm = tm + dt
   sc = (sc + ds) % 10.0
-  myshape.set_custom_data(16, [[tm, sc, -0.5 * sc]])
-  """NB prior to pi3d v1.15 this would have been a 1D array to index 48 rather than 16
-  also passed as shape (n, 3) 2D array
-  """
+  myshape.set_custom_data(48, [tm, sc, -0.5 * sc])
+  
   post.start_capture()
   # 1. drawing objects now renders to an offscreen texture ####################
 
@@ -102,10 +103,10 @@ while DISPLAY.loop_running():
       p.stdin.flush()
   if b'FFT' in l: #frequency analysis
     val_str = l.split()
-    rgb[0] = float(val_str[2]) / 115.0
-    rgb[1] = float(val_str[6]) / 115.0
-    rgb[2] = float(val_str[10]) / 115.0
-  post.draw({16:rgb})
+    rval = float(val_str[2]) / 115.0
+    gval = float(val_str[6]) / 115.0
+    bval = float(val_str[10]) / 115.0
+  post.draw({48:rval, 49:gval, 50:bval})
 
   if mx > 3.0:
     dx = -1.0
@@ -115,11 +116,11 @@ while DISPLAY.loop_running():
     dy = -1.0
   elif  my < 0.0:
     dy = 1.0
-  mx += dx * rgb[1] / 100.0
-  my += dy * rgb[2] / 50.0 
+  mx += dx * gval / 100.0
+  my += dy * bval / 50.0 
   myshape.scale(mx, my, mx)
-  myshape.rotateIncY(0.6471 + rgb[0])
-  myshape.rotateIncX(0.513 - rgb[2])
+  myshape.rotateIncY(0.6471 + rval)
+  myshape.rotateIncX(0.513 - bval)
   mysprite.rotateIncZ(0.5)
 
   if tm > pic_next:

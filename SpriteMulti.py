@@ -11,14 +11,19 @@ shader as follows
   vertices[1]   y position
   vertices[2]   z depth but fract(z) is used as a multiplier for point size
   normals[0]    rotation in radians
-  normals[1]    alpha
-  normals[2]    the size of the sprite square to use for texture sampling
-                in this case each sprite has a patch 0.125x0.125 as there
-                are 8x8 on the sheet. However normals[2] is set to 0.1 to
-                leave a margin of 0.0125 around each sprite.
+  normals[1]    red and green values to multiply with the texture
+  normals[2]    blue and alph values to multiply with the texture. The values
+                are packed into the whole number and fractional parts of
+                the float i.e. where R and G are between 0.0 and 0.999
+                normals[:,2] = floor(999 * R) + G
   tex_coords[0] distance of left side of sprite square from left side of
                 texture in uv scale 0.0 to 1.0
   tex_coords[1] distance of top of sprite square from top of texture
+
+unif[48] is used to hold the size of the sprite square to use for texture
+sampling in this case each sprite has a patch 0.125x0.125 as there
+are 8x8 on the sheet. However unif[48] is set to 0.1 to leave a margin of
+0.0125 around each sprite.
 
 The movement of the vertices is calculated using numpy which makes it very
 fast but it is quite hard to understand as all the iteration is done
@@ -54,7 +59,7 @@ DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 
 CAMERA = pi3d.Camera(is_3d=False)
-shader = pi3d.Shader("shaders/uv_spritemult")
+shader = pi3d.Shader("uv_pointsprite")
 
 img = pi3d.Texture("textures/atlas01.png")
 
@@ -71,8 +76,8 @@ mass = dia * dia
 radii = np.add.outer(dia, dia) / 7.0 # should be / 2.0 this will make bugs 'touch' when nearer
 
 rot = np.zeros((MAX_BUGS, 3)) # :,0 for rotation
-rot[:,1] = 1.0 # :,1 for alpha
-rot[:,2] = 0.1
+rot[:,1] = 999.999 # :,1 R, G
+rot[:,2] = 999.999 # :,2 B, A
 """  :,2 for sub-size i.e 8x8 images each is 0.125 but there is 0.0125
 margin on each side with 0.1 'useable' image inside. This is to avoid the
 corners overlapping other images as they are rotated.
@@ -83,6 +88,7 @@ uv[:,:] = 0.0125 # all start off same. uv is top left corner of square
 bugs = pi3d.Points(camera=CAMERA, vertices=loc, normals=rot, tex_coords=uv,
                    point_size=MAX_BUG_SIZE)
 bugs.set_draw_details(shader, [img])
+bugs.unif[48] = 0.1
 
 temperature = 0.9
 interact = True
@@ -140,7 +146,7 @@ while DISPLAY.loop_running():
     # change image occasionally
     if frame_num % 10 == 0:
       uv[ix[0],:] = np.random.randint(0, 7, (ix[0].shape[0], 2)) * 0.125 + 0.0125
-      rot[ix[1],1] = np.random.uniform(0.5, 1.0)
+      rot[ix[1],2] = np.floor(rot[ix[1],2]) + np.random.uniform(0.5, 1.0, len(ix[1]))
 
   k = KEYBOARD.read()
   if k > -1:

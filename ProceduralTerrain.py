@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 """ An example of making objects change shape by re-creating them inside the while loop
 the textures are also offset by a different amount each frame.
 """
+import numpy as np
 from math import sin, cos, radians, pi
 import random
 import demo
@@ -17,49 +18,57 @@ PSIZE = 128 # perlin size
 PFREQ = 1.0 / 32.0 # perlin frequency
 POCT = 5 # perlin octaves
 CAMRAD = 15.0 # radius of camera position
+ALL = slice(None, None) # slice all in this dimension
 
 # code originally came from a forum:http://gamedev.stackexchange.com/questions/23625/how-do-you-generate-tileable-perlin-noise
 # suggestion by boojum.
 class Noise3D():
   # initialize class with the grid size (inSize), frequency (inFreq) and number of octaves (octs) 
   def __init__(self, size, freq, octs, seed=1):
-    self.perm = [i for i in range(256)]
+    perm = [i for i in range(256)]
     random.seed(seed)
-    random.shuffle(self.perm)
-    self.perm += self.perm
-    self.dirs = [(cos(a * 2.0 * pi / 256),
-                  cos((a+85) * 2.0 * pi / 256),
-                  cos((a+170) * 2.0 * pi / 256))
-                  for a in range(256)]
+    random.shuffle(perm)
+    perm += perm
+    self.perm = np.array(perm)
+    self.dirs = np.array([[cos(a * 2.0 * pi / 256),
+                  cos((a + 85) * 2.0 * pi / 256),
+                  cos((a + 170) * 2.0 * pi / 256)]
+                  for a in range(256)])
     self.size = size
     self.freq = freq
     self.octs = octs
 
-  def noise(self, x, y, per):
-    def surflet(gridX, gridY):
-      distX, distY = abs(x-gridX), abs(y-gridY)
-      polyX = 1 - 6 * distX**5 + 15 * distX**4 - 10 * distX**3
-      polyY = 1 - 6 * distY**5 + 15 * distY**4 - 10 * distY**3
-      hashed = self.perm[self.perm[self.perm[int(gridX) % per] + int(gridY) % per]]
-      grad = (x - gridX)*self.dirs[hashed][0] + (y - gridY)*self.dirs[hashed][1]
-      return polyX * polyY * grad
+  def noise(self, xy, per):
+    """ xy is 3D array of x,y values as floats 
+    """
+    def surflet(gridXY):
+      distXY = np.absolute(xy - gridXY)
+      polyXY = 1.0 - 6.0 * distXY**5 + 15.0 * distXY**4 - 10.0 * distXY**3
+      hashed = self.perm[
+                self.perm[
+                  self.perm[gridXY[:,:,0].astype(np.int) % per] +
+                            gridXY[:,:,1].astype(np.int) % per]]
+      grad = ((xy[:,:,0] - gridXY[:,:,0]) * self.dirs[hashed][:,:,0] +
+              (xy[:,:,1] - gridXY[:,:,1]) * self.dirs[hashed][:,:,1])
+      return polyXY[:,:,0] * polyXY[:,:,1] * grad
         
-    intX, intY = int(x), int(y)
-    return (surflet(intX + 0, intY + 0) + surflet(intX + 0, intY + 1) +
-            surflet(intX + 1, intY + 0) + surflet(intX + 1, intY + 1))
+    intXY = xy.astype(np.int)
+    return (surflet(intXY + [0, 0]) + surflet(intXY + [0, 1]) +
+            surflet(intXY + [1, 0]) + surflet(intXY + [1, 1]))
 
   #return a value for noise in 2D
-  def generate(self, x, y):
-    val = 0
-    x = x * self.freq
-    y = y * self.freq
+  def generate(self, xy):
+    """ xy is 3D array of x,y values 
+    """
+    val = np.zeros(xy.shape[:2]) # ie same x,y dimensions
+    xy = np.array(xy, dtype=np.float) * self.freq
     per = int(self.freq * self.size)
     for o in range(self.octs):
-      val += 0.5**o * self.noise(x * 2**o, y * 2**o, per * 2**o)
+      val += 0.5**o * self.noise(xy * 2**o, per * 2**o)
     return val
 
 DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20,
-                  background=(0.6, 0.5, 0.0, 1.0), samples=4)
+                  background=(0.6, 0.5, 0.0, 1.0))
 
 opengles.glDisable(GL_CULL_FACE) # do this as it will be possible to look under terrain, has to done after Display.create()
 
@@ -70,7 +79,6 @@ perlin = Noise3D(PSIZE, PFREQ, POCT) # size of grid, frequency of noise,
 # number of octaves, use 5 octaves as reasonable balance
 
 #### generate terrain
-verts = []
 norms = []
 tex_coords = []
 idx = []
@@ -78,12 +86,12 @@ wh = hh = W / 2.0 # half size
 ws = hs = W / (IX - 1.0) # dist between each vert
 tx = tz = 1.0 / IX
 
-for z in range(IZ):
-  for x in range(IX):
-    this_x = -wh + x*ws
-    this_z = -hh + z*hs
-    ht = perlin.generate(x, z) * HT
-    verts.append([this_x, ht, this_z])
+verts = np.zeros((IZ, IX, 3), dtype=np.float) # c order arrays 
+xy = np.array([[[x, y] for x in range(IX)] for y in range(IZ)])
+verts[:,:,0] = xy[:,:,0] * ws - wh
+verts[:,:,2] = xy[:,:,1] * hs - hh
+verts[:,:,1] = perlin.generate(xy) * HT # y value perlin noise height
+verts.shape = (IZ * IX, 3) # pi3d uses semi-flattened arrays
 
 s = 0
 #create one long triangle_strip by alternating X directions
@@ -115,7 +123,7 @@ mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
 omx, omy = mymouse.position()
 
-xoff, zoff = 0, 0
+xoff, yoff, zoff = 0, 0, 0
 
 mykeys = pi3d.Keyboard()
 CAMERA = pi3d.Camera.instance()
@@ -146,29 +154,37 @@ while DISPLAY.loop_running():
       break
     elif k == ord("x"):
       xoff = (xoff - 1) % PSIZE
-      s1, s2, s3, s4, s5, s6, s7, s8, s9 = 1, IXZ, 1,   0, IXZ - 1,   1, 0, IXZ, IX
-      newedge = [perlin.generate(xoff, (z + zoff) % PSIZE) * HT for z in range(IZ)]
+      s1,s2, s3, s4 = ALL, slice(1, None), ALL, slice(None, -1)
+      s5, s6 = ALL, slice(None, 1)
+      newedge = [[[xoff, (z + zoff) % PSIZE]] for z in range(IZ)]
       flg = True
     elif k == ord("s"):
       xoff = (xoff + 1) % PSIZE
-      s1, s2, s3, s4, s5, s6, s7, s8, s9 = 0, IXZ - 1, 1,   1, IXZ, 1,   IX - 1, IXZ, IX
-      newedge = [perlin.generate(xoff + IX - 1, (z + zoff) % PSIZE) * HT for z in range(IZ)]
+      s1,s2, s3, s4 = ALL, slice(None, -1), ALL, slice(1, None)
+      s5, s6 = ALL, slice(-1, None)
+      newedge = [[[xoff + IX - 1, (z + zoff) % PSIZE]] for z in range(IZ)]
       flg = True
     elif k == ord("z"):
       zoff = (zoff - 1) % PSIZE
-      s1, s2, s3, s4, s5, s6, s7, s8, s9 = IZ, IXZ, 1,   0, IXZ - IZ, 1,   0, IZ, 1
-      newedge = [perlin.generate((x + xoff) % PSIZE, zoff) * HT for x in range(IX)]
+      s1,s2, s3, s4 = slice(1, None), ALL, slice(None, -1), ALL
+      s5, s6 = slice(None, 1), ALL
+      newedge = [[[(x + xoff) % PSIZE, zoff] for x in range(IX)]]
       flg = True
     elif k == ord("a"):
       zoff = (zoff + 1) % PSIZE
-      s1, s2, s3, s4, s5, s6, s7, s8, s9 = 0, IXZ - IZ, 1,   IZ, IXZ, 1,   IXZ - IZ, IXZ, 1
-      newedge = [perlin.generate((x + xoff) % PSIZE, zoff + IZ - 1) * HT for x in range(IX)]
+      s1,s2, s3, s4 = slice(None, -1), ALL, slice(1, None), ALL
+      s5, s6 = slice(-1, None), ALL
+      newedge = [[[(x + xoff) % PSIZE, zoff + IZ - 1] for x in range(IX)]]
       flg = True
 
     if flg: # i.e. one of above keys pressed
+      newedge = perlin.generate(np.array(newedge)) * HT
       b = terrain.buf[0]
-      b.array_buffer[s1:s2:s3,1] = b.array_buffer[s4:s5:s6,1]
-      b.array_buffer[s7:s8:s9,1] = newedge
-      b.array_buffer[:,3:6] = b.calc_normals()
-      b.re_init(pts=b.array_buffer[:,0:3], normals = b.array_buffer[:,3:6])
+      bab = b.array_buffer # aliases to reduce typing
+      bab.shape = (IZ, IX, 6)
+      bab[s1,s2,1] = bab[s3,s4,1]
+      bab[s5,s6,1] = newedge
+      bab.shape = (IZ * IX, 6)
+      bab[:,3:6] = b.calc_normals()
+      b.re_init(pts=bab[:,0:3], normals = bab[:,3:6])
 

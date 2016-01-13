@@ -1,12 +1,13 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
+from six import unichr
 import math, random, time, traceback, os
 import sys
 import demo
 import pi3d
 # use tab for backspace and carriage return for delete
 CHARS = {'space':' ', 'BackSpace':'\t', 'DEL':'\r', 'Return':'\n',
-         chr(263):'\t', chr(330):'\r'} 
+         unichr(263):'\t', unichr(330):'\r'}
 """for some reason these last two are the codes returned by this keyboard
 using curses on the raspberry pi (for BackSpace and DEL - you might need 
 to fine tune this look-up dictionary system

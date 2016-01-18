@@ -20,10 +20,7 @@ shader = pi3d.Shader("uv_reflect")
 #========================================
 # this is a bit of a one off because the texture has transparent parts
 # comment out and google to see why it's included here.
-#from pi3d import opengles, GL_CULL_FACE
-#opengles.glDisable(GL_CULL_FACE)
-from pi3d import opengles, GL_ALPHA_TEST
-opengles.glDisable(GL_ALPHA_TEST)
+pi3d.opengles.glDisable(pi3d.GL_CULL_FACE)
 #========================================
 
 # load model
@@ -35,10 +32,10 @@ except Exception as e:
   print("exception was {}".format(e))
   """ could be IOError for missing file or various errors from trying to
   load a file pickled with a different version of python or pickle etc"""
-  mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4.0)
-  # load bump and reflection textures
+# load bump and reflection textures
   bumptex = pi3d.Texture("textures/floor_nm.jpg")
   shinetex = pi3d.Texture("textures/stars.jpg")
+  mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4.0)
   mymodel.set_normal_shine(bumptex, 16.0, shinetex, 0.5)
 mymodel.set_shader(shader)
 

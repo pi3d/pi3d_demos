@@ -49,4 +49,5 @@ void main(void){
   c += texture2D(tex0, uv + vec2(-4.243, -4.243) * f);
 
   gl_FragColor = c * factor;
+  gl_FragColor.a = unif[5][2];
 }

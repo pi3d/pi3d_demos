@@ -28,5 +28,5 @@ void main(void){
     //vec2 duv = uv + d * pow(2.0, i);
     gl_FragColor += texture2D(tex0, uv + d * pow(2.0, i)) * step;
   }
-  gl_FragColor.a *= unif[5][2];
+  gl_FragColor.a = unif[5][2];
 }

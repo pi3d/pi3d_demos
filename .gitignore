@@ -43,3 +43,6 @@ documentation/Makefile
 # ms db files
 *.db
 
+# path to pi3d specific to machine
+demo.py
+

@@ -196,6 +196,3 @@ while DISPLAY.loop_running():
               y=-250, is_3d=False, camera=CAM2D)
       label.set_shader(flatsh)
       label.set_alpha(1.5)
-
-
-

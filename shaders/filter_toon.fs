@@ -24,6 +24,6 @@ void main(void){
   c1.rgb = (c1.rgb - 1.0 + fact) / fact;
   gl_FragColor = mix(c1, vec4(unif[16], 1.0), f);
   gl_FragColor = floor(gl_FragColor * 5.0 + 0.5) / 5.0;
-  gl_FragColor.a *= unif[5][2];
+  gl_FragColor.a = unif[5][2];
 }
 

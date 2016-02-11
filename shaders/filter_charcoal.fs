@@ -21,5 +21,5 @@ void main(void){
   f = clamp(f, 0.0, 1.0);
   c1.rgb = mix(paper, charcoal, f);
   gl_FragColor = c1;
-  gl_FragColor.a *= unif[5][2];
+  gl_FragColor.a = unif[5][2];
 }

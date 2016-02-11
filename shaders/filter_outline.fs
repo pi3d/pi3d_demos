@@ -15,7 +15,7 @@ void main(void){
   float f = distance(c1.rgb, c2.rgb) + distance(c1.rgb, c3.rgb) - 0.2;
   f = clamp(f, 0.0, 1.0);
   gl_FragColor = mix(c1, vec4(unif[16], 1.0), f);
-  gl_FragColor.a *= unif[5][2];
+  gl_FragColor.a = unif[5][2];
 }
 
 

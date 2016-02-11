@@ -12,14 +12,13 @@ shader = pi3d.Shader("uv_reflect")
 #========================================
 # this is a bit of a one off because the texture has transparent parts
 # comment out and google to see why it's included here.
-from pi3d import opengles, GL_CULL_FACE
-opengles.glDisable(GL_CULL_FACE)
+pi3d.opengles.glDisable(pi3d.GL_CULL_FACE)
 #========================================
 # load bump and reflection textures
 bumptex = pi3d.Texture("textures/floor_nm.jpg")
 shinetex = pi3d.Texture("textures/stars.jpg")
 # load model_loadmodel
-mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4)
+mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot', z=4.0)
 mymodel.set_shader(shader)
 mymodel.set_normal_shine(bumptex, 16.0, shinetex, 0.5)
 # Fetch key presses

@@ -18,6 +18,6 @@ void main(void){
   float h = step(r, fract((gl_FragCoord.y - gl_FragCoord.x) * d));
   f = clamp(f + 1.0 - h, 0.0, 1.0);
   gl_FragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(unif[16], 1.0), f);
-  gl_FragColor.a *= unif[5][2];
+  gl_FragColor.a = unif[5][2];
 }
 

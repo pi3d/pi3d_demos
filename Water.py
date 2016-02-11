@@ -4,14 +4,18 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 """ Animated normal map to give rippling reflection as off the surface of water
 there is a fog applied to the water surface with an alpha of zero so that it fades
 in the distance
-TODO transparency from fog doesn't work for non-reflection map object, the shader
-probably needs to be tweaked.
-The demo also shows normal mapping for texture and the Font class.
 
 There is also an offset applied applied to the uv texture mapping for the water.
 Although there is no texture (it uses mat_reflect shader) the offset is
 carried through to the normal map texture. It is not used to offset the
 reflection image.
+
+The text here uses the Pngfont class which is generally not as good as the
+normal Font but can be used where Pillow isn't installed such as with
+python_for_android.
+
+This demo also shows the effect of set_material() in combination with a
+uv mapped texture.
 
 3D perlin noise creation application in
 textures/water/noise_normal.py
@@ -58,7 +62,6 @@ for i in range(num[0]):
 
 myshape.position(0.0, 0.0, 5)
 myshape.set_draw_details(shader, [shapeimg, shapebump, shapeshine], 1.0, 0.1)
-myshape.set_material((1.0, 0.5, 0.2, 0.5))
 
 mywater = pi3d.LodSprite(w=250.0, h=250.0, n=6)
 mywater.set_draw_details(matsh, [waterbump[0], shapeshine], 14.0, 0.6)
@@ -67,8 +70,8 @@ mywater.set_fog((0.4, 0.6, 0.8, 0.0),100)
 mywater.rotateToX(85.0)
 mywater.position(10.0, -2.0, 0.0)
 
-arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,0,170,255))   #load ttf font and set the font colour to 'raspberry'
-mystring = pi3d.String(font=arialFont, string="Now the Raspberry Pi really does rock")
+font = pi3d.Pngfont("fonts/GillSansMT.png", (221,0,170,255))
+mystring = pi3d.String(font=font, string="Now the Raspberry Pi really does rock")
 mystring.translate(0.0, 0.0, 1)
 mystring.set_shader(flatsh)
 
@@ -111,8 +114,10 @@ while DISPLAY.loop_running():
 
   tick += 1
 
-  #pi3d.screenshot("/media/E856-DA25/New/fr%03d.jpg" % fr)
-  #fr += 1
+  fr += 1
+  myshape.set_material((math.sin(fr*0.102) * 0.25 + 0.5, 
+                        math.sin(fr*0.073) * 0.25 + 0.5, 
+                        math.sin(fr*0.067) * 0.25 + 0.5))
 
   k = mykeys.read()
   if k==112:

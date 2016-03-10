@@ -3,13 +3,26 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import demo
 import pi3d
+import numpy as np
+
+def normal_map(texture):
+  gray = (texture.image[:,:,:3] * [0.2989, 0.5870, 0.1140]).sum(axis=2) # grayscale
+  grdnt = np.gradient(gray)
+  grdnt[0] = 128.0 - grdnt[0] * 0.5
+  grdnt[1] = 128.0 + grdnt[1] * 0.5
+  z = np.maximum(0, 65025 - grdnt[0]**2 - grdnt[1]**2)
+  n_map = np.zeros(texture.image.shape[:2] + (3,), dtype=np.uint8)
+  n_map[:,:,0] = grdnt[0]
+  n_map[:,:,1] = grdnt[1]
+  n_map[:,:,2] = (z**0.5).astype(np.uint8)
+  return pi3d.Texture(n_map)
 
 class StarSystem(object):
   def __init__(self, star_ref, planet_tex, obj_object, v):
     ''' 
     '''
     self.flatsh = pi3d.Shader('uv_flat')
-    self.shader = pi3d.Shader('uv_light')
+    self.shader = pi3d.Shader('uv_bump')
     self.star_tex = pi3d.Texture('textures/sun.jpg')
     self.star = None
     self.planet = None
@@ -39,8 +52,7 @@ class StarSystem(object):
 
     if self.planet is None:
       self.planet = pi3d.Sphere(radius=0.1, slices=24, sides=24, light=light)
-      self.planet.set_shader(self.shader)
-    self.planet.set_textures([planet_tex])
+    self.planet.set_draw_details(self.shader, planet_tex, 1.0, 0.0)
     self.planet.set_light(light)
     self.planet.position(star_loc[0], star_loc[1], star_loc[2]-2.2)
 
@@ -67,5 +79,8 @@ systems = [[0, pi3d.Texture("textures/mars.jpg"), iss],
            [102488, pi3d.Texture("textures/planet09.jpg"), tardis],
            [32928, pi3d.Texture("textures/planet10.jpg"), iss]]
 '''
+
+for s in systems: # add the normal maps once the standard Textures are loaded.
+  s[1] = [s[1], normal_map(s[1])]
 
 

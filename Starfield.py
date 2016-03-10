@@ -90,20 +90,15 @@ def select_visible():
       return # do first time blocking execution
     time.sleep(2.0)
 
-
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=50, y=50, far=100000, frames_per_second=20) #note big far plane value
+DISPLAY = pi3d.Display.create(x=50, y=50, near=0.05, far=100000, frames_per_second=20, samples=4) #note big far and small near plane values
 DISPLAY.set_background(0,0,0,1)    	# black!
 CAM = pi3d.Camera()
 CAM2D = pi3d.Camera(is_3d=False)
 flatsh = pi3d.Shader("uv_flat")
+matsh = pi3d.Shader("mat_flat")
 starsh = pi3d.Shader("shaders/star_point") #shader uses rgb and luninosity
 
-earthimg = pi3d.Texture("textures/world_map.jpg")
-# Load shapes
-mysphere = pi3d.Sphere(radius=2, slices=24, sides=24,
-                  name="earth", x=10, y=-5, z=180)
-mysphere.set_draw_details(flatsh, [earthimg])
 target = pi3d.Sprite(camera=CAM2D, z=5.0, w=50, h=50)
 target.set_draw_details(flatsh, [pi3d.Texture("textures/target.png")])
 
@@ -125,7 +120,7 @@ font = pi3d.Font('fonts/FreeSans.ttf')
 name_loc = v[list(names)] # this will be a view of the full array, only for named stars
 label = pi3d.String(font=font, string='Sol', y=-250, is_3d=False, camera=CAM2D)
 label.set_shader(flatsh)
-xm, ym, zm = 0.0, 0.0, -1.1 # this is 1.1 parsecs away! Too close and it's inside the near plane!
+xm, ym, zm = 0.2, 0.0, -2.0
 verts, norms, texs = None, None, None
 stars = None
 ready = False
@@ -140,6 +135,22 @@ t.start()
 while stars is None: # to ensure stars set up first time in select_visible
   time.sleep(0.1)
 
+''' constelation lines '''
+orion = [231, 44288, 52501, 100413, 52501, 42572, 62904, 55898, 71408,
+         59549, 17025, 5088, 42572, 5088, 17025, 81378,14265, 14597, 14265,
+         81378, 51101, 76177]
+orion_line = pi3d.Lines(vertices=v[orion,:3])
+orion_line.set_shader(matsh)
+ursamajor = [2982, 5454, 2934, 3178, 2982, 3144, 3324, 4284]
+ursamajor_line = pi3d.Lines(vertices=v[ursamajor,:3])
+ursamajor_line.set_shader(matsh)
+raspberry = [0, 667, 5187, 667, 31882, 7980, 31882, 9285]
+raspberry_line = pi3d.Lines(vertices=v[raspberry,:3])
+raspberry_line.set_shader(matsh)
+
+import starsystem as sm
+near_system = sm.StarSystem(sm.systems[0][0], sm.systems[0][1], sm.systems[0][2], v)
+
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
 rot = 0.0
@@ -149,6 +160,7 @@ step = [0.0, 0.0, 0.0]
 # Fetch key presses
 mykeys = pi3d.Keyboard()
 # Display scene
+fr = 1
 while DISPLAY.loop_running():
   mx, my = mymouse.position()
   rot = - mx * 0.2
@@ -157,9 +169,20 @@ while DISPLAY.loop_running():
 
   stars.draw()
   lbla = label.alpha()
-  if lbla > 0.1:
+  if lbla > 0.05:
     label.draw()
-    label.set_alpha(lbla * 0.99)
+    orion_line.draw()
+    ursamajor_line.draw()
+    raspberry_line.draw()
+    label.set_alpha(lbla * 0.98)
+    orion_line.set_alpha(lbla * 0.5)
+    ursamajor_line.set_alpha(lbla * 0.5)
+    raspberry_line.set_alpha(lbla * 0.5)
+
+  sublight = abs(step[0]) < 0.002
+  if sublight:
+    near_system.draw()
+    
   target.draw()
   if ready:
     stars.re_init(pts=verts, normals=norms, texcoords=texs) # have to do this in main thread
@@ -178,12 +201,18 @@ while DISPLAY.loop_running():
       DISPLAY.stop()
       break
     else: #any other key
-      if k == ord(' '):
-        if step == [0.0, 0.0, 0.0]: # already stopped
-          if (xm, ym, zm) == (0.0, 0.0, 0.0): # at location of Sol, move away to be able to see it
-            xm, ym, zm = 0.0, 0.0, -1.1
-          else:
-            xm, ym, zm = 0.0, 0.0, 0.0
+      if k == ord(' '): # stop and load nearest 'system'
+        r_loc = v[[s[0] for s in sm.systems],0:3] - [xm, ym, zm] # dist systems rel cam
+        r_dist = (r_loc[:,0] ** 2 + r_loc[:,1] ** 2 + r_loc[:,2] ** 2).reshape(-1, 1) # euclidean dist
+        n = np.argmin(r_dist) # this one's nearest
+        if r_dist[n] < 6.0:
+          near_system.visible = True
+          if near_system.star_ref != n:
+            near_system.change_details(sm.systems[n][0], sm.systems[n][1], sm.systems[n][2], v)
+          if not sublight:
+            xm, ym, zm = v[sm.systems[n][0],0:3] + [0.2, 0.0, -2.0]
+        else:
+          near_system.visible = False
         step = [0.0, 0.0, 0.0]
       r_loc = name_loc[:,0:3] - [xm, ym, zm] # array of named stars' position rel to camera
       # calculate the euclidean distance to normalize the array to unti vectors...
@@ -196,6 +225,7 @@ while DISPLAY.loop_running():
               y=-250, is_3d=False, camera=CAM2D)
       label.set_shader(flatsh)
       label.set_alpha(1.5)
-
-
-
+      orion_line.set_alpha(0.5)
+      ursamajor_line.set_alpha(0.5)
+  #pi3d.screenshot('/home/patrick/Downloads/scr_caps_pi3d/scr_caps/f{:05d}.jpg'.format(fr))
+  #fr += 1

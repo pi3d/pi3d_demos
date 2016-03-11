@@ -22,16 +22,16 @@ void main(void) {
   vec4 light = vec4(0.577, 0.577, 0.577, 1.0);
   coord = vec2(gl_FragCoord);
   coord.y = unif[15][2] - coord.y; // top left convension though means flipping image!
-  if (coord.x <= unif[14][0] || coord.x > unif[14][0]+unif[15][0] ||
-      coord.y <= unif[14][1] || coord.y > unif[14][1]+unif[15][1]) texf = vec4(0.0, 0.0, 0.0, 0.0); // only draw the image once
+  if (coord.x < unif[14][0] || coord.x > unif[14][0]+unif[15][0] ||
+      coord.y < unif[14][1] || coord.y > unif[14][1]+unif[15][1]) texf = vec4(0.0, 0.0, 0.0, 0.0); // only draw the image once
   else {
     coordsc = coord - unif[14].xy; // offset
     coordsc *=  pix_invf; // really dividing to scale 0-1 i.e. (x/w, y/h)
     texf = texture2D(tex0, coordsc);
   }
   
-  if (coord.x <= unif[16][0] || coord.x > unif[16][0]+unif[17][0] ||
-      coord.y <= unif[16][1] || coord.y > unif[16][1]+unif[17][1]) texb = vec4(0.0, 0.0, 0.0, 0.0); // only draw the image once
+  if (coord.x <= unif[16][0] || coord.x >= unif[16][0]+unif[17][0] ||
+      coord.y <= unif[16][1] || coord.y >= unif[16][1]+unif[17][1]) texb = vec4(0.0, 0.0, 0.0, 0.0); // only draw the image once
   else {
     coordsc = coord - unif[16].xy; // offset
     coordsc *=  pix_invb; // really dividing to scale 0-1 i.e. (x/w, y/h)

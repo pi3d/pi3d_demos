@@ -5,15 +5,18 @@ import demo
 import pi3d
 import numpy as np
 
-def normal_map(texture):
+def normal_map(texture, factor=1.0):
+  ''' takes a pi3d.texture and returns a normal map (as pi3d.Texture using
+  lightness as height map. Argument factor can scale the effect
+  '''
   gray = (texture.image[:,:,:3] * [0.2989, 0.5870, 0.1140]).sum(axis=2) # grayscale
-  grdnt = np.gradient(gray)
-  grdnt[0] = 128.0 - grdnt[0] * 0.5
-  grdnt[1] = 128.0 + grdnt[1] * 0.5
-  z = np.maximum(0, 65025 - grdnt[0]**2 - grdnt[1]**2)
-  n_map = np.zeros(texture.image.shape[:2] + (3,), dtype=np.uint8)
-  n_map[:,:,0] = grdnt[0]
-  n_map[:,:,1] = grdnt[1]
+  grdnt = np.gradient(gray) # a tuple of two arrays x and y gradients
+  grdnt[0] = 128.0 - grdnt[0] * 0.5 * factor # range -256 to +256 converted to
+  grdnt[1] = 128.0 + grdnt[1] * 0.5 * factor # 0-255. x swapped r to l
+  z = np.maximum(0, 65025 - grdnt[0]**2 - grdnt[1]**2) # ensure +ve for sqrt
+  n_map = np.zeros(texture.image.shape[:2] + (3,), dtype=np.uint8) # RGB same size
+  n_map[:,:,0] = grdnt[0].astype(np.uint8)
+  n_map[:,:,1] = grdnt[1].astype(np.uint8)
   n_map[:,:,2] = (z**0.5).astype(np.uint8)
   return pi3d.Texture(n_map)
 

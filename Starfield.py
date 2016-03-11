@@ -57,10 +57,10 @@ orion = [231, 44288, 52501, 100413, 52501, 42572, 62904, 55898, 71408,
 orion_line = pi3d.Lines(vertices=s.v[orion,:3])
 orion_line.set_shader(matsh)
 ursamajor = [2982, 5454, 2934, 3178, 2982, 3144, 3324, 4284]
-ursamajor_line = pi3d.Lines(vertices=s.v[ursamajor,:3])
+ursamajor_line = pi3d.Lines(vertices=s.v[ursamajor,:3], material=(0.0, 0.2, 0.9))
 ursamajor_line.set_shader(matsh)
 pi = [0, 667, 5187, 667, 31882, 7980, 31882, 9285]
-pi_line = pi3d.Lines(vertices=s.v[pi,:3])
+pi_line = pi3d.Lines(vertices=s.v[pi,:3], material=(0.87, 0.0, 0.67))
 pi_line.set_shader(matsh)
 
 import starsystem as sm # tucked away in another file for tidyness!

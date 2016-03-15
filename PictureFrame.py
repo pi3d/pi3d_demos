@@ -14,7 +14,7 @@ import pi3d
 ########################################################################
 # set the user variables here
 ########################################################################
-PIC_DIR = '/home/patrick/pi3d_demos/textures' # for filtering subdirectories
+PIC_DIR = '/home/pi/pi3d_demos/textures' # for filtering subdirectories
                # and file names alter lines c. 52 and 56 below
 TMDELAY = 5.0  # time between slides This needs to be big enough for
                # texture loading and fading

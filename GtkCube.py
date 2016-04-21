@@ -27,7 +27,7 @@ onto a gtk image.
 NB to get the pi3d layer 'behind' the X windows you need to set its
 value to < -127
 '''
-DISPLAY = pi3d.Display.create(w=W, h=H, frames_per_second=20, layer=-128)
+DISPLAY = pi3d.Display.create(w=W, h=H, layer=-128)
 shader = pi3d.Shader('uv_light')
 tex = pi3d.Texture('textures/PATRN.PNG')
 
@@ -97,6 +97,9 @@ box2.pack_start(button2, True, True, 0)
 button3 = gtk.Button('Rotate Z 20deg')
 button3.connect('clicked', rotZ, cube)
 box2.pack_start(button3, True, True, 0)
+message = gtk.Label('Left click and\ndrag on image or\nclick these buttons')
+message.set_justify(gtk.JUSTIFY_CENTER)
+box2.pack_start(message, True, True, 5)
 
 image_box.connect("motion_notify_event", mot, cube)
 image_box.set_events(gtk.gdk.EXPOSURE_MASK
@@ -116,8 +119,10 @@ t = threading.Thread(target=gtk.main, name='GTK thread')
 t.daemon = True
 t.start()
 
-while DISPLAY.loop_running():
+pi3d_loop = True
+while pi3d_loop:
   if cube.show_flag:
+    pi3d_loop = DISPLAY.loop_running() # don't need to run this all the time
     cube.draw()
     img_gtk.set_from_pixbuf(gtk.gdk.pixbuf_new_from_array(
                               pi3d.screenshot(), gtk.gdk.COLORSPACE_RGB, 8))
@@ -126,4 +131,5 @@ while DISPLAY.loop_running():
                         GdkPixbuf.Colorspace.RGB, True, 8, W, H, W * 4)) '''
     win.show_all()
     cube.show_flag = False
+    time.sleep(0.02) # stop loop running flat out
 

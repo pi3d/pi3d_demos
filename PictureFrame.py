@@ -14,18 +14,23 @@ import pi3d
 ########################################################################
 # set the user variables here
 ########################################################################
-PIC_DIR = '/home/pi/pi3d_demos/textures/' # for filtering subdirectories
+PIC_DIR = '/home/pi/pi3d_demos/textures' # for filtering subdirectories
                # and file names alter lines c. 52 and 56 below
 TMDELAY = 5.0  # time between slides This needs to be big enough for
                # texture loading and fading
 FPS = 20       # animation frames per second
 FADE_TM = 2.0  # time for fading
 TK = False     # set to true to run in tk window (have to start x server)
-MIPMAP = False # whether to anti-alias map screen pixels to image pixels
-               # set False if no scaling required
+MIPMAP = True  # whether to anti-alias map screen pixels to image pixels
+               # set False if no scaling required (faster, less memory needed)
 SHUFFLE = True # randomly shuffle the pictures
 PPS = 1        # how many pictures to show before changing shader
 CHKNUM = 30    # number of picture between re-loading file list
+########################################################################
+# Where the aspect ratio of the image is different from the monitor the
+# gap is filled with a low alpha reflection of the image. If you want this
+# to be the pure background then you can edit the file
+# shaders/blend_include_fs.inc and change edge_alpha = 0.0
 ########################################################################
 
 def tex_load(fname):
@@ -34,7 +39,7 @@ def tex_load(fname):
   slide = Slide()
   if not os.path.isfile(fname):
     return None
-  tex = pi3d.Texture(fname, blend=True, mipmap=MIPMAP)
+  tex = pi3d.Texture(fname, blend=True, mipmap=MIPMAP, m_repeat=True)
   xrat = DISPLAY.width/tex.ix
   yrat = DISPLAY.height/tex.iy
   if yrat < xrat:
@@ -67,7 +72,7 @@ class Slide(object):
     self.dimensions = None
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(background=(0.0, 0.0, 0.0, 1.0),
+DISPLAY = pi3d.Display.create(background=(0.3, 0.3, 0.3, 1.0),
                                 frames_per_second=FPS, tk=TK)
 if TK:
   win = DISPLAY.tkwin

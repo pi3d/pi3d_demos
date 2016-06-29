@@ -130,7 +130,9 @@ dot2.set_2d_size(w=10, h=10)
 tankrot = 180.0
 turret = 0.0
 tankroll = 0.0     #side-to-side roll of tank on ground
-tankpitch = 0.0   #too and fro pitch of tank on ground lol catface
+tankpitch = 0.0    #too and fro pitch of tank on ground
+enemyroll = 0.0
+enemypitch = 0.0
 
 #key presses
 mymouse = pi3d.Mouse(restrict = False)
@@ -205,11 +207,6 @@ try:
     oxm, ozm = xm, zm
 
     #draw player tank with smoothing on pitch and roll to lessen jerkiness
-    tmnow = time.time()
-    if tmnow > (ltm + 0.5):
-      tankpitch_to, tankroll_to = mymap.pitch_roll(xm, zm)
-    tankpitch += (tankpitch_to - tankpitch)/3.0
-    tankroll += (tankroll_to - tankroll)/3.0
     drawTiger(xm, ym, zm, tankrot, tankroll, tankpitch, 180 - turret, ((tilt+20)*-1.0 if tilt > -20.0 else 0.0))
 
     mymap.draw()           # Draw the landscape
@@ -219,13 +216,13 @@ try:
     etdz = -math.cos(math.radians(etr))
     etx += etdx
     etz += etdz
-    ety = mymap.calcHeight(etx, etz) + avhgt
+    #ety = mymap.calcHeight(etx, etz) + avhgt # see below
     etr += 0.5
-    if tmnow > (ltm + 0.5):
-      pitch, roll = mymap.pitch_roll(etx, etz)
-      ltm = tmnow # updating this here but not for users tank relies on everything
-                  # being done in the right order
-    drawTiger(etx, ety, etz, etr, roll, pitch, etr, 0)
+    pitch, roll = mymap.pitch_roll(etx, etz)
+    ety = mymap.ht_y + avhgt # calcHeight is now called as part of pitch_roll
+    enemypitch = enemypitch * 0.9 + pitch * 0.1
+    enemyroll = enemyroll * 0.9 + roll * 0.1
+    drawTiger(etx, ety, etz, etr, enemyroll, enemypitch, etr, 0)
 
     #Draw buildings
     church.draw()
@@ -246,35 +243,7 @@ try:
       turret += 2.0
     if turret - 2.0 > mouserot:
       turret -= 2.0
-    """
-    if inputs.key_state("BTN_LEFT"):
-      xm -= math.sin(math.radians(tankrot)) * 2
-      zm -= math.cos(math.radians(tankrot)) * 2
-      ym = (mymap.calcHeight(xm, zm) + avhgt)
-    if inputs.key_state("KEY_W"):  #key W
-      xm -= math.sin(math.radians(tankrot)) * 2
-      zm -= math.cos(math.radians(tankrot)) * 2
-      ym = (mymap.calcHeight(xm, zm) + avhgt)
-    if inputs.key_state("KEY_S"): #key S
-      xm += math.sin(math.radians(tankrot)) * 2
-      zm += math.cos(math.radians(tankrot)) * 2
-      ym = (mymap.calcHeight(xm, zm) + avhgt)
-    if inputs.key_state("KEY_A"):  #key A
-      tankrot -= 2
-    if inputs.key_state("KEY_D"): #key D
-      tankrot += 2
-    if inputs.key_state("KEY_P"): #key P
-      pi3d.screenshot('TigerTank.jpg')
 
-    elif win.ev == 'resized':
-      DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
-      win.resized = False
-      # This flag must be reset otherwise no further events will be detected
-
-    win.ev = ''  # Clear the event so it doesn't repeat.
-
-    CAMERA.was_moved = False
-    """
     try:
       win.update()
     except Exception as e:
@@ -293,21 +262,22 @@ try:
                   DISPLAY.width / float(DISPLAY.height)))
       win.resized = False
     if win.ev == "key":
+      mv = False
       if win.key == "w":
         xm -= math.sin(math.radians(tankrot)) * 2
         zm -= math.cos(math.radians(tankrot)) * 2
-        ym = (mymap.calcHeight(xm, zm) + avhgt)
-      if win.key == "s":
+        mv = True
+      elif win.key == "s":
         xm += math.sin(math.radians(tankrot)) * 2
         zm += math.cos(math.radians(tankrot)) * 2
-        ym = (mymap.calcHeight(xm, zm) + avhgt)
-      if win.key == "a":
+        mv = True
+      elif win.key == "a":
         tankrot -= 2
-      if win.key == "d":
+      elif win.key == "d":
         tankrot += 2
-      if win.key == "p":
+      elif win.key == "p":
         pi3d.screenshot("TigerTank.jpg")
-      if win.key == "Escape":
+      elif win.key == "Escape":
         try:
           print("bye,bye1")
           DISPLAY.destroy()
@@ -319,6 +289,11 @@ try:
           exit()
         except:
           pass
+      if mv: # moved so recalc pitch_roll
+        pitch, roll = mymap.pitch_roll(xm, zm)
+        tankpitch = tankpitch * 0.9 + pitch * 0.1
+        tankroll = tankroll * 0.9 + roll * 0.1
+        ym = mymap.ht_y + avhgt # calcHeight done by pitch_roll
     if win.ev=="drag" or win.ev=="click" or win.ev=="wheel":
       xm -= math.sin(math.radians(tankrot)) * 2
       zm -= math.cos(math.radians(tankrot)) * 2

@@ -210,15 +210,14 @@ while DISPLAY.loop_running():
   if mDist < 3: #it's got you, return to GO
     xm, ym, zm = 0, mymap.calcHeight(0,0) + avhgt, 0
 
-  clash = mymap.clashTest(mSx, mSy, mSz, 1.5)
-  if clash[0]:
+  m_ht, (nx, ny, nz) = mymap.calcHeight(mSx, mSz, True)
+  if m_ht > mSy - 1.5:
     # returns the components of normal vector if clash
-    nx, ny, nz =  clash[1], clash[2], clash[3]
     # move it away a bit to stop it getting trapped inside if it has tunelled
-    jDist = clash[4] + 0.1
+    jDist = m_ht - mSy + 1.6
     mSx, mSy, mSz = mSx + jDist*nx, mSy + jDist*ny, mSz + jDist*nz
 
-    # use R = I - 2(N.I)N
+    # use vector equation for reflection: R = I - 2(N.I)N
     rfact = 2.05*(nx*mDx + ny*mDy + nz*mDz) #small extra boost by using value > 2 to top up energy in defiance of 1st LOT
     mDx, mDy, mDz = mDx - rfact*nx, mDy - rfact*ny*0.8, mDz - rfact*nz
     # stop the speed increasing too much

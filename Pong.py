@@ -30,7 +30,7 @@ DISPLAY.set_background(0.4,0.8,0.8,1) # r,g,b,alpha
 camera = pi3d.Camera((0, 0, 0), (0, 0, -1), (1, 1000, 30.0, DISPLAY.width/DISPLAY.height))
 light = pi3d.Light((10, -20, -10))
 # load shader
-shader = pi3d.Shader("uv_reflect")
+shader = pi3d.Shader("uv_light")
 flatsh = pi3d.Shader("uv_flat")
 #defocus = pi3d.Defocus() #<<<<<<<<<<<<<<<
 #========================================
@@ -49,10 +49,13 @@ myecube.set_draw_details(flatsh, [ectex])
 #ball
 maxdsz = 0.3
 radius = 1.0
-ball = pi3d.Sphere(camera, light, radius,12,12,0.0,"sphere",-4,8,-7)
+radius0 = 1.0
+ball = pi3d.Triangle(corners=((-0.01, 0.0), (0.0, 0.01), (0.01, 0.0)))
+ball_shape = pi3d.Sphere(radius=radius)
+ball.add_child(ball_shape) # to get realistic 'rolling'
 # Shape.set_draw_details is a wrapper for calling the method on each item in buf
 # as is done explicitly here for no reason than to show that it can be done!
-ball.set_draw_details(shader,[ballimg], 0.0, 0.0)
+ball_shape.set_draw_details(shader,[ballimg])
 
 #monster
 monster = pi3d.Plane(camera, light, 5.0, 5.0, "monster", 0,0,0, 0,0,0)
@@ -66,8 +69,8 @@ mapheight=40.0
 
 mymap = pi3d.ElevationMap("textures/pong.jpg", camera=camera, light=light,
                      width=mapwidth, depth=mapdepth, height=mapheight,
-                     divx=32, divy=32, ntiles=4, name="sub")
-mymap.set_draw_details(shader, [groundimg, groundimg, ballimg], 1.0, 0.0)
+                     divx=64, divy=64, ntiles=4, name="sub")
+mymap.set_draw_details(shader, [groundimg])
 
 #avatar camera
 avhgt = 2.0
@@ -150,6 +153,9 @@ while DISPLAY.loop_running():
     if dsz > 0.4: dsz = 0.4
     if dsx > 0.3: dsx = 0.2
     if dsz > maxdsz: dsz = maxdsz
+  if sy < mymap.y() - 0.4:
+    sy = mymap.y() + 0.4 + radius
+    dsy = abs(dsy)
 
   # bounce off edges and give a random boost
   if sx > maphalf:
@@ -176,15 +182,15 @@ while DISPLAY.loop_running():
       score0 = pi3d.String(font=arialFont, string=str(score[0]), y=12, z=-5, sx=0.05, sy=0.05)
       score0.set_shader(flatsh)
       radius = 0.1 + (radius - 0.1)*0.75 # ball gets smaller each time you score
-      ball = pi3d.Sphere(camera, light, radius,12,12,0.0,"sphere",0,0,0)
-      ball.set_draw_details(shader,[ballimg], 0.0, 0.0)
+      s_fact = radius / radius0
+      ball_shape.scale(s_fact, s_fact, s_fact)
       maxdsz += 0.01 # max speed in z direction increases too
       sx, sy, sz = 0, mapheight/3, 0
       dsx, dsy, dsz = 0.3*random.random()-0.15, 0, -0.1
 
   ball.position(sx, sy, sz)
-
-  ball.rotateIncX(dsz/radius*50)
+  ball.rotateToY(math.degrees(math.atan2(dsx, dsz)))
+  ball_shape.rotateIncX((dsz ** 2 + dsx ** 2) ** 0.5 / radius * 50.0)
 
   #defocus.start_blur() #<<<<<<<<<<<<<<<
   ball.draw()

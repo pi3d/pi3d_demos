@@ -55,14 +55,14 @@ KEYBOARD = pi3d.Keyboard()
 LOGGER = pi3d.Log.logger(__name__)
 
 BACKGROUND_COLOR = (0.3, 0.3, 0.3, 0.0)
-DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
+DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=20)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 
 CAMERA = pi3d.Camera(is_3d=False)
 shader = pi3d.Shader("uv_pointsprite")
 
-img = pi3d.Texture("textures/atlas01.png", mipmap=False, i_format=pi3d.GL_LUMINANCE_ALPHA, filter=pi3d.GL_NEAREST)
-
+img = pi3d.Texture("textures/atlas01.png", mipmap=False, i_format=pi3d.GL_RGBA, filter=pi3d.GL_NEAREST)
+# i_format=pi3d.GL_LUMINANCE_ALPHA ## see what happens with a converted texture type
 loc = np.zeros((MAX_BUGS, 3))
 loc[:,0] = np.random.uniform(-HWIDTH, HWIDTH, MAX_BUGS)
 loc[:,1] = np.random.uniform(-HHEIGHT, HHEIGHT, MAX_BUGS)

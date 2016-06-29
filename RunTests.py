@@ -31,7 +31,7 @@ test_list = [["Amazing", 10], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
             ["LoadModelPickle", 5], ["MarsStation", 13], ["Minimal_2d", 4],
             ["Minimal", 4], ["NumpyBalls", 5], ["Orbit", 5], ["Pi3d2", 4],
             ["Pi3d3", 4], ["PictureFrame", 7], ["Pong", 5], ["Post", 6],
-            ["ProceduralTerrain", 10], ["RobotWalkabout", 8], ["Scenery", 11],
+            ["ProceduralTerrain", 10], ["RobotWalkabout", 8], ["Scenery", 15],
             ["Shapes", 5], ["Silo", 10], ["Slideshow_2d", 6],
             ["Snake", 6], ["SpriteBalls", 6], ["StringMulti", 6],
             ["TigerShadow", 10], ["TigerTank", 10], ["Water", 6]]

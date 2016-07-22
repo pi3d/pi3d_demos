@@ -15,7 +15,8 @@ opposite edge (33x33) so that there are no "cracks"
 
 In this version the Camera positioning is done using the relocate() method
 which can be used to take into account steepness of the slope by altering
-the slope_factor argument.
+the slope_factor argument. NB the Camera movements are relative, by setting
+the argument absolute=False
 """
 
 import math,random
@@ -117,8 +118,8 @@ mykeys = pi3d.Keyboard()
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
 
-CAMERA = pi3d.Camera()
-
+CAMERA = pi3d.Camera(absolute=False)
+roll = 0.0
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
   xm, ym, zm = CAMERA.relocate(rot, tilt, point=[xm, ym, zm], distance=step, 
@@ -128,6 +129,8 @@ while DISPLAY.loop_running():
     ym += avhgt
     step = [0.0, 0.0, 0.0]
   myecube.position(xm, ym, zm)
+  CAMERA.rotateZ(roll)
+  roll = 0.0
 
   # For opaque objects it is more efficient to draw from near to far as the
   # shader will not calculate pixels already concealed by something nearer.
@@ -150,7 +153,7 @@ while DISPLAY.loop_running():
   mytrees2.draw()
   mytrees3.draw()
 
-  mx, my = mymouse.position()
+  mx, my = mymouse.velocity() #change to position() if Camera switched to absolute=True (default)
   buttons = mymouse.button_status()
 
   rot = - mx * 0.2
@@ -181,6 +184,8 @@ while DISPLAY.loop_running():
       mymouse.stop()
       DISPLAY.stop()
       break
+    elif k == ord('f'):
+      roll = 1.0
 
 
     halfsize = mapsize / 2.0

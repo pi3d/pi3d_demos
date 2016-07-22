@@ -90,11 +90,8 @@ class Main(object):
 
   def pi3dloop(self, dt):
     self.DISPLAY.loop_running()
-    self.CAMERA.reset()
-    self.CAMERA.rotate(self.tilt, self.rot, 0)
-    self.CAMERA.position((self.xm - self.CAMERA.mtrx[0, 3] * OFFSET,
-                          self.ym - self.CAMERA.mtrx[1, 3] * OFFSET,
-                          self.zm - self.CAMERA.mtrx[2, 3] * OFFSET))
+    self.CAMERA.relocate(self.rot, self.tilt, [self.xm, self.ym, self.zm], 
+                                              [-OFFSET, -OFFSET, -OFFSET])
     self.myecube.position(self.xm, self.ym, self.zm)
     self.ball.position(self.xm, self.ym, self.zm)
 
@@ -137,8 +134,7 @@ class Main(object):
       if self.txt is not None:
         self.txt.draw()
         (x, y, z) = self.Hardware.accelerometerReading()
-        sr = self.CAMERA.mtrx[0, 3]
-        cr = self.CAMERA.mtrx[2, 3]
+        sr, _, cr = self.CAMERA.get_direction()
         self.gx = y * cr + (z - x) * sr
         self.gz = (z - x) * cr - y * sr # i.e. hold at 45 degrees for neutral
     else:
@@ -153,8 +149,7 @@ class Main(object):
       #Press ESCAPE to terminate
       k = self.mykeys.read()
       if k >-1:
-        sr = self.CAMERA.mtrx[0, 3]
-        cr = self.CAMERA.mtrx[2, 3]
+        sr, _, cr = self.CAMERA.get_direction()
         if k==ord('w'):  #key W
           self.go_flag = not self.go_flag
         elif k == 261 or k == 137: # rgt

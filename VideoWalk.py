@@ -196,13 +196,14 @@ while DISPLAY.loop_running():
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1 or buttons > mymouse.BUTTON_UP:
+    dx, dy, dz = CAMERA.get_direction()
     if k == ord("w") or buttons == mymouse.LEFT_BUTTON:  #key W
-      xm += CAMERA.mtrx[0, 3]
-      zm += CAMERA.mtrx[2, 3]
+      xm += dx
+      zm += dz
       ym = mymap.calcHeight(xm, zm) + avhgt
     elif k == ord("s") or buttons == mymouse.RIGHT_BUTTON:  #kry S
-      xm -= CAMERA.mtrx[0, 3]
-      zm -= CAMERA.mtrx[2, 3]
+      xm -= dx
+      zm -= dz
       ym = mymap.calcHeight(xm, zm) + avhgt
     elif k == 112:  #key P
       pi3d.screenshot("forestWalk"+str(scshots)+".jpg")

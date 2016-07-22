@@ -10,7 +10,23 @@ to an appropriate +ve separation.
 
 NB also, no camera has been explicitly assigned to the objects so they all
 use the default instance and this will be CAMERA.camera_3d so long as the
-StereoCam instance was created before any other Camera instance.
+StereoCam instance was created before any other Camera instance. i.e. it
+would be safer really to assign the Camera to each Shape as they are created.
+
+This demo also uses relative rotation for the Camera which is more like
+the effect of having a gyro sensor attached to stereo goglles. This can
+be efficiently done using the Mouse.velocity() method and the argumente:
+Camera(... absolute=False) or just set Camera.absolute = False. Using the
+'a' and 'd' keys will rotate the camera about the z axis (roll mode)
+
+Because relative rotations are cumulative with no simple way to keep track
+of the overall result there are two convenience methods added to Camera 
+a) euler_angles() to return the Euler (z->x->y) rotations for the current 
+orientation
+b) matrix_from_two_vecors() to return the rotation matrix required to move
+from a starting direction to the current direction vector, such a process
+might be required to correct 'dead reckoning' from gyro readings with a
+magnetometer vector.  
 """
 
 import math,random
@@ -106,6 +122,7 @@ scshots = 1
 #avatar camera
 rot = 0.0
 tilt = 0.0
+roll = 0.0001 # to trick the camera update first time through loop before mouse movement
 avhgt = 3.5
 xm = 0.0
 zm = 0.0
@@ -116,11 +133,63 @@ mykeys = pi3d.Keyboard()
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
 
-omx, omy = mymouse.position()
+start_vector = CAMERA.camera_3d.get_direction()
 
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
-  CAMERA.move_camera((xm, ym, zm), rot, tilt)
+  #Press ESCAPE to terminate
+  k = mykeys.read()
+  if k >-1: # or buttons > mymouse.BUTTON_UP:
+    dx, dy, dz = CAMERA.get_direction()
+    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key W
+      xm += dx
+      zm += dz
+      ym = mymap.calcHeight(xm, zm) + avhgt
+    elif k == 115: # or buttons == mymouse.RIGHT_BUTTON:  #kry S
+      xm -= dx
+      zm -= dz
+      ym = mymap.calcHeight(xm, zm) + avhgt
+    elif k == ord('a'):
+      roll += 2.0
+    elif k == ord('d'):
+      roll -= 2.0
+    elif k == ord('l'):
+      rx, ry, rz = CAMERA.camera_3d.euler_angles()
+      CAMERA.move_camera((xm, ym, zm), ry, rx, rz) # default to absolute rotations
+      print(rx, ry, rz)
+    elif k == ord('k'):
+      vector = CAMERA.get_direction()
+      if start_vector is not None:
+        CAMERA.camera_3d.r_mtrx = CAMERA.camera_3d.matrix_from_two_vecors(start_vector, vector)
+        ''' The above process will not preserve the z axis rotation compare
+        with the following system
+        _, _, rz = CAMERA.camera_3d.euler_angles() # get Euler z rotation
+        rx, ry, _ = CAMERA.camera_3d.euler_angles( # get required x and y rotations to align vectors.
+                        CAMERA.camera_3d.matrix_from_two_vecors(start_vector, vector))
+        CAMERA.move_camera((xm, ym, zm), ry, rx, rz)'''
+        print(CAMERA.camera_3d.r_mtrx)
+    elif k == ord('m'): # for this to work there needs to be an alteration to the application of the rotation matrix above
+      start_vector = CAMERA.get_direction()
+    elif k == 112:  #key P
+      pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
+      scshots += 1
+    elif k == 10:   #key RETURN
+      mc = 0
+    elif k == 27:  #Escape key
+      mykeys.close()
+      mymouse.stop()
+      DISPLAY.stop()
+      break
+
+    halfsize = mapsize / 2.0
+    xm = (xm + halfsize) % mapsize - halfsize # wrap location to stay on map -500 to +500
+    zm = (zm + halfsize) % mapsize - halfsize
+
+  rot, tilt = mymouse.velocity()
+  rot *= -1.0
+  if rot != 0.0 or tilt != 0.0 or roll != 0.0: #to stop overwriting move_camera() after pressing l
+    CAMERA.move_camera((xm, ym, zm), rot, tilt, roll, absolute=False)
+  rot, tilt, roll = 0.0, 0.0, 0.0
   myecube.position(xm, ym, zm)
   for i in range(2):
     CAMERA.start_capture(i)
@@ -145,34 +214,3 @@ while DISPLAY.loop_running():
 
   mx, my = mymouse.position()
   buttons = mymouse.button_status()
-
-  rot -= (mx-omx)*0.2
-  tilt += (my-omy)*0.2
-  omx=mx
-  omy=my
-
-  #Press ESCAPE to terminate
-  k = mykeys.read()
-  if k >-1 or buttons > mymouse.BUTTON_UP:
-    if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key W
-      xm += CAMERA.camera_3d.mtrx[0, 3] 
-      zm += CAMERA.camera_3d.mtrx[2, 3]
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 115 or buttons == mymouse.RIGHT_BUTTON:  #kry S
-      xm -= CAMERA.camera_3d.mtrx[0, 3] 
-      zm -= CAMERA.camera_3d.mtrx[2, 3]
-      ym = mymap.calcHeight(xm, zm) + avhgt
-    elif k == 112:  #key P
-      pi3d.screenshot("forestWalk"+str(scshots)+".jpg")
-      scshots += 1
-    elif k == 10:   #key RETURN
-      mc = 0
-    elif k == 27:  #Escape key
-      mykeys.close()
-      mymouse.stop()
-      DISPLAY.stop()
-      break
-
-    halfsize = mapsize / 2.0
-    xm = (xm + halfsize) % mapsize - halfsize # wrap location to stay on map -500 to +500
-    zm = (zm + halfsize) % mapsize - halfsize

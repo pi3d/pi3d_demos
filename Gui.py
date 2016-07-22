@@ -1,10 +1,12 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-from six import unichr
+
 import math, random, time, traceback, os
 import sys
 import demo
 import pi3d
+from six_mod import unichr # have to do this after importing pi3d as it's part of package
+
 # use tab for backspace and carriage return for delete
 CHARS = {'space':' ', 'BackSpace':'\t', 'DEL':'\r', 'Return':'\n',
          unichr(263):'\t', unichr(330):'\r'}

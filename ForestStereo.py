@@ -137,6 +137,7 @@ start_vector = CAMERA.camera_3d.get_direction()
 
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
+  l_or_k_pressed = False # to stop routine camera movement for cases where l or k pressed
   #Press ESCAPE to terminate
   k = mykeys.read()
   if k >-1: # or buttons > mymouse.BUTTON_UP:
@@ -157,6 +158,7 @@ while DISPLAY.loop_running():
       rx, ry, rz = CAMERA.camera_3d.euler_angles()
       CAMERA.move_camera((xm, ym, zm), ry, rx, rz) # default to absolute rotations
       print(rx, ry, rz)
+      l_or_k_pressed = True
     elif k == ord('k'):
       vector = CAMERA.get_direction()
       if start_vector is not None:
@@ -168,6 +170,7 @@ while DISPLAY.loop_running():
                         CAMERA.camera_3d.matrix_from_two_vecors(start_vector, vector))
         CAMERA.move_camera((xm, ym, zm), ry, rx, rz)'''
         print(CAMERA.camera_3d.r_mtrx)
+        l_or_k_pressed = True
     elif k == ord('m'): # for this to work there needs to be an alteration to the application of the rotation matrix above
       start_vector = CAMERA.get_direction()
     elif k == 112:  #key P
@@ -187,7 +190,7 @@ while DISPLAY.loop_running():
 
   rot, tilt = mymouse.velocity()
   rot *= -1.0
-  if rot != 0.0 or tilt != 0.0 or roll != 0.0: #to stop overwriting move_camera() after pressing l
+  if not l_or_k_pressed: #to stop overwriting move_camera() after pressing l
     CAMERA.move_camera((xm, ym, zm), rot, tilt, roll, absolute=False)
   rot, tilt, roll = 0.0, 0.0, 0.0
   myecube.position(xm, ym, zm)

@@ -7,7 +7,7 @@ import random, time, fnmatch, os, threading
 import demo
 import pi3d
 
-from six.moves import queue
+from six_mod.moves import queue
 
 def interp(x, xp, yp):
   for i, val in enumerate(xp):

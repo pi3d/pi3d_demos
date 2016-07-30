@@ -10,7 +10,7 @@ import random, time, glob, threading
 import demo
 import pi3d
 
-from six.moves import queue
+from six_mod.moves import queue
 
 print("#########################################################")
 print("press ESC to escape, S to go back, any key for next slide")

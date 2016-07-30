@@ -133,7 +133,7 @@ while DISPLAY.loop_running():
       # calculate the euclidean distance to normalize the array to unti vectors...
       r_dist = ((r_loc[:,0] ** 2 + r_loc[:,1] ** 2 + r_loc[:,2] ** 2) ** 0.5).reshape(-1, 1)
       # choose the vector that most nearly matches the direction the camera is pointing...
-      n = np.argmax(np.dot(r_loc / r_dist, CAM.mtrx[0:3,3]))
+      n = np.argmax(np.dot(r_loc / r_dist, CAM.get_direction()))
       # use n to look up the index held in the 8th column of the name_loc
       label = pi3d.String(font=font, string='{} {:7.1f}l.yrs v={:.1E}c'.format(
               s.names[int(name_loc[n, 7])], r_dist[n,0] * 3.262, step[0] * 2057000000.0), # parsec to c

@@ -109,7 +109,7 @@ CAMERA = pi3d.Camera.instance()
 #this block added for fast text changing
 import time
 CAMERA2D = pi3d.Camera(is_3d=False)
-myfont = pi3d.Font('fonts/FreeMonoBoldOblique.ttf', codepoints='0123456789. FPStm:')
+myfont = pi3d.Font('fonts/NotoSerif-Regular.ttf', codepoints='0123456789. FPStm:')
 myfont.blend = True
 tstring = "{:.0f}FPS tm:{:.1f} ".format(60,time.time())
 lasttm = time.time()
@@ -125,17 +125,6 @@ mystring.position(xpos, ypos, 1.0)
 
 # Display scene and move camera
 while DISPLAY.loop_running():
-  ####################
-  #this block added for fast text changing
-  tm = time.time()
-  fcount += 1
-  if tm > (lasttm + tdel):
-    newtstring = "{:.0f}FPS tm:{:.1f}".format(fcount / (tm - lasttm), tm)
-    mystring.quick_change(newtstring)
-    lasttm = tm
-    fcount = 0
-  mystring.draw()
-  ####################  
   CAMERA.reset()
   CAMERA.rotate(tilt, rot, 0)
   CAMERA.position((xm, ym, zm))
@@ -150,6 +139,17 @@ while DISPLAY.loop_running():
   mytrees2.draw()
   mytrees1.draw()
 #  myecube.draw()
+  ####################
+  #this block added for fast text changing
+  tm = time.time()
+  fcount += 1
+  if tm > (lasttm + tdel):
+    newtstring = "{:.0f}FPS tm:{:.1f}".format(fcount / (tm - lasttm), tm)
+    mystring.quick_change(newtstring)
+    lasttm = tm
+    fcount = 0
+  mystring.draw()
+  ####################
 
   mx, my = mymouse.position()
 

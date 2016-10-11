@@ -82,7 +82,7 @@ lastZ0 = 0.0
 camera.position((xm, 2 + ym, -maphalf - 2.5))
 
 #scores
-arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,0,170,255))
+arialFont = pi3d.Font("fonts/NotoSerif-Regular.ttf", (221,0,170,255))
 arialFont.blend = True
 score = [0,0]
 score0 = pi3d.String(font=arialFont, string=str(score[0]), y=12, sx=0.05, sy=0.05)

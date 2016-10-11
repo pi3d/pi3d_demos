@@ -72,7 +72,7 @@ tick=0
 next_time = time.time()+2.0
 
 #load ttf font and set the font colour to 'raspberry'
-arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf",  (221,0,170,255),
+arialFont = pi3d.Font("fonts/NotoSerif-Regular.ttf",  (221,0,170,255),
                     add_codepoints=[256])
 arialFont.blend = True #much better anitaliased look but must String.draw() after everything else      
 mystring = pi3d.String(font=arialFont, string=MESSAGE,

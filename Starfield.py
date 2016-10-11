@@ -38,7 +38,7 @@ target.set_draw_details(flatsh, [pi3d.Texture("textures/target.png")])
 import stars # tucked away in another file for tidyness!
 s = stars.Stars()
 
-font = pi3d.Font('fonts/FreeSans.ttf')
+font = pi3d.Font('fonts/NotoSans-Regular.ttf')
 name_loc = s.v[list(s.names)] # this will be a view of the full array, only for named stars
 label = pi3d.String(font=font, string='Sol', y=-250, is_3d=False, camera=CAM2D)
 label.set_shader(flatsh)

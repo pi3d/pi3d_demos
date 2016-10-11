@@ -63,7 +63,7 @@ myhemisphere = pi3d.Sphere(radius=1, sides=24, slices=24, hemi=0.5, name="hspher
         x=4, y=-1, z=10)
 myPlane = pi3d.Plane(w=4, h=4, name="plane", z=12)
 # Load ttf font and set the font colour to 'raspberry'
-arialFont = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,0,170,255))
+arialFont = pi3d.Font("fonts/NotoSerif-Regular.ttf", (221,0,170,255))
 mystring = pi3d.String(font=arialFont, string="Now the Raspberry Pi really does rock", z=4)
 mystring.set_shader(flatsh)
 

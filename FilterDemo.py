@@ -109,7 +109,7 @@ mykeys = pi3d.Keyboard()
 CAMERA = pi3d.Camera(scale=0.5)
 CAM2D = pi3d.Camera(is_3d=False)
 
-font = pi3d.Font("fonts/FreeMonoBoldOblique.ttf", (221,221,128,255))
+font = pi3d.Font("fonts/NotoSerif-Regular.ttf", (221,221,128,255))
 # list [[name, [list of custom vals -> unif[48:]], [list increments each frame]]]
 filter_list =   [ ["shaders/filter_toon", [0.0, 0.0, 0.0]], # outline_colour_r, g, b
                   ["post_base", [2.5]], # sampling distance for convolution sampling

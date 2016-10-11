@@ -134,7 +134,7 @@ CAMERA = pi3d.Camera(lens=(1.0, 10000.0, 55.0, 1.6))
 ####################
 #this block added for fast text changing
 CAMERA2D = pi3d.Camera(is_3d=False)
-myfont = pi3d.Font('fonts/FreeMonoBoldOblique.ttf', color = (255, 230, 128, 255),
+myfont = pi3d.Font('fonts/NotoSerif-Regular.ttf', color = (255, 230, 128, 255),
                         codepoints='0123456789. -goldoz:mskph')
 myfont.blend = True
 tstring = "gold {:05d}oz {:02d}m{:02d}s -{:4.1f}km {:3.1f}kph ".format(score, 0, 0, 0.0, 0.0)

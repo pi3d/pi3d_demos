@@ -121,6 +121,7 @@ mystring.set_shader(flatsh)
 xpos = (-DISPLAY.width + rt - lt) / 2.0
 ypos = (-DISPLAY.height + tp - bm) / 2.0
 mystring.position(xpos, ypos, 1.0)
+mystring.draw() # NB has to be drawn before quick_change() is called as buffer needs to exist
 ####################
 
 # Display scene and move camera

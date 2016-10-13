@@ -57,7 +57,7 @@ font_colour = (255, 255, 255, 255)
 text_pos = QWIDTH
 
 working_directory = os.path.dirname(os.path.realpath(__file__))
-font_path = os.path.abspath(os.path.join(working_directory, 'fonts', 'FreeSans.ttf'))
+font_path = os.path.abspath(os.path.join(working_directory, 'fonts', 'NotoSans-Regular.ttf'))
 
 # Create pointFont and the text manager to use it
 pointFont = pi3d.Font(font_path, font_colour, codepoints=list(range(32,128)))

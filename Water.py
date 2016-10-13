@@ -17,6 +17,9 @@ python_for_android.
 This demo also shows the effect of set_material() in combination with a
 uv mapped texture.
 
+The normal map for shapebump is generated from a standard image using
+the normal_map argument
+
 3D perlin noise creation application in
 textures/water/noise_normal.py
 """
@@ -43,7 +46,7 @@ flatsh = pi3d.Shader("uv_flat")
 
 #Create textures
 shapeimg = pi3d.Texture("textures/straw1.jpg")
-shapebump = pi3d.Texture("textures/mudnormal.jpg")
+shapebump = pi3d.Texture("textures/straw1.jpg", normal_map=-6.0)
 waterbump = []
 iFiles = glob.glob("textures/water/n_norm???.png")
 iFiles.sort() # order is vital to animation!

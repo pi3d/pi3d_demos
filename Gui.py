@@ -56,7 +56,7 @@ DISPLAY = pi3d.Display.create(x=50, y=50, w=640, h=480, frames_per_second=30)
 DISPLAY.set_background(0.8,0.8,0.8,1.0) # r,g,b,alpha
 
 shader = pi3d.Shader("uv_reflect")
-font = pi3d.Font("fonts/FreeSans.ttf", color=(0,0,0,255), font_size=20)
+font = pi3d.Font("fonts/NotoSans-Regular.ttf", color=(0,0,0,255), font_size=20)
 gui = pi3d.Gui(font)
 ww, hh = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 

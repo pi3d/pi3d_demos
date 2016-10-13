@@ -21,7 +21,7 @@ if sys.version_info[0] == 3: #i.e. will test with version used to start this pro
 else:
   pyname = "python"
 
-FACTOR = 1.0 # increase for lower power i.e. on RPi A or B
+FACTOR = 2.0 # increase for lower power i.e. on RPi A or B
 
 test_list = [["Amazing", 10], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
             ["ClothWalk", 6], ["Clouds3d", 5], ["CollisionBalls", 5],

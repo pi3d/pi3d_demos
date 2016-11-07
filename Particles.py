@@ -7,13 +7,13 @@ import demo
 import pi3d
 import numpy as np
 
-N = 25000     # number of sparks
+N = 7500      # number of sparks
 DEL = 0.025   # 1/FPS i.e. time per frame
 FPS = 1 / DEL # like this
-F = 0.002     # initial upward velocity
+F = 0.001     # initial upward velocity
 R = 0.001     # random movement
 A = 0.01      # air resistance
-g = 0.0012    # gravity
+g = 0.0017    # gravity
 
 class Sparks(object):
   def __init__(self, shader, tex, **kwargs):
@@ -21,8 +21,7 @@ class Sparks(object):
     self.verts = np.array([[0.0, -1.0, 0.0] for i in range(N)], 
                                          dtype='float32') # locations all 0,-1,0
     self.norms = np.zeros((N, 3), dtype='float32')        # normals not used
-    self.texs = np.linspace(0.0, 1.0, N * 2, 
-                         dtype='float32').reshape((N, 2)) # uv coords vary with age of spark
+    self.texs = np.linspace(0.0, 1.0, N * 2).reshape((N, 2)) # uv coords vary with age of spark
     self.points = pi3d.Points(vertices=self.verts, normals=self.norms, 
             tex_coords=self.texs, point_size=5, **kwargs) # use pi3d Points object
     self.points.set_draw_details(shader, [tex])
@@ -55,7 +54,7 @@ keys = pi3d.Keyboard()
 mouse = pi3d.Mouse(restrict=False)
 mouse.start()
 
-camrad = [-8.0, -8.0, -8.0]
+camrad = [-6.0, -6.0, -6.0]
 
 while display.loop_running():
   rot, tilt = mouse.position()

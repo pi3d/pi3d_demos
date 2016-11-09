@@ -8,24 +8,26 @@ import pi3d
 import numpy as np
 
 N = 7500      # number of sparks
-DEL = 0.025   # 1/FPS i.e. time per frame
+DEL = 0.04    # 1/FPS i.e. time per frame
 FPS = 1 / DEL # like this
 F = 0.001     # initial upward velocity
-R = 0.001     # random movement
+R = 0.008     # random movement
 A = 0.01      # air resistance
 g = 0.0017    # gravity
 
-class Sparks(object):
+class Sparks(pi3d.Points):
   def __init__(self, shader, tex, **kwargs):
+    ''' inherit from Points class
+    '''
     self.vel = np.zeros((N, 3), dtype='float32')          # velocities all zero to start
     self.verts = np.array([[0.0, -1.0, 0.0] for i in range(N)], 
                                          dtype='float32') # locations all 0,-1,0
     self.norms = np.zeros((N, 3), dtype='float32')        # normals not used
     self.texs = np.linspace(0.0, 1.0, N * 2).reshape((N, 2)) # uv coords vary with age of spark
-    self.points = pi3d.Points(vertices=self.verts, normals=self.norms, 
-            tex_coords=self.texs, point_size=5, **kwargs) # use pi3d Points object
-    self.points.set_draw_details(shader, [tex])
-    
+    super(Sparks, self).__init__(vertices=self.verts, normals=self.norms, 
+            tex_coords=self.texs, point_size=5, **kwargs) # pass to Points.__init__()
+    self.set_draw_details(shader, [tex])
+
   def update(self):
     self.vel[10:] = self.vel[:-10] # 'age' all the sparks by moving along ten
     self.verts[10:] = self.verts[:-10]
@@ -38,10 +40,8 @@ class Sparks(object):
     self.vel[ix,1] -= g * DEL      # gravity
     self.verts[ix] += self.vel[ix] # update positions
     self.texs[:,1] = (self.texs[:,1] + np.random.random(N) * 0.01) % 1.0 # update textures
-    self.points.re_init(pts=self.verts, normals=self.norms, texcoords=self.texs) # re-init the buffers
-    
-  def draw(self):
-    self.points.draw()
+    self.re_init(pts=self.verts, normals=self.norms, texcoords=self.texs) # re-init the buffers
+
 
 display = pi3d.Display.create(background=(0.1, 0.1, 0.1, 1.0), frames_per_second=FPS)
 camera = pi3d.Camera()
@@ -55,7 +55,6 @@ mouse = pi3d.Mouse(restrict=False)
 mouse.start()
 
 camrad = [-6.0, -6.0, -6.0]
-
 while display.loop_running():
   rot, tilt = mouse.position()
   rot, tilt = rot * 0.1, tilt * -0.1

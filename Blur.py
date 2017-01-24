@@ -27,9 +27,15 @@ if sys.version_info[0] == 3:
 import pi3d
 
 LOGGER = pi3d.Log(__name__, level='INFO', format='%(message)s')
-#LOGGER = pi3d.Log(__name__, level='INFO', file='junk.txt')
-#LOGGER = pi3d.Log(__name__, level='INFO')
-
+# or you can log to file, or use default format
+#LOGGER = pi3d.Log(__name__, level='DEBUG', file='dump.txt')
+#LOGGER = pi3d.Log(__name__, level='ERROR')
+''' to display all the pi3d module logging activity you must leave the
+name argument blank (it will default to None) this will set the logger
+to the root logger i.e.
+'''
+#LOGGER = pi3d.Log(level='DEBUG')
+# these can be changed subsequently using LOGGER.set_logs()
 MESSAGE = """\
 blurring
 with

@@ -193,7 +193,7 @@ while DISPLAY.loop_running() and not inputs.key_state("KEY_ESC"):
   if inputs.key_state("KEY_P"): #key P
     #record = not(record)
     while inputs.key_state("KEY_P"):
-    	inputs.do_input_events()		# wait for key to go up
+      inputs.do_input_events()    # wait for key to go up
     pi3d.screenshot("silo"+str(scshots)+".jpg")
     scshots += 1
   if inputs.key_state("KEY_ENTER"):  #key RETURN

@@ -18,7 +18,7 @@ import math, random, time, traceback
 import demo
 import pi3d
 
-LOGGER = pi3d.Log.logger(__name__)
+LOGGER = pi3d.Log(__name__, level='INFO')
 
 # Create a Tkinter window
 winw, winh, bord = 1200, 600, 0     #64MB GPU memory setting
@@ -247,7 +247,7 @@ try:
     try:
       win.update()
     except Exception as e:
-      print("bye,bye2", e)
+      LOGGER.info("bye,bye2 %s", e)
       DISPLAY.destroy()
       try:
         win.destroy()
@@ -256,7 +256,7 @@ try:
       mymouse.stop()
       exit()
     if win.ev == "resized":
-      print("resized")
+      LOGGER.info("resized")
       DISPLAY.resize(win.winx, win.winy, win.width, win.height-bord)
       CAMERA.reset((DISPLAY.near, DISPLAY.far, DISPLAY.fov,
                   DISPLAY.width / float(DISPLAY.height)))
@@ -279,7 +279,7 @@ try:
         pi3d.screenshot("TigerTank.jpg")
       elif win.key == "Escape":
         try:
-          print("bye,bye1")
+          LOGGER.info("bye,bye1")
           DISPLAY.destroy()
           try:
             win.destroy()
@@ -302,7 +302,7 @@ try:
       win.ev=""  #clear the event so it doesn't repeat
 
 except Exception as e:
-  print("bye,bye3", e)
+  LOGGER.info("bye,bye3 %s", e)
   DISPLAY.destroy()
   try:
     win.destroy()

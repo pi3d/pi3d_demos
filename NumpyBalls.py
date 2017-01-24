@@ -19,7 +19,7 @@ MAX_BALL_SIZE = 40
 MAX_BALL_VELOCITY = 10.0
 
 KEYBOARD = pi3d.Keyboard()
-LOGGER = pi3d.Log.logger(__name__)
+LOGGER = pi3d.Log(__name__, level='INFO')
 
 BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
 DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)

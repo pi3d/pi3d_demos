@@ -26,6 +26,10 @@ if sys.version_info[0] == 3:
 
 import pi3d
 
+LOGGER = pi3d.Log(__name__, level='INFO', format='%(message)s')
+#LOGGER = pi3d.Log(__name__, level='INFO', file='junk.txt')
+#LOGGER = pi3d.Log(__name__, level='INFO')
+
 MESSAGE = """\
 blurring
 with
@@ -103,7 +107,7 @@ while DISPLAY.loop_running():
   mystring.rotateIncZ(0.05)
 
   if time.time() > next_time:
-    print("FPS:", tick / 2.0)
+    LOGGER.info("FPS: %4.1f", (tick / 2.0))
     tick=0
     next_time = time.time() + 2.0
   tick+=1
@@ -117,4 +121,3 @@ while DISPLAY.loop_running():
     DISPLAY.destroy()
     break
 
-quit()

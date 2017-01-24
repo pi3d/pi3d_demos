@@ -25,10 +25,6 @@ pgdn   pgup    = forward 10, back 10
 +/=    -/_     = increase magnification, reduce magnification
 1-5    6-0     = speed up, slow down
 #########################################################""")
-
-LOGGER = pi3d.Log.logger(__name__)
-LOGGER.info("Log using this expression.")
-
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(background=(0.0, 0.0, 0.0, 1.0), frames_per_second=40)
 shader = pi3d.Shader("uv_flat")

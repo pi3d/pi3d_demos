@@ -15,20 +15,23 @@ import pi3d
 
 rads = 0.017453292512 # degrees to radians
 
-#helpful messages
-print("############################################################")
-print("Esc to quit, W to go forward, Mouse to steer, Space to jump.")
+logger = pi3d.Log(__name__, level='INFO', format='%(message)s')
 
-print("N.B. W now works as a TOGGLE one press to go one to stop.")
+logger.info('''
+############################################################
+Esc to quit, W to go forward, Mouse to steer, Space to jump.
 
-print("At the edge you will turn into a ghost and be able to fly ")
-print("and pass through rocks! There are limited numbers of jumps.")
-print("Good turnings are often greener and tend to be near")
-print("(but in the opposite direction to) big holes")
-print("############################################################")
-print("If you get touched by a monster you will return to the start!")
-print("############################################################")
-print()
+N.B. W now works as a TOGGLE one press to go one to stop.
+
+At the edge you will turn into a ghost and be able to fly 
+and pass through rocks! There are limited numbers of jumps.
+Good turnings are often greener and tend to be near
+(but in the opposite direction to) big holes
+############################################################
+If you get touched by a monster you will return to the start!
+############################################################
+''')
+logger.set_logs(level='WARNING') # set level back to higher threshold
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100, background=(0.4, 0.8, 0.8, 1),

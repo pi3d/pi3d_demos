@@ -8,14 +8,14 @@ import math, random, time
 
 import demo
 import pi3d
-#pi3d.Log.set_logs(file="/home/pi/pi3d_demos/templog.txt")
-LOGGER = pi3d.Log.logger(__name__)
+
+LOGGER = pi3d.Log(__name__, level='INFO', format='%(message)s')
 LOGGER.info("\n\nAs yet there is no system for freeing gpu memory taken by shader\n"\
             "programs. On the pi after loading a total of 16 (2 base + 14 demo)\n"\
             "shaders, the screen will go black. Normally you wouldn't keep\n"\
             "loading lots of shaders in this way. Comment out some of the lines\n"\
             "where filter_list is defined\nTODO - free shader memory?\n")
-            
+#LOGGER.set_logs(file='templog.txt')
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(w=1280, h=720)

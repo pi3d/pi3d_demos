@@ -24,10 +24,17 @@ of the Raspberry Pi GPU.
 It enables both 3D and 2D
 rendering and aims to provide
 a host of exciting commands.'''
-
-str1 = pi3d.FixedString('fonts/NotoSans-Regular.ttf', mytext, font_size=32, background_color=(200,140,20,235),
-          camera=CAMERA2D, shader=flatsh, f_type='SMOOTH')
-str1.sprite.positionX(-300) #NB note Shape methods act on FixedString.sprite
+# 'normal' FixedString on a (fairly) solid background
+str1 = pi3d.FixedString('fonts/NotoSans-Regular.ttf', mytext, font_size=32, 
+                        background_color=(200,140,20,235),
+                        camera=CAMERA2D, shader=flatsh, f_type='SMOOTH')
+str1.sprite.position(-300, 0, 2) #NB note Shape methods act on FixedString.sprite
+# shadow outline FixedString to show up against light or dark backgrounds
+# try setting shadow_radius to 0 to see what the issue is
+str1a = pi3d.FixedString('fonts/NotoSans-Regular.ttf', mytext[:53], font_size=48, 
+                        color=(70, 70, 180, 255), background_color=None, shadow_radius=1, 
+                        camera=CAMERA2D, shader=flatsh, f_type='SMOOTH')
+str1a.sprite.position(50, -150, 1) #NB note Shape methods act on FixedString.sprite
 
 str2 = pi3d.FixedString('fonts/NotoSerif-Regular.ttf', mytext, font_size=24, f_type='BUMP')
 mycuboid = pi3d.Cuboid(camera=CAMERA, z=2, x=0.5)
@@ -41,7 +48,8 @@ mykeys = pi3d.Keyboard()
 while DISPLAY.loop_running():
   str1.draw()
   mycuboid.draw()
-  mycuboid.rotateIncZ(0.05)
+  str1a.draw()
+  mycuboid.rotateIncX(0.091)
   mycuboid.rotateIncY(0.13)
   if mykeys.read() == 27:
     mykeys.close()

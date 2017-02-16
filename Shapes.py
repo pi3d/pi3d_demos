@@ -62,14 +62,34 @@ mytorus = pi3d.Torus(radius=1, thickness=0.3, ringrots=12, sides=24, name="Torus
 myhemisphere = pi3d.Sphere(radius=1, sides=24, slices=24, hemi=0.5, name="hsphere",
         x=4, y=-1, z=10)
 myPlane = pi3d.Plane(w=4, h=4, name="plane", z=12)
-# Load ttf font and set the font colour to 'raspberry'
-arialFont = pi3d.Font("fonts/NotoSerif-Regular.ttf", (221,0,170,255))
-mystring = pi3d.String(font=arialFont, string="Now the Raspberry Pi really does rock", z=4)
-mystring.set_shader(flatsh)
+
+# Use three ttfs fonts one with the colour 'raspberry', one with background
+# colour and one using a contrasting shadow
+txt = "Now the Raspberry Pi really does rock"
+strings = [pi3d.String(
+            font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (221, 0, 170, 255)), 
+              string=txt, z=4),
+           pi3d.String(
+            font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255)),
+              string=txt, z=4),
+           pi3d.String(
+            font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255),
+                          background_color=(128, 128, 128, 0)),
+              string=txt, z=4),
+           pi3d.String(
+            font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255), 
+                          shadow=(200, 255, 0, 255), shadow_radius=1), 
+              string=txt, z=4)]
+
+for s in strings:
+  s.set_shader(flatsh)
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
+
 angl = 0.0
+i_f = 0
+i_s = 0
 # Display scene
 while DISPLAY.loop_running():
 
@@ -118,8 +138,14 @@ while DISPLAY.loop_running():
   mylathe.rotateIncZ(0.4)
   mylathe.rotateIncX(0.11)
 
-  mystring.draw()
-  mystring.rotateIncZ(0.5)
+  strings[i_s].draw()
+  for s in strings:
+    s.rotateIncZ(0.5)
+
+  i_f += 1
+  if i_f > 150:
+    i_f = 0
+    i_s = (i_s + 1) % len(strings) 
 
   k = mykeys.read()
   if k >-1:

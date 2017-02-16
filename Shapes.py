@@ -73,8 +73,12 @@ strings = [pi3d.String(
             font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255)),
               string=txt, z=4),
            pi3d.String(
+            font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255),
+                          background_color=(128, 128, 128, 0)),
+              string=txt, z=4),
+           pi3d.String(
             font=pi3d.Font("fonts/NotoSerif-Regular.ttf", (0, 0, 26, 255), 
-                              shadow=(200, 255, 0, 255), shadow_radius=1), 
+                          shadow=(200, 255, 0, 255), shadow_radius=1), 
               string=txt, z=4)]
 
 for s in strings:
@@ -141,7 +145,7 @@ while DISPLAY.loop_running():
   i_f += 1
   if i_f > 150:
     i_f = 0
-    i_s = (i_s + 1) % 3 
+    i_s = (i_s + 1) % len(strings) 
 
   k = mykeys.read()
   if k >-1:

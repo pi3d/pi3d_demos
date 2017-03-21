@@ -1,22 +1,8 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-""" First person view using ElevationMap.calcHeight function to move over
-undulating surface, MergeShape.cluster to create a forest that renders quickly,
-uv_reflect shader is used give texture and reflection to a monument, fog is
-applied to objects so that their details become masked with distance.
-The lighting is also defined with a yellow directional tinge and an indigo tinge
-to the ambient light.
-
-The ElevationMap is designed to "tile" as the Camera moves towards an edge.
-Notice that the height image mountainsHgt.png is not jpeg which would cause
-compression inaccuracies and has an extra row of pixels duplicating the
-opposite edge (33x33) so that there are no "cracks"
-
-In this version the Camera positioning is done using the relocate() method
-which can be used to take into account steepness of the slope by altering
-the slope_factor argument. NB the Camera movements are relative, by setting
-the argument absolute=False
+""" Based on ForestWalk but using four different textures for the
+EnvironmentMap. Functionality added in v2.19
 """
 
 import math,random
@@ -36,14 +22,18 @@ pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 
 shader = pi3d.Shader("uv_env_map")
 flatsh = pi3d.Shader("uv_flat")
 
+# tree textures
 tree2img = pi3d.Texture("textures/tree2.png")
 tree1img = pi3d.Texture("textures/tree1.png")
-pongimg = pi3d.Texture("textures/pong2.jpg")
-strawimg = pi3d.Texture("textures/straw1.jpg")
-mudimg = pi3d.Texture("textures/mudnormal.jpg")
-rockimg = pi3d.Texture("textures/rocktile2.jpg")
-bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
+# ground textures
+pongimg = pi3d.Texture("textures/stripwood.jpg")
+mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
 reflimg = pi3d.Texture("textures/stars.jpg")
+strawimg = pi3d.Texture("textures/straw1.jpg")
+# ground normal maps
+mudimg = pi3d.Texture("textures/mudnormal.jpg")
+bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
+rockimg = pi3d.Texture("textures/rocktile2.jpg")
 floorimg = pi3d.Texture("textures/floor_nm.jpg")
 
 FOG = ((0.3, 0.3, 0.4, 0.8), 650.0)
@@ -57,21 +47,15 @@ myecube.set_draw_details(flatsh, ectex)
 # Create elevation map
 mapsize = 1000.0
 mapheight = 120.0
-mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
 mymap = pi3d.ElevationMap("textures/mountainsHgt.png", name="map",
                      width=mapsize, depth=mapsize, height=mapheight,
-                     divx=32, divy=32) 
-mymap.set_draw_details(shader, [mountimg1, bumpimg, 
+                     divx=32, divy=32, texmap="textures/mars_height.png") 
+''' texmap represents four different diffuse textures and four normal maps
+allocated according to the lowest to highest luminance values on the map'''
+mymap.set_draw_details(shader, [pongimg, mudimg,
+                                mountimg1, bumpimg, 
                                 reflimg, floorimg,
-                                pongimg, mudimg,
-                                strawimg, rockimg], 16.0, 0.0, umult=8.0, vmult=8.0)
-import numpy as np
-bfr = mymap.buf[0].array_buffer
-tex_num = np.floor(bfr[:,1] * 5.0 / mapheight) % 4.0 # 1D numpy array 0,1,2,3 based on y value
-bfr[:,6] += tex_num
-
-#mymap.buf[0].re_init() # don't need to do this as before first draw
-
+                                strawimg, rockimg], 8.0, 0.0, umult=16.0, vmult=16.0)
 mymap.set_fog(*FOG)
 
 #Create tree models
@@ -88,12 +72,12 @@ treemodel2.add(treeplane.buf[0], 0,0,0, 0,120,0)
 
 #Scatter them on map using Merge shape's cluster function
 mytrees1 = pi3d.MergeShape(name="trees1")
-mytrees1.cluster(treemodel1.buf[0], mymap,0.0,0.0,200.0,200.0,20,"",8.0,3.0)
+mytrees1.cluster(treemodel1.buf[0], mymap,0.0,0.0,200.0,200.0,10,"",8.0,3.0)
 mytrees1.set_draw_details(flatsh, [tree2img], 0.0, 0.0)
 mytrees1.set_fog(*TFOG)
 
 mytrees2 = pi3d.MergeShape(name="trees2")
-mytrees2.cluster(treemodel2.buf[0], mymap,0.0,0.0,200.0,200.0,20,"",6.0,3.0)
+mytrees2.cluster(treemodel2.buf[0], mymap,0.0,0.0,200.0,200.0,15,"",6.0,3.0)
 mytrees2.set_draw_details(flatsh, [tree1img], 0.0, 0.0)
 mytrees2.set_fog(*TFOG)
 
@@ -121,7 +105,7 @@ roll = 0.0
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
   xm, ym, zm = CAMERA.relocate(rot, tilt, point=[xm, ym, zm], distance=step, 
-                              normal=norm, crab=crab, slope_factor=1.5)
+                              normal=norm, crab=crab, slope_factor=0.5)
   if step != [0.0, 0.0, 0.0]: #i.e. previous loop set movmement
     ym, norm = mymap.calcHeight(xm, zm, True)
     ym += avhgt
@@ -130,10 +114,6 @@ while DISPLAY.loop_running():
   CAMERA.rotateZ(roll)
   roll = 0.0
 
-  # For opaque objects it is more efficient to draw from near to far as the
-  # shader will not calculate pixels already concealed by something nearer.
-  # In this case the partially transparent trees have to be drawn after
-  # things behind them.
   mymap.draw()
   if abs(xm) > 300:
     mymap.position(math.copysign(1000,xm), 0.0, 0.0)

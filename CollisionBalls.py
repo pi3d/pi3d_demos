@@ -17,14 +17,15 @@ MIN_BALL_SIZE = 5
 MAX_BALL_SIZE = 40
 MAX_BALL_VELOCITY = 10.0
 
-KEYBOARD = pi3d.Keyboard()
-LOGGER = pi3d.Log(__name__, level='INFO')
-
 BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
 DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
 WIDTH, HEIGHT = DISPLAY.width, DISPLAY.height
 ZPLANE = 1000
 fov = 2.0 * math.degrees(math.atan(HEIGHT/2.0/ZPLANE))
+# logger created before other pi3d components to allow logging, NB no name set
+LOGGER = pi3d.Log(level='INFO') #, file='temp.txt') # to file to see log with ncurses keyboard
+
+KEYBOARD = pi3d.Keyboard()
 
 CAMERA = pi3d.Camera((0, 0, 0), (0, 0, -1.0),
                 (1, 1100, fov,

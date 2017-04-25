@@ -16,10 +16,13 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 import sys
 
-if sys.version_info[0] == 3: #i.e. will test with version used to start this program
-  pyname = "python3"
+if len(sys.argv) > 1: #can put a python interpreter name on the end to force i.e. using pypy
+  pyname = sys.argv[1]
 else:
-  pyname = "python"
+  if sys.version_info[0] == 3: #i.e. will test with version used to start this program
+    pyname = "python3"
+  else:
+    pyname = "python"
 
 FACTOR = 2.0 # increase for lower power i.e. on RPi A or B
 

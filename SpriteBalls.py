@@ -26,9 +26,9 @@ import demo
 import pi3d
 import time
 
-MAX_BALLS = 100
+MAX_BALLS = 900
 MIN_BALL_SIZE = 15 # z value is used to determine point size
-MAX_BALL_SIZE = 75
+MAX_BALL_SIZE = 5
 MAX_BALL_VELOCITY = 3.0
 
 min_dist = 1.001
@@ -54,7 +54,8 @@ vel = np.random.uniform(-MAX_BALL_VELOCITY, MAX_BALL_VELOCITY, (MAX_BALLS, 2))
 dia = (MIN_BALL_SIZE + (max_dist - loc[:,2]) /
                 (max_dist - min_dist) * (MAX_BALL_SIZE - MIN_BALL_SIZE))
 mass = dia * dia
-radii = np.add.outer(dia, dia) / 3.0 # should be / 2.0 this will make balls 'touch' when nearer
+# reshape to column and transpose to make add.outer() (not yet in pypy numpy)
+radii = (dia.reshape(1,-1).T + dia) / 3.0 # should be / 2.0 this will make bugs 'touch' when nearer
 
 color = np.floor(np.random.uniform(0.0, 2.99999, (MAX_BALLS, 3))) 
 
@@ -68,13 +69,13 @@ l_tm = time.time()
 while DISPLAY.loop_running():
   balls.draw()
   ##### bounce off walls
-  ix = np.where(loc[:,0] < -HWIDTH) # off left side
+  ix = np.where(loc[:,0] < -HWIDTH)[0] # off left side
   vel[ix,0] = np.abs(vel[ix,0]) * temperature # x component +ve
-  ix = np.where(loc[:,0] > HWIDTH) # off right
+  ix = np.where(loc[:,0] > HWIDTH)[0] # off right
   vel[ix,0] = np.abs(vel[ix,0]) * -temperature # vx -ve
-  ix = np.where(loc[:,1] < -HHEIGHT)
+  ix = np.where(loc[:,1] < -HHEIGHT)[0]
   vel[ix,1] = np.abs(vel[ix,1]) * temperature
-  ix = np.where(loc[:,1] > HHEIGHT)
+  ix = np.where(loc[:,1] > HHEIGHT)[0]
   vel[ix,1] = np.abs(vel[ix,1]) * -temperature
   vel[:,1] -= 0.01 # slight downward drift
   loc[:,0:2] += vel[:,:] # adjust x,y positions by velocities
@@ -85,9 +86,9 @@ while DISPLAY.loop_running():
 
   ##### bounce off each other. Work increases as square of N
   if interact:
-    d1 = np.subtract.outer(loc[:,0], loc[:,0]) # array of all the x diffs
-    d2 = np.subtract.outer(loc[:,1], loc[:,1]) # array of all the y diffs
-    ix = np.where((np.hypot(d1, d2) - radii) < 0.0) # index of all overlaps
+    d1 = (loc[:,0].reshape(1,-1).T - loc[:,0]) # array of all the x diffs
+    d2 = (loc[:,1].reshape(1,-1).T - loc[:,1]) # array of all the y diffs
+    ix = np.where(((d1 ** 2 + d2 ** 2) ** 0.5 - radii) < 0.0) # index of all overlaps
     non_dup = np.where(ix[0] > ix[1]) # remove double count and 'self' overlaps
     ix = (ix[0][non_dup], ix[1][non_dup]) # remake slimmed down index
     dx = d1[ix[0], ix[1]] # separation x component

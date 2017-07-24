@@ -26,9 +26,9 @@ import demo
 import pi3d
 import time
 
-MAX_BALLS = 900
+MAX_BALLS = 200
 MIN_BALL_SIZE = 15 # z value is used to determine point size
-MAX_BALL_SIZE = 5
+MAX_BALL_SIZE = 20
 MAX_BALL_VELOCITY = 3.0
 
 min_dist = 1.001

@@ -30,7 +30,8 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
 
 #inputs = InputEvents()
 #inputs.get_mouse_movement()
-
+CAMERA = pi3d.Camera()
+CAM2D = pi3d.Camera(is_3d=False)
 pi3d.Light(lightpos=(-1, -1, 1), lightcol =(0.8, 0.8, 0.8), lightamb=(0.30, 0.30, 0.32))
 
 win = DISPLAY.tkwin
@@ -59,6 +60,8 @@ mountimg1 = pi3d.Texture('textures/mountains3_512.jpg')
 bumpimg = pi3d.Texture('textures/grasstile_n.jpg')
 tigerbmp = pi3d.Texture('models/Tiger/tiger_bump.jpg')
 topbmp = pi3d.Texture('models/Tiger/top_bump.jpg')
+redb = pi3d.Texture('textures/red_ball.png', blend=True)
+blub = pi3d.Texture('textures/blu_ball.png', blend=True)
 
 mymap = pi3d.ElevationMap(mapfile='textures/mountainsHgt2.png',
                      width=mapwidth, depth=mapdepth,
@@ -119,12 +122,11 @@ scw, sch = sniptex.ix * scx, sniptex.iy * scx
 sniper.set_2d_size(scw, sch, (DISPLAY.width - scw)/2,(DISPLAY.height - sch)/2)
 
 #corner map and dots
-smmap = pi3d.ImageSprite(mountimg1, shade2d, w=10, h=10, z=0.2)
-smmap.set_2d_size(w=200, h=200, x=DISPLAY.width - 200, y=DISPLAY.height - 200)
-dot1 = pi3d.ImageSprite("textures/red_ball.png", shade2d, w=10, h=10, z=0.1)
-dot1.set_2d_size(w=10, h=10) # 10x10 pixels
-dot2 = pi3d.ImageSprite("textures/blu_ball.png", shade2d, w=10, h=10, z=0.05)
-dot2.set_2d_size(w=10, h=10)
+HW, HH = (DISPLAY.width - 200.0) / 2, (DISPLAY.height - 200.0) / 2
+smmap = pi3d.ImageSprite(mountimg1, flatsh, w=200, h=200, 
+            x=HW, y=HH, z=0.2, camera=CAM2D)
+dot1 = pi3d.ImageSprite(redb, flatsh, w=10, h=10, z=0.1, camera=CAM2D)
+dot2 = pi3d.ImageSprite(blub, flatsh, w=10, h=10, z=0.05, camera=CAM2D)
 
 #player tank vars
 tankrot = 180.0
@@ -170,8 +172,6 @@ win.update()
 DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 is_running = True
-CAMERA = pi3d.Camera.instance()
-
 try:
   while DISPLAY.loop_running():
     mx, my = mymouse.position()
@@ -181,13 +181,13 @@ try:
     omy=my
 
     CAMERA.reset()
-    dot1.set_2d_location(DISPLAY.width - 105.0 + 200.0*xm/mapwidth,
-                        DISPLAY.height - 105.0 - 200.0*zm/mapdepth)
-    dot2.set_2d_location(DISPLAY.width - 105.0 + 200.0*etx/mapwidth,
-                        DISPLAY.height - 105.0 - 200.0*etz/mapdepth)
+
+    smmap.draw()
+    dot1.position(HW + 200.0 * xm/mapwidth, HH + 200.0 * zm / mapdepth, 0.1)
+    dot2.position(HW + 200.0 * etx/mapwidth, HH + 200.0 * etz / mapdepth, 0.05)
     dot1.draw()
     dot2.draw()
-    smmap.draw()
+
     # tilt can be used to prevent the view from going under the landscape!
     sf = 60 - 55.0 / abs(tilt) if tilt < -1 else 5.0
     xoff = sf * math.sin(math.radians(mouserot))

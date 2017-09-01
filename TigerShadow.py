@@ -20,6 +20,8 @@ DISPLAY = pi3d.Display.create(tk=True, window_title='Tiger Tank demo in Pi3D',
 
 #inputs = InputEvents()
 #inputs.get_mouse_movement()
+CAMERA = pi3d.Camera()
+CAM2D = pi3d.Camera(is_3d=False)
 
 mylight = pi3d.Light(lightpos=(1.0, -1.0, 1.0), lightcol =(0.8, 0.8, 0.8), lightamb=(0.10, 0.10, 0.12))
 
@@ -28,8 +30,6 @@ win = DISPLAY.tkwin
 shader = pi3d.Shader('shadow_uv_bump')
 flatsh = pi3d.Shader('uv_flat')
 shade2d = pi3d.Shader('2d_flat')
-
-CAMERA = pi3d.Camera()
 
 #========================================
 # create splash screen and draw it
@@ -51,7 +51,9 @@ mountimg1 = pi3d.Texture('textures/mountains3_512.jpg')
 bumpimg = pi3d.Texture('textures/grasstile_n.jpg')
 tigerbmp = pi3d.Texture('models/Tiger/tiger_bump.jpg')
 topbmp = pi3d.Texture('models/Tiger/top_bump.jpg')
-#roadway = pi3d.Texture('textures/road5.png')
+redb = pi3d.Texture('textures/red_ball.png', blend=True)
+blub = pi3d.Texture('textures/blu_ball.png', blend=True)
+
 mymap = pi3d.ElevationMap(mapfile='textures/mountainsHgt2.png',
                      width=mapwidth, depth=mapdepth,
                      height=mapheight, divx=64, divy=64)
@@ -118,6 +120,13 @@ if scy > scx:
 scw, sch = sniptex.ix * scx, sniptex.iy * scx
 sniper.set_2d_size(scw, sch, (DISPLAY.width - scw)/2,(DISPLAY.height - sch)/2)
 
+#corner map and dots
+HW, HH = (DISPLAY.width - 200.0) / 2, (DISPLAY.height - 200.0) / 2
+smmap = pi3d.ImageSprite(mountimg1, flatsh, w=200, h=200, 
+            x=HW, y=HH, z=0.2, camera=CAM2D)
+dot1 = pi3d.ImageSprite(redb, flatsh, w=10, h=10, z=0.1, camera=CAM2D)
+dot2 = pi3d.ImageSprite(blub, flatsh, w=10, h=10, z=0.05, camera=CAM2D)
+
 #player tank vars
 tankrot = 180.0
 turret = 0.0
@@ -180,6 +189,13 @@ try:
     omy=my
 
     CAMERA.reset()
+
+    smmap.draw()
+    dot1.position(HW + 200.0 * xm/mapwidth, HH + 200.0 * zm / mapdepth, 0.1)
+    dot2.position(HW + 200.0 * etx/mapwidth, HH + 200.0 * etz / mapdepth, 0.05)
+    dot1.draw()
+    dot2.draw()
+
     sf = 60 - 55.0 / abs(tilt) if tilt < -1 else 5.0
     xoff = sf * math.sin(math.radians(mouserot))
     yoff = abs(1.25 * sf * math.sin(math.radians(tilt))) + 3.0

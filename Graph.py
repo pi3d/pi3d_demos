@@ -127,14 +127,15 @@ class Graph(object):
     ''' work out nice looking grid line positions
     '''
     steps = np.array([1.0, 2.0, 2.5, 5.0, 10.0])
-    d = (maxv - minv) / (num + 1)
+    span = maxv - minv
+    d = span / (num + 1)
     d_exp = np.floor(np.log10(abs(d)))
     d_man = d / 10 ** d_exp
     diffs = np.abs((d_man - steps) / steps)
     st = steps[np.argmin(diffs)] * 10 ** d_exp
-    val = np.floor((minv + st) / st) * st
+    val = np.floor((minv + st + span * 0.1) / st) * st
     vals = []
-    while val < maxv * 0.9:
+    while val < (maxv - span * 0.1):
       vals.append(val)
       val += st
     return vals

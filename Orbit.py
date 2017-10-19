@@ -99,6 +99,7 @@ DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20)
 DISPLAY.set_background(0,0,0,1)    	# r,g,b,alpha
 # Camera ---------------------------------
 CAMERA = pi3d.Camera()
+CAM2D = pi3d.Camera(is_3d=False)
 # Shaders --------------------------------
 shader = pi3d.Shader("uv_light")
 flatsh = pi3d.Shader("uv_flat")
@@ -109,6 +110,7 @@ sunimg = pi3d.Texture("textures/sun.jpg")
 sunshellimg = pi3d.Texture("textures/sun_shell.png", True)
 earthimg = pi3d.Texture("textures/world_map.jpg")
 moonimg = pi3d.Texture("textures/moon.jpg")
+
 # EnvironmentCube ------------------------
 ectex = [pi3d.Texture('textures/ecubes/skybox_grimmnight.jpg')]
 myecube = pi3d.EnvironmentCube(size=900.0, maptype='CROSS')
@@ -120,10 +122,14 @@ selflight = pi3d.Light(lightamb=(1.1, 1.1, 1.1)) # on the sun
 # Planets --------------------------------
 sun = Planet([sunimg, sunshellimg], shader, 1.0, 8000000, pos=[0.0, 0.0, 0.0],
             vel=[-0.01, 0.0, 0.0], light=selflight) #to keep total momentum of system zero!
+venus = Planet([moonimg, sunshellimg], shader, 0.06, 80000000, pos=[0.0, -1.0, -5.0], 
+            vel=[0.6, 0.12, 0.0], track_shader=tracksh, light=sunlight)
 earth = Planet([earthimg, cloudimg], shader, 0.125, 80000000, pos=[0.0, -1.0, -9.0], 
             vel=[0.5, 0.1, 0.0], track_shader=tracksh, light=sunlight)
 moon = Planet([moonimg], shader, 0.025, 80000000, pos=[0.0, -1.0, -9.6], 
             vel=[0.72, 0.144, 0.0], track_shader=tracksh, light=sunlight)
+mars = Planet([earthimg, sunshellimg], shader, 0.1, 80000000, pos=[0.0, -1.0, -13.0], 
+            vel=[0.4, 0.08, 0.0], track_shader=tracksh, light=sunlight)
 jupiter = Planet([moonimg, sunshellimg], shader, 0.2, 8000000,  pos=[0.0, 0.0, 14.0],
             vel=[-0.2, 0.3, 0.0], track_shader=tracksh, light=sunlight)
 # Fetch key presses ----------------------
@@ -137,20 +143,28 @@ tilt = 0
 rottilt = True
 camRad = [-13.5, -13.5, -13.5]
 # Display scene
+fr = 0
 while DISPLAY.loop_running():
   if rottilt:
     CAMERA.relocate(rot, tilt, [0.0, 0.0, 0.0], camRad)
     rottilt = False
   for i in range(5): # make time interval for physics fifth of frame time
-    sun.pull([earth, moon, jupiter])
-    earth.pull([sun, moon, jupiter])
-    moon.pull([sun, earth, jupiter])
-    jupiter.pull([sun, earth, moon])
+    sun.pull([venus, earth, moon, mars, jupiter])
+    venus.pull([sun, earth, moon, mars, jupiter])
+    earth.pull([sun, venus, moon, mars, jupiter])
+    mars.pull([sun, venus, earth, moon, jupiter])
+    moon.pull([sun, venus, earth, mars, jupiter])
+    jupiter.pull([sun, venus, earth, moon, mars])
   sun.position_and_draw()
+  venus.position_and_draw()
   earth.position_and_draw()
   moon.position_and_draw()
+  mars.position_and_draw()
   jupiter.position_and_draw()
   myecube.draw()
+
+  pi3d.screenshot('/home/patrick/Downloads/Untitled Folder/scr_caps/fr{:05d}.jpg'.format(fr))
+  fr += 1
 
   mx, my = mymouse.position()
   if rot != (mx * -0.1) or tilt != (my * 0.1):

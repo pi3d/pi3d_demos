@@ -163,9 +163,6 @@ while DISPLAY.loop_running():
   jupiter.position_and_draw()
   myecube.draw()
 
-  pi3d.screenshot('/home/patrick/Downloads/Untitled Folder/scr_caps/fr{:05d}.jpg'.format(fr))
-  fr += 1
-
   mx, my = mymouse.position()
   if rot != (mx * -0.1) or tilt != (my * 0.1):
     rot = mx * -0.1

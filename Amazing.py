@@ -97,28 +97,26 @@ raspberry.set_fog((0.1,0.1,0.2,0.6), 200.0)
 """
 shed = pi3d.Model(file_string="models/shed1.obj",
              name="shed", y=3, sx=2, sy=2, sz=2)
-
-shedgp = []
+shed.set_shader(shader)
+shedgp = pi3d.MergeShape(name="shed")
+shedgp.set_fog((0.1,0.1,0.1,1.0), 250.0)
 xArr = []
 yArr = []
 zArr = []
 rArr = []
-for i in range(5):
-  xval = (random.random()-0.5)*50 + 19
+for i in range(10):
+  xval = (random.random() - 0.5 ) * 50 + 19
   xArr.append(xval)
-  zval = (random.random()-0.5)*50 - 19
+  zval = (random.random() - 0.5) * 50 - 19
   zArr.append(zval)
-  yArr.append(mymap.calcHeight(xval, zval))
+  yArr.append(mymap.calcHeight(xval, zval) + 2.0)
   rArr.append(random.random()*45)
 
-for b in shed.buf:
-  thisAbbGp = pi3d.MergeShape(name="shed")
-  # i.e. different merge groups for each part requiring different texture
-  for i in range(len(xArr)):
-    thisAbbGp.add(b, xArr[i], yArr[i], zArr[i], 0, rArr[i], 0)
-  shedgp.append(thisAbbGp)
-  shedgp[len(shedgp)-1].set_draw_details(shader, b.textures, 0.0, 0.0)
-  shedgp[len(shedgp)-1].set_fog((0.1,0.1,0.1,1.0), 250.0)
+for i, b in enumerate(shed.buf):
+  for j in range(len(xArr)):
+    shedgp.merge(b, xArr[j], yArr[j], zArr[j], 0.0, rArr[j], 0.0,
+                  1.0, 1.0, 1.0, i) # last arg is buf number
+
 
 # monster
 monst = pi3d.TCone()
@@ -234,9 +232,8 @@ while DISPLAY.loop_running():
 
   # draw the sheds, slight hack as only need to do this if near middle!
   if abs(xm) < 100 and abs(zm) < 100:
-    for g in shedgp:
-      g.set_light(light)
-      g.draw()
+    shedgp.set_light(light)
+    shedgp.draw()
 
   #key press ESCAPE to terminate
   k = mykeys.read()

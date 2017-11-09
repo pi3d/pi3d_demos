@@ -52,9 +52,9 @@ LOGGER.info('Starting NumpyBalls')
 while DISPLAY.loop_running():
   a = np.array([b.unif[0:3] for b in SPRITES])
   b = np.copy(a)
-  d0 = np.subtract.outer(a[:,0], b[:,0])
-  d1 = np.subtract.outer(a[:,1], b[:,1])
-  d3 = np.hypot(d0, d1) - RADII
+  d0 = a[:,0].reshape(1,-1).T - b[:,0]
+  d1 = a[:,1].reshape(1,-1).T - b[:,1]
+  d3 = (d0 ** 2 + d1 ** 2) ** 0.5 - RADII
   
   for i in range(0, MAX_BALLS):
     for j in range(i + 1, MAX_BALLS):

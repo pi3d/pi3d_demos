@@ -123,8 +123,8 @@ while DISPLAY.loop_running():
 
   ##### bounce off each other. Work increases as square of N
   if interact:
-    d1 = (loc[:,0].reshape(1,-1).T - loc[:,0]) # array of all the x diffs
-    d2 = (loc[:,1].reshape(1,-1).T - loc[:,1]) # array of all the y diffs
+    d1 = (loc[np.newaxis,:,0].T - loc[:,0]) # array of all the x diffs
+    d2 = (loc[np.newaxis,:,1].T - loc[:,1]) # array of all the y diffs
     ix = np.where(((d1 ** 2 + d2 ** 2) ** 0.5 - radii) < 0.0) # index of all overlaps
     non_dup = np.where(ix[0] < ix[1])[0] # remove double count and 'self' overlaps
     ix = (ix[0][non_dup], ix[1][non_dup]) # remake slimmed down index

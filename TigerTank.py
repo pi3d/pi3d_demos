@@ -4,14 +4,38 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 """ Landscape from ElevationMap with model tanks and buildings. Demonstrates using
 a function to draw the various parts of the tank and the ElevationMap.pitch_roll()
 method to make models conform (aproximately) to the surface of an ElevationMap.
-The tank gun is raised as the mouse view point to looking up. This shows how to
-combine various rotations about different axes without the objects falling apart!
-This demo also uses a tkinter tkwindow but creates it as method of Display. Compare
-with the system used in demos/MarsStation.py
+
 Also look out for:
+
+Parent-child Shapes. The tank gun is a child of the turret which is a child
+of the body. The gun is raised as the mouse view points to looking up by rotating
+about its local x axis. The turret rotates about its local y axis. This shows how to
+combine various rotations about different axes without the objects falling apart!
+
+Note that the origin for all three component Shapes of the tank model is
+at the pivot point of the turret. However for the gun the rotation is moved
+to the front edge of the turret by using cz=2.5 in the constructor.
+
+In order for the missiles to be fired from the tanks correctly this demo
+shows the use of Shape.transform_direction() which generate a 3D vector
+representing the direction of the gun in global space. This is used to provide
+launch velocity for the missiles which are then rotated to align with their
+current velocity (on their parabola) using Shape.rotate_to_direction()
+
+The Shape.shallow_clone() method has been used to make mulitple copies of
+the tanks and missiles. This creates instances of the position, rotation,
+scale etc properties of the Shape but shares the mesh and texture data.
+
+Rather than use the normal methods for positioning and rotating shapes the
+@property and associated setter methods have been used Shape.xyz and Shape.rxryrz
+
 2D shader usage. Drawing onto an ImageSprite canvas placed in front of the camera
 imediately after reset() This is used to generate a splash screed during file
-loading and to draw a telescopic site view and a navigation map
+loading and to draw a telescopic site view and a navigation map with the locations
+of the tanks.
+
+This demo also uses a tkinter tkwindow but creates it as method of Display. Compare
+with the system used in demos/MarsStation.py
 """
 import math, random, time, traceback
 
@@ -38,6 +62,7 @@ win = DISPLAY.tkwin
 
 shader = pi3d.Shader('uv_bump')
 flatsh = pi3d.Shader('uv_flat')
+matsh = pi3d.Shader('mat_light')
 shade2d = pi3d.Shader('2d_flat')
 
 #========================================
@@ -74,20 +99,49 @@ FOG = (0.5, 0.5, 0.5, 0.8)
 mymap.set_fog(FOG, 1000.0)
 
 #Load tank
-tank_body = pi3d.Model(file_string='models/Tiger/body.obj', sx=0.1, sy=0.1, sz=0.1)
+tank_body = pi3d.Model(file_string='models/Tiger/body.obj')
 tank_body.set_shader(shader)
 tank_body.set_normal_shine(tigerbmp)
+tank_body.set_fog(FOG, 1000.0)
 
-tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj')
+tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj', z=0.2, cz=2.5)
 tank_gun.set_shader(shader)
+tank_body.set_fog(FOG, 1000.0)
 
 tank_turret = pi3d.Model(file_string='models/Tiger/turret.obj')
 tank_turret.set_shader(shader)
 tank_turret.set_normal_shine(topbmp)
+tank_turret.set_fog(FOG, 1000.0)
+
+#Make some clones of this tank
+tanks = [] # will be a list of lists [body, turret, gun] to allow articulation
+tanks.append([tank_body, tank_turret, tank_gun]) # tanks[0] will be the one driven by the user
+for i in range(3): # try increasing to see the limitations of pi3d, python, GPU and CPU
+  tanks.append([tank_body.shallow_clone(), None, None])
+  tanks[-1][1] = tank_turret.shallow_clone()
+  tanks[-1][2] = tank_gun.shallow_clone()
+  tanks[-1][0].xyz = (random.random() * 800.0 - 400.0, 0.0, random.random() * 600.0 - 100.0)
 ### because these children will inherit matrix operation applied to
 #   their parent they don't need to be scaled
-tank_body.add_child(tank_turret)
-tank_turret.add_child(tank_gun)
+#   as these are cloned the child references get duplicated if add_child()
+#   is used so the children attribute has to be overwritten with a new list (of one)
+for t in tanks:
+  t[0].children = [t[1]] #turret is child of body
+  t[1].children = [t[2]] #gun is child of turret
+
+#Make some missiles
+missile = pi3d.Lathe(path=((0.0, 1.5), (0.1, 1.5), (0.13, 0.7),
+                (0.2, 0.6), (0.2, 0.01), (0.19, 0.0), (0.0, 0.0)), sides=8)
+missile.set_material((1.0, 0.0, 1.0)) # purple beer bottle!
+missile.set_shader(matsh) # mat_light is default if nothing specified better to be explicit
+
+missiles = [] # will be list of missiles
+for t in tanks:
+  missiles.append(missile.shallow_clone())
+  missiles[-1].x_vel = 0.0 # add velocity attributes to the instance
+  missiles[-1].y_vel = -5.0 # this may or may not be good practice but
+  missiles[-1].z_vel = 0.0 # python allows it so why not...
+  missiles[-1].next_tm = 0.0 # also add next fire time to missiles to restrict fire rate
 
 #Load church
 x, z = 20, -320
@@ -128,14 +182,6 @@ smmap = pi3d.ImageSprite(mountimg1, flatsh, w=200, h=200,
 dot1 = pi3d.ImageSprite(redb, flatsh, w=10, h=10, z=0.1, camera=CAM2D)
 dot2 = pi3d.ImageSprite(blub, flatsh, w=10, h=10, z=0.05, camera=CAM2D)
 
-#player tank vars
-tankrot = 180.0
-turret = 0.0
-tankroll = 0.0     #side-to-side roll of tank on ground
-tankpitch = 0.0    #too and fro pitch of tank on ground
-enemyroll = 0.0
-enemypitch = 0.0
-
 #key presses
 mymouse = pi3d.Mouse(restrict = False)
 mymouse.start()
@@ -144,28 +190,18 @@ omx, omy = mymouse.position()
 #position vars
 mouserot = 0.0
 tilt = 0.0
-avhgt = 0.85
+avhgt = 6.0
 xm, oxm = 0.0, -1.0
 zm, ozm = -200.0, -1.0
 ym = mymap.calcHeight(xm, zm) + avhgt
-
-#enemy tank vars
-etx = 120
-etz = -120
-etr = 0.0
+tankrot, tankpitch, tankroll = 180.0, 0.0, 0.0
+turret = 0.0
 
 ltm = 0.0 #last pitch roll check
 smode = False #sniper mode
 
-def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle):
-  tank_body.position(x, y, z)
-  tank_body.rotateToX(pitch)
-  tank_body.rotateToY(rot-90)
-  tank_body.rotateToZ(roll)
-  tank_turret.rotateToY(turret - rot)
-  tank_gun.rotateToZ(gunangle)
-  tank_body.draw() # children drawn too.
-
+def limit_tilt(tilt):
+  return (tilt - 5) if tilt > 5.0 else 0.0
 
 # Update display before we begin (user might have moved window)
 win.update()
@@ -174,132 +210,164 @@ DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 is_running = True
 try:
   while DISPLAY.loop_running():
-    mx, my = mymouse.position()
-    mouserot -= (mx-omx)*0.2
-    tilt += (my-omy)*0.2
-    omx=mx
-    omy=my
+      mx, my = mymouse.position()
+      mouserot -= (mx-omx)*0.2
+      tilt += (my-omy)*0.2
+      omx=mx
+      omy=my
 
-    CAMERA.reset()
+      CAMERA.reset()
 
-    smmap.draw()
-    dot1.position(HW + 200.0 * xm/mapwidth, HH + 200.0 * zm / mapdepth, 0.1)
-    dot2.position(HW + 200.0 * etx/mapwidth, HH + 200.0 * etz / mapdepth, 0.05)
-    dot1.draw()
-    dot2.draw()
+      smmap.draw()
+      for t in tanks[1:]: # all the enemy dots will be the same colour
+        dot2.xyz = (HW + 200.0 * t[0].x() / mapwidth, HH + 200.0 * t[0].z() / mapdepth, 0.05)
+        dot2.draw()
+      dot1.xyz = (HW + 200.0 * xm/mapwidth, HH + 200.0 * zm / mapdepth, 0.1)
+      dot1.draw()
 
-    # tilt can be used to prevent the view from going under the landscape!
-    sf = 60 - 55.0 / abs(tilt) if tilt < -1 else 5.0
-    xoff = sf * math.sin(math.radians(mouserot))
-    yoff = abs(1.25 * sf * math.sin(math.radians(tilt))) + 3.0
-    zoff = -sf * math.cos(math.radians(mouserot))
+      # tilt can be used to prevent the view from going under the landscape!
+      sf = 60 - 55.0 / abs(tilt) if tilt < -1 else 5.0
+      xoff = sf * math.sin(math.radians(mouserot))
+      yoff = abs(1.25 * sf * math.sin(math.radians(tilt))) + 3.0
+      zoff = -sf * math.cos(math.radians(mouserot))
 
-    if tilt > -5 and smode == False: # zoom in
-      CAMERA.reset(lens=(1, 3000, 12.5, DISPLAY.width / DISPLAY.height))
-      smode = True
-    elif tilt <= -5 and smode == True: # zoom out
-      CAMERA.reset(lens=(1, 3000, 45, DISPLAY.width / DISPLAY.height))
-      smode = False
+      if tilt > -5 and smode == False: # zoom in
+        CAMERA.reset(lens=(1, 3000, 12.5, DISPLAY.width / DISPLAY.height))
+        smode = True
+      elif tilt <= -5 and smode == True: # zoom out
+        CAMERA.reset(lens=(1, 3000, 45, DISPLAY.width / DISPLAY.height))
+        smode = False
 
-    #adjust CAMERA position in and out so we can see our tank
-    CAMERA.rotate(tilt, mouserot, 0)
-    CAMERA.position((xm + xoff, ym + yoff + 5, zm + zoff))
-    oxm, ozm = xm, zm
+      #adjust CAMERA position in and out so we can see our tank
+      CAMERA.rotate(tilt, mouserot, 0)
+      CAMERA.position((xm + xoff, ym + yoff + 5.0, zm + zoff))
+      oxm, ozm = xm, zm
 
-    #draw player tank with smoothing on pitch and roll to lessen jerkiness
-    drawTiger(xm, ym, zm, tankrot, tankroll, tankpitch, 180 - turret, ((tilt+20)*-1.0 if tilt > -20.0 else 0.0))
+      mymap.draw() # Draw the landscape first as tank wheels have transparency
 
-    mymap.draw()           # Draw the landscape
+      for i, t in enumerate(tanks):
+        b_x, b_y, b_z = t[0].xyz
+        b_rx, b_ry, b_rz = t[0].rxryrz
+        t_rx, t_ry, t_rz = t[1].rxryrz
+        g_rx, g_ry, g_rz = t[2].rxryrz
+        if i == 0: # this is your tank
+          b_x, b_z = xm, zm
+          ym = b_y # as y value set later and ym is used for camera
+          tgt_x, tgt_z = b_x, b_z # other tanks will use tanks[0] as target!
+          b_ry = tankrot
+          t_ry = 180 + turret - tankrot
+          g_rx = limit_tilt(tilt)
+        else: # these are enemies
+          manhatten_dist = abs(tgt_x - b_x) + abs(tgt_z - b_z) # approx so they're not too accurate
+          b_x -= 0.5 * math.sin(math.radians(b_ry))
+          b_z -= 0.5 * math.cos(math.radians(b_ry))
+          rot_to = math.degrees(math.atan2(tgt_x - b_x, tgt_z - b_z))
+          # use tweening for rotation and add an error depending on dist and i
+          # this remainder method avoids weirdness as rot_to goes from 0 to 360
+          b_ry += ((rot_to + 7.5 * i + 3000.0 / manhatten_dist - b_ry) % 360 - 180) * 0.05
+          t_ry = 180 + rot_to - b_ry # point straight as us!
+          g_rx = min(45.0, max(0.0, manhatten_dist * 0.2))
+        pitch, roll = mymap.pitch_roll(b_x, b_z)
+        b_y = mymap.ht_y + avhgt # calcHeight is now called as part of pitch_roll
+        b_rx = b_rx * 0.9 + pitch * 0.1
+        b_rz = b_rz * 0.9 + roll * 0.1
 
-    #Draw enemy tank
-    etdx = -math.sin(math.radians(etr))
-    etdz = -math.cos(math.radians(etr))
-    etx += etdx
-    etz += etdz
-    #ety = mymap.calcHeight(etx, etz) + avhgt # see below
-    etr += 0.5
-    pitch, roll = mymap.pitch_roll(etx, etz)
-    ety = mymap.ht_y + avhgt # calcHeight is now called as part of pitch_roll
-    enemypitch = enemypitch * 0.9 + pitch * 0.1
-    enemyroll = enemyroll * 0.9 + roll * 0.1
-    drawTiger(etx, ety, etz, etr, enemyroll, enemypitch, etr, 0)
+        t[0].xyz = (b_x, b_y, b_z) # set position
+        t[0].rxryrz = (b_rx, b_ry, b_rz) # set rotations. Body
+        t[1].rxryrz = (t_rx, t_ry, t_rz) # turret
+        t[2].rxryrz = (g_rx, g_ry, g_rz) # gun
+        t[0].draw()
 
-    #Draw buildings
-    church.draw()
-    cottages.draw()
+      for i, m in enumerate(missiles):
+        m_x, m_y, m_z = m.xyz
+        tm = time.time()
+        if m_y < mymap.calcHeight(m_x, m_z):
+          #print(i, tm, m.next_tm)
+          # dropped through the floor, go back to gun and get launch direction
+          if tm > m.next_tm: # if long enough gap
+            # NB vectors are scaled by the parent scale factor
+            m.next_tm = tm + 10.0
+            # the gun is actually pointing -z direction. move up 2 so 
+            but_pt, aim_vec = tanks[i][2].transform_direction([0.0, 0.0, -1.0],
+                                                              [0.0, 0.0, 0.0])
+            m.xyz = but_pt + aim_vec * 12.0 # start from about muzzle
+            m.x_vel, m.y_vel, m.z_vel = aim_vec * 3.0
+        else:
+          m.y_vel -= 0.03 # downward acc gravity
+          # the missile created by Lathe is pointing upwards so use up vector
+          # also have to reverse x, not sure why
+          m.rotate_to_direction([-m.x_vel, m.y_vel, m.z_vel], [0.0, 1.0, 0.0])
+          m.xyz = (m_x + m.x_vel, m_y + m.y_vel, m_z + m.z_vel)
+          m.draw()
 
-    myecube.position(xm, ym, zm)
-    myecube.draw()  #Draw environment cube
+      #Draw buildings
+      church.draw()
+      cottages.draw()
 
-    if smode:
-      """ because some of the overlays have blend=True they must be done AFTER
-      other objects have been rendered.
-      """
-      target.draw()
-      sniper.draw()
+      myecube.xyz = (xm, ym, zm)
+      myecube.draw()  #Draw environment cube
 
-    # turns player tankt turret towards center of screen which will have a crosshairs
-    if turret + 2.0 < mouserot:
-      turret += 2.0
-    if turret - 2.0 > mouserot:
-      turret -= 2.0
+      if smode:
+        """ because some of the overlays have blend=True they must be done AFTER
+        other objects have been rendered.
+        """
+        target.draw()
+        sniper.draw()
 
-    try:
-      win.update()
-    except Exception as e:
-      LOGGER.info("bye,bye2 %s", e)
-      DISPLAY.destroy()
+      # turns player tankt turret towards center of screen which will have a crosshairs
+      if turret + 2.0 < -mouserot:
+        turret += 2.0
+      if turret - 2.0 > -mouserot:
+        turret -= 2.0
+
       try:
-        win.destroy()
-      except:
-        pass
-      mymouse.stop()
-      exit()
-    if win.ev == "resized":
-      LOGGER.info("resized")
-      DISPLAY.resize(win.winx, win.winy, win.width, win.height-bord)
-      CAMERA.reset((DISPLAY.near, DISPLAY.far, DISPLAY.fov,
-                  DISPLAY.width / float(DISPLAY.height)))
-      win.resized = False
-    if win.ev == "key":
-      mv = False
-      if win.key == "w":
-        xm -= math.sin(math.radians(tankrot)) * 2
-        zm -= math.cos(math.radians(tankrot)) * 2
-        mv = True
-      elif win.key == "s":
-        xm += math.sin(math.radians(tankrot)) * 2
-        zm += math.cos(math.radians(tankrot)) * 2
-        mv = True
-      elif win.key == "a":
-        tankrot -= 2
-      elif win.key == "d":
-        tankrot += 2
-      elif win.key == "p":
-        pi3d.screenshot("TigerTank.jpg")
-      elif win.key == "Escape":
+        win.update()
+      except Exception as e:
+        LOGGER.info("bye,bye2 %s", e)
+        DISPLAY.destroy()
         try:
-          LOGGER.info("bye,bye1")
-          DISPLAY.destroy()
-          try:
-            win.destroy()
-          except:
-            pass
-          mymouse.stop()
-          exit()
+          win.destroy()
         except:
           pass
-      if mv: # moved so recalc pitch_roll
-        pitch, roll = mymap.pitch_roll(xm, zm)
-        tankpitch = tankpitch * 0.9 + pitch * 0.1
-        tankroll = tankroll * 0.9 + roll * 0.1
-        ym = mymap.ht_y + avhgt # calcHeight done by pitch_roll
-    if win.ev=="drag" or win.ev=="click" or win.ev=="wheel":
-      xm -= math.sin(math.radians(tankrot)) * 2
-      zm -= math.cos(math.radians(tankrot)) * 2
-      ym = (mymap.calcHeight(xm, zm) + avhgt)
-    else:
-      win.ev=""  #clear the event so it doesn't repeat
+        mymouse.stop()
+        exit()
+      if win.ev == "resized":
+        LOGGER.info("resized")
+        DISPLAY.resize(win.winx, win.winy, win.width, win.height-bord)
+        CAMERA.reset((DISPLAY.near, DISPLAY.far, DISPLAY.fov,
+                    DISPLAY.width / float(DISPLAY.height)))
+        win.resized = False
+      if win.ev == "key":
+        if win.key == "w":
+          xm -= math.sin(math.radians(tankrot)) * 2
+          zm -= math.cos(math.radians(tankrot)) * 2
+        elif win.key == "s":
+          xm += math.sin(math.radians(tankrot)) * 2
+          zm += math.cos(math.radians(tankrot)) * 2
+        elif win.key == "a":
+          tankrot -= 2
+        elif win.key == "d":
+          tankrot += 2
+        elif win.key == "p":
+          pi3d.screenshot("TigerTank.jpg")
+        elif win.key == "Escape":
+          try:
+            LOGGER.info("bye,bye1")
+            DISPLAY.destroy()
+            try:
+              win.destroy()
+            except:
+              pass
+            mymouse.stop()
+            exit()
+          except:
+            pass
+      if win.ev=="drag" or win.ev=="click" or win.ev=="wheel":
+        xm -= math.sin(math.radians(tankrot)) * 2
+        zm -= math.cos(math.radians(tankrot)) * 2
+        ym = (mymap.calcHeight(xm, zm) + avhgt)
+      else:
+        win.ev=""  #clear the event so it doesn't repeat
 
 except Exception as e:
   LOGGER.info("bye,bye3 %s", e)

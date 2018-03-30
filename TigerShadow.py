@@ -66,7 +66,7 @@ def set_fog(shape):
   shape.set_fog(FOG, 1000.0)
 
 #Load tank
-tank_body = pi3d.Model(file_string='models/Tiger/body.obj', sx=0.1, sy=0.1, sz=0.1)
+tank_body = pi3d.Model(file_string='models/Tiger/body.obj')
 tank_body.set_shader(shader)
 tank_body.set_normal_shine(tigerbmp)
 """ NB the shadow texture must be the third texture in Buffer.textures
@@ -143,7 +143,7 @@ omx, omy = mymouse.position()
 #position vars
 mouserot = 0.0
 tilt = 0.0
-avhgt = 0.85
+avhgt = 6.0
 xm, oxm = 5.0, -1.0
 zm, ozm = -185.0, -1.0
 ym = mymap.calcHeight(xm, zm) + avhgt
@@ -162,7 +162,7 @@ smode = False #sniper mode
 def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle, shadows=None):
   tank_body.position(x, y, z)
   tank_body.rotateToX(pitch)
-  tank_body.rotateToY(rot-90)
+  tank_body.rotateToY(rot)
   tank_body.rotateToZ(roll)
   tank_turret.rotateToY(turret - rot)
   tank_gun.rotateToZ(gunangle)
@@ -222,8 +222,8 @@ try:
     difx = etx - xm # distance from self
     difz = etz - zm
     difd = (difx**2 + difz**2)**0.5
-    detx = 1.5 * difz / difd - 0.005 * (difd - etr) * difx / difd
-    detz = -1.5 * difx / difd - 0.005 * (difd - etr) * difz / difd
+    detx = 1.0 * difz / difd - 0.005 * (difd - etr) * difx / difd
+    detz = -1.0 * difx / difd - 0.005 * (difd - etr) * difz / difd
     etx += detx # gradually turns to circle player tank
     etz += detz
     #ety = mymap.calcHeight(etx, etz) + avhgt # see below

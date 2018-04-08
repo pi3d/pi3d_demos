@@ -34,8 +34,13 @@ imediately after reset() This is used to generate a splash screed during file
 loading and to draw a telescopic site view and a navigation map with the locations
 of the tanks.
 
+The ElevationMap uses the uv_elev_map shader which allow four diffuse and
+four normal textures to be mapped to the terrain.
+
 This demo also uses a tkinter tkwindow but creates it as method of Display. Compare
 with the system used in demos/MarsStation.py
+
+Tip: u raises gun, j lowers gun, f fires gun
 """
 import math, random, time, traceback
 
@@ -61,6 +66,7 @@ pi3d.Light(lightpos=(-1, -1, 1), lightcol =(0.8, 0.8, 0.8), lightamb=(0.30, 0.30
 win = DISPLAY.tkwin
 
 shader = pi3d.Shader('uv_bump')
+mapshader = pi3d.Shader("uv_elev_map")
 flatsh = pi3d.Shader('uv_flat')
 matsh = pi3d.Shader('mat_light')
 shade2d = pi3d.Shader('2d_flat')
@@ -82,36 +88,46 @@ mapwidth = 2000.0
 mapdepth = 2000.0
 mapheight = 100.0
 mountimg1 = pi3d.Texture('textures/mountains3_512.jpg')
-bumpimg = pi3d.Texture('textures/grasstile_n.jpg')
-tigerbmp = pi3d.Texture('models/Tiger/tiger_bump.jpg')
-topbmp = pi3d.Texture('models/Tiger/top_bump.jpg')
+strawimg = pi3d.Texture('textures/Roof.png')
+grassimg = pi3d.Texture('textures/grass.jpg')
+rockimg = pi3d.Texture('textures/rock1.jpg')
 redb = pi3d.Texture('textures/red_ball.png', blend=True)
 blub = pi3d.Texture('textures/blu_ball.png', blend=True)
 
+# normal textures
+tigerbmp = pi3d.Texture('models/Tiger/tiger_bump.jpg')
+topbmp = pi3d.Texture('models/Tiger/top_bump.jpg')
+mudbmp = pi3d.Texture('textures/mudnormal.jpg')
+grassbmp = pi3d.Texture('textures/grasstile_n.jpg')
+rockbmp = pi3d.Texture('textures/rocktile2.jpg')
+
 mymap = pi3d.ElevationMap(mapfile='textures/mountainsHgt2.png',
                      width=mapwidth, depth=mapdepth,
-                     height=mapheight, divx=64, divy=64)
+                     height=mapheight, divx=64, divy=64, texmap='textures/roads.jpg')
 
-mymap.set_draw_details(shader, [mountimg1, bumpimg], 128.0, 0.0)
+mymap.set_draw_details(mapshader, [grassimg, grassbmp,
+                                rockimg, rockbmp, 
+                                mountimg1, rockbmp,
+                                strawimg, mudbmp], 64.0, 0.0, umult=48.0, vmult=48.0)
 
 FOG = (0.5, 0.5, 0.5, 0.8)
 
-mymap.set_fog(FOG, 1000.0)
+mymap.set_fog(FOG, 800.0)
 
 #Load tank
 tank_body = pi3d.Model(file_string='models/Tiger/body.obj')
 tank_body.set_shader(shader)
 tank_body.set_normal_shine(tigerbmp)
-tank_body.set_fog(FOG, 1000.0)
+tank_body.set_fog(FOG, 800.0)
 
 tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj', z=0.2, cz=2.5)
 tank_gun.set_shader(shader)
-tank_body.set_fog(FOG, 1000.0)
+tank_body.set_fog(FOG, 800.0)
 
 tank_turret = pi3d.Model(file_string='models/Tiger/turret.obj')
 tank_turret.set_shader(shader)
 tank_turret.set_normal_shine(topbmp)
-tank_turret.set_fog(FOG, 1000.0)
+tank_turret.set_fog(FOG, 800.0)
 
 #Make some clones of this tank
 tanks = [] # will be a list of lists [body, turret, gun] to allow articulation
@@ -150,6 +166,7 @@ y = mymap.calcHeight(x,z)
 church = pi3d.Model(file_string='models/AllSaints/AllSaints.obj',
           sx=0.1, sy=0.1, sz=0.1, x=x, y=y, z=z)
 church.set_shader(shader)
+church.set_fog(FOG, 800.0)
 
 #Load cottages
 x, z = 250,-40
@@ -158,6 +175,7 @@ y = mymap.calcHeight(x,z)
 cottages = pi3d.Model(file_string='models/Cottages/cottages_low.obj',
           sx=0.1, sy=0.1, sz=0.1, x=x, y=y, z=z, ry=-5)
 cottages.set_shader(shader)
+cottages.set_fog(FOG, 800.0)
 
 #cross-hairs in gun sight
 targtex = pi3d.Texture("textures/target.png", blend=True)
@@ -196,12 +214,13 @@ zm, ozm = -200.0, -1.0
 ym = mymap.calcHeight(xm, zm) + avhgt
 tankrot, tankpitch, tankroll = 180.0, 0.0, 0.0
 turret = 0.0
+elev = 0.0
 
 ltm = 0.0 #last pitch roll check
 smode = False #sniper mode
 
 def limit_tilt(tilt):
-  return (tilt - 5) if tilt > 5.0 else 0.0
+  return elev + ((tilt - 5) if tilt > 5.0 else 0.0)
 
 # Update display before we begin (user might have moved window)
 win.update()
@@ -299,6 +318,15 @@ try:
           m.rotate_to_direction([-m.x_vel, m.y_vel, m.z_vel], [0.0, 1.0, 0.0])
           m.xyz = (m_x + m.x_vel, m_y + m.y_vel, m_z + m.z_vel)
           m.draw()
+          # approx hit detection
+          for j, t in enumerate(tanks):
+            if i != j:
+              t_x, t_y, t_z = t[0].xyz
+              if abs(m_x - t_x) < 10 and abs(m_y - t_y) < 4 and abs(m_z - t_z) < 10:
+                o_x, o_y, o_z = tanks[i][0].xyz
+                dist = ((o_x - t_x) ** 2 + (o_y - t_y) ** 2 + (o_z - t_z) ** 2) ** 0.5
+                print('tank #{} hit tank #{} at a range of {:5.1f}'.format(i, j, dist))
+                m.xyz = m_x, -1000, m_z # stop multiple hits!
 
       #Draw buildings
       church.draw()
@@ -314,7 +342,7 @@ try:
         target.draw()
         sniper.draw()
 
-      # turns player tankt turret towards center of screen which will have a crosshairs
+      # turns player tank turret towards center of screen which will have a crosshairs
       if turret + 2.0 < -mouserot:
         turret += 2.0
       if turret - 2.0 > -mouserot:
@@ -348,8 +376,15 @@ try:
           tankrot -= 2
         elif win.key == "d":
           tankrot += 2
+        elif win.key == "f": # fire on space
+          missiles[0].positionY(-100.0)
+          missiles[0].next_tm = 0.0
         elif win.key == "p":
           pi3d.screenshot("TigerTank.jpg")
+        elif win.key == "u":
+          elev += 5
+        elif win.key == "j":
+          elev -= 5
         elif win.key == "Escape":
           try:
             LOGGER.info("bye,bye1")

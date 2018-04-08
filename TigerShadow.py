@@ -75,7 +75,7 @@ drawn to. This isn't a problem where the textures can be passed to the
 draw() method as with the ElevationMap see line 260. However for Model
 drawing the diffuse texture is loaded automatically so the botch is to
 check if there are still only two texttures and add the shadow map as
-the third one see line 177
+the third one see line 170
 """
 tank_gun = pi3d.Model(file_string='models/Tiger/gun.obj')
 tank_gun.set_shader(shader)

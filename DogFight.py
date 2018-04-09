@@ -36,6 +36,7 @@ print("""===================================
 ================================""")
 
 SHADER = pi3d.Shader("uv_bump") #for objects to look 3D
+ELEVSH = pi3d.Shader("uv_elev_map") # for multi textured terrain
 FLATSH = pi3d.Shader("uv_flat") #for 'unlit' objects like the background
 
 GRAVITY = 9.8 #m/s**2
@@ -433,13 +434,20 @@ myecube.set_fog((0.5,0.5,0.5,1.0), 4000)
 mapwidth = 10000.0
 mapdepth = 10000.0
 mapheight = 1000.0
-mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
-bumpimg = pi3d.Texture("textures/grasstile_n.jpg")
-reflimg = pi3d.Texture("textures/stars.jpg")
+mountimg1 = pi3d.Texture('textures/mountains3_512.jpg') # diffuse textures
+roadimg = pi3d.Texture('textures/Roof.png')
+grassimg = pi3d.Texture('textures/grass.jpg')
+rockimg = pi3d.Texture('textures/rock1.jpg')
+mudbmp = pi3d.Texture('textures/mudnormal.jpg') #normal textures
+grassbmp = pi3d.Texture('textures/grasstile_n.jpg')
+rockbmp = pi3d.Texture('textures/rocktile2.jpg')
 mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
                      width=mapwidth, depth=mapdepth, height=mapheight,
-                     divx=64, divy=64, camera=CAMERA)
-mymap.set_draw_details(SHADER, [mountimg1, bumpimg, reflimg], 1024.0, 0.0)
+                     divx=64, divy=64, camera=CAMERA, texmap='textures/roads.jpg')
+mymap.set_draw_details(ELEVSH, [grassimg, grassbmp,
+                                rockimg, rockbmp, 
+                                mountimg1, rockbmp,
+                                roadimg, mudbmp], 64.0, 0.0, umult=96.0, vmult=96.0)
 mymap.set_fog((0.5, 0.5, 0.5, 1.0), 4000)
 # init events
 inputs = pi3d.InputEvents()

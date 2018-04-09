@@ -88,7 +88,7 @@ mapwidth = 2000.0
 mapdepth = 2000.0
 mapheight = 100.0
 mountimg1 = pi3d.Texture('textures/mountains3_512.jpg')
-strawimg = pi3d.Texture('textures/Roof.png')
+roadimg = pi3d.Texture('textures/Roof.png')
 grassimg = pi3d.Texture('textures/grass.jpg')
 rockimg = pi3d.Texture('textures/rock1.jpg')
 redb = pi3d.Texture('textures/red_ball.png', blend=True)
@@ -108,7 +108,7 @@ mymap = pi3d.ElevationMap(mapfile='textures/mountainsHgt2.png',
 mymap.set_draw_details(mapshader, [grassimg, grassbmp,
                                 rockimg, rockbmp, 
                                 mountimg1, rockbmp,
-                                strawimg, mudbmp], 64.0, 0.0, umult=48.0, vmult=48.0)
+                                roadimg, mudbmp], 64.0, 0.0, umult=48.0, vmult=48.0)
 
 FOG = (0.5, 0.5, 0.5, 0.8)
 
@@ -147,7 +147,7 @@ for t in tanks:
 
 #Make some missiles
 missile = pi3d.Lathe(path=((0.0, 1.5), (0.1, 1.5), (0.13, 0.7),
-                (0.2, 0.6), (0.2, 0.01), (0.19, 0.0), (0.0, 0.0)), sides=8)
+                (0.2, 0.6), (0.2, 0.01), (0.19, 0.0), (0.0, 0.0)), sides=12)
 missile.set_material((1.0, 0.0, 1.0)) # purple beer bottle!
 missile.set_shader(matsh) # mat_light is default if nothing specified better to be explicit
 
@@ -158,6 +158,7 @@ for t in tanks:
   missiles[-1].y_vel = -5.0 # this may or may not be good practice but
   missiles[-1].z_vel = 0.0 # python allows it so why not...
   missiles[-1].next_tm = 0.0 # also add next fire time to missiles to restrict fire rate
+  missiles[-1].expl = 0.0 # also add exploding factor
 
 #Load church
 x, z = 20, -320
@@ -227,8 +228,8 @@ win.update()
 DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 is_running = True
-try:
-  while DISPLAY.loop_running():
+#try:
+while DISPLAY.loop_running():
       mx, my = mymouse.position()
       mouserot -= (mx-omx)*0.2
       tilt += (my-omy)*0.2
@@ -300,10 +301,11 @@ try:
       for i, m in enumerate(missiles):
         m_x, m_y, m_z = m.xyz
         tm = time.time()
-        if m_y < mymap.calcHeight(m_x, m_z):
+        terrain_ht = mymap.calcHeight(m_x, m_z)
+        if m_y < terrain_ht:
           #print(i, tm, m.next_tm)
           # dropped through the floor, go back to gun and get launch direction
-          if tm > m.next_tm: # if long enough gap
+          if tm > m.next_tm: # if long enough gap, re-fire missile
             # NB vectors are scaled by the parent scale factor
             m.next_tm = tm + 10.0
             # the gun is actually pointing -z direction. move up 2 so 
@@ -311,6 +313,14 @@ try:
                                                               [0.0, 0.0, 0.0])
             m.xyz = but_pt + aim_vec * 12.0 # start from about muzzle
             m.x_vel, m.y_vel, m.z_vel = aim_vec * 3.0
+            m.expl = 0.0 # stop exploding
+            m.sxsysz = (1.0, 1.0, 1.0) # return to normal size
+            m.set_point_size(0.0) # back to normal polygon drawing
+          elif m.expl < 99.5: # keep exploding until reach size or time is up
+            m.expl = 50 + m.expl * 0.5 # explode fast then slow 
+            m.sxsysz = (m.expl, m.expl, m.expl)
+            m.set_point_size(500.0) # draw vertices as points (size at one unit of distance from camera)
+            m.draw()
         else:
           m.y_vel -= 0.03 # downward acc gravity
           # the missile created by Lathe is pointing upwards so use up vector
@@ -326,7 +336,7 @@ try:
                 o_x, o_y, o_z = tanks[i][0].xyz
                 dist = ((o_x - t_x) ** 2 + (o_y - t_y) ** 2 + (o_z - t_z) ** 2) ** 0.5
                 print('tank #{} hit tank #{} at a range of {:5.1f}'.format(i, j, dist))
-                m.xyz = m_x, -1000, m_z # stop multiple hits!
+                m.xyz = m_x, terrain_ht - 0.1, m_z # stop multiple hits!
 
       #Draw buildings
       church.draw()
@@ -403,7 +413,7 @@ try:
         ym = (mymap.calcHeight(xm, zm) + avhgt)
       else:
         win.ev=""  #clear the event so it doesn't repeat
-
+'''
 except Exception as e:
   LOGGER.info("bye,bye3 %s", e)
   DISPLAY.destroy()
@@ -412,4 +422,4 @@ except Exception as e:
   except:
     pass
   mymouse.stop()
-  exit()
+  exit()'''

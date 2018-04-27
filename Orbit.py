@@ -62,7 +62,7 @@ class Planet(pi3d.Sphere):
     force = np.array([0.0, 0.0, 0.0])
     for body in bodies:
       dirctn = body.pos - self.pos
-      dist = ((dirctn ** 2.0).sum()) ** 0.5
+      dist = np.linalg.norm(dirctn)
       """ NB dist is cubed because (dirctn/dist) is the unit vector between
       masses and the size of the force is GMm/d^2
       """

@@ -18,7 +18,7 @@ LOGGER.info("\n\nAs yet there is no system for freeing gpu memory taken by shade
 #LOGGER.set_logs(file='templog.txt')
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(w=1280, h=720)
+DISPLAY = pi3d.Display.create(w=1280, h=720, frames_per_second=30)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))

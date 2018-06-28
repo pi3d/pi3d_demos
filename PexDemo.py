@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import demo
 import pi3d
 
-display = pi3d.Display.create()
+display = pi3d.Display.create(frames_per_second=30)
 cam2D = pi3d.Camera(is_3d=False)
 shader = pi3d.Shader('uv_flat')
 

@@ -22,7 +22,7 @@ atoms = {1:['hydrogen', 0.5, (1.0, 0.0, 0.0)],
          8:['oxygen', 0.9, (1.0, 1.0, 1.0)],
          15:['phosphorus', 1.5, (1.0, 0.0, 1.0)]}
 
-display = pi3d.Display.create()
+display = pi3d.Display.create(frames_per_second=30)
 camera = pi3d.Camera()
 
 ball = pi3d.Sphere(radius=atoms[6][1])

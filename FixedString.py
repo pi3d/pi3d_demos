@@ -9,7 +9,7 @@ for each letter"""
 import demo
 import pi3d
 
-DISPLAY = pi3d.Display.create(x=150, y=150)
+DISPLAY = pi3d.Display.create(x=150, y=150, frames_per_second=30)
 flatsh = pi3d.Shader("uv_flat")
 shader = pi3d.Shader("uv_bump")
 CAMERA = pi3d.Camera()

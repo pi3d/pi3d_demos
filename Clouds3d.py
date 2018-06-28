@@ -26,7 +26,7 @@ zd = 1.0 * cloud_depth / cloudno
 MARGIN = 100
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=MARGIN, y=MARGIN)
+DISPLAY = pi3d.Display.create(x=MARGIN, y=MARGIN, frames_per_second=30)
 scnx = DISPLAY.width
 scny = DISPLAY.height
 

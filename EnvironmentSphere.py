@@ -9,7 +9,7 @@ from math import cos, sin, radians
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100,
-                         background=(0.2, 0.4, 0.6, 1))
+                         background=(0.2, 0.4, 0.6, 1), frames_per_second=30)
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader('uv_flat')
 #========================================

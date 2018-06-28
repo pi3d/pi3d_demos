@@ -35,7 +35,7 @@ logger.set_logs(level='WARNING') # set level back to higher threshold
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100, background=(0.4, 0.8, 0.8, 1),
-                              use_pygame=True)
+                              use_pygame=True, frames_per_second=30)
 
 shader = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")

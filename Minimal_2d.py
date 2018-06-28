@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 """ Example showing what can be left out. ESC to quit"""
 import demo
 import pi3d
-DISPLAY = pi3d.Display.create(x=150, y=150)
+DISPLAY = pi3d.Display.create(x=150, y=150, frames_per_second=30)
 shader = pi3d.Shader("uv_flat")
 CAMERA = pi3d.Camera(is_3d=False)
 sprite = pi3d.ImageSprite("textures/PATRN.PNG", shader, w=100.0, h=100.0, z=5.0)

@@ -69,7 +69,7 @@ clothimg = pi3d.Texture(wv)
 ########################################################################
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=100, y=100)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
 DISPLAY.set_background(0.4, 0.8, 0.8, 1.0)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.45, 0.5, 0.6))

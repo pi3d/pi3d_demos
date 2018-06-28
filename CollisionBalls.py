@@ -18,7 +18,7 @@ MAX_BALL_SIZE = 40
 MAX_BALL_VELOCITY = 10.0
 
 BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
-DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
+DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
 WIDTH, HEIGHT = DISPLAY.width, DISPLAY.height
 ZPLANE = 1000
 fov = 2.0 * math.degrees(math.atan(HEIGHT/2.0/ZPLANE))

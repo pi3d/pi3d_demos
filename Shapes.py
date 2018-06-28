@@ -13,7 +13,8 @@ import demo
 # Load *all* the classes
 import pi3d
 # Load diplay, nearly full screen
-DISPLAY = pi3d.Display.create(x=20, y=20, background=(0.0, 0.0, 0.1, 1.0))
+DISPLAY = pi3d.Display.create(x=20, y=20,
+                        background=(0.0, 0.0, 0.1, 1.0), frames_per_second=30)
 # Load shaders
 shader = pi3d.Shader("uv_light")
 shinesh = pi3d.Shader("uv_reflect")

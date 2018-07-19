@@ -10,7 +10,7 @@ from math import sin, cos
 import demo
 import pi3d
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=50, y=50)
+DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=30)
 DISPLAY.set_background(0,0,0,1)    	# r,g,b,alpha
 shader = pi3d.Shader("uv_light")
 shinesh = pi3d.Shader("uv_reflect")

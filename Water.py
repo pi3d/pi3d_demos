@@ -111,8 +111,8 @@ while DISPLAY.loop_running():
     i_n = (i_n + 1) % num_n
     mywater.buf[0].textures[0] = waterbump[i_n]
     next_time = time.time() + spf
-    av_fps = av_fps*0.9 + tick/spf*0.1 # exp smooth moving average
-    print(av_fps,"FPS")
+    av_fps = av_fps*0.75 + tick/spf*0.25 # exp smooth moving average
+    print("{:5.1f} FPS".format(av_fps))
     tick = 0
 
   tick += 1

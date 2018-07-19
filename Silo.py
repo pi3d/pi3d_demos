@@ -15,7 +15,8 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=150, y=150, background=(0.4, 0.8, 0.8, 1))
+DISPLAY = pi3d.Display.create(x=150, y=150,
+            background=(0.4, 0.8, 0.8, 1), frames_per_second=30)
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
 #############################

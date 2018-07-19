@@ -13,7 +13,7 @@ import pi3d
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=50, y=50, w=-100, h=-100,
-                         background=(0.4, 0.8, 0.8, 1))
+                         background=(0.4, 0.8, 0.8, 1), frames_per_second=30)
 shader = pi3d.Shader("uv_reflect")
 bumpsh = pi3d.Shader("uv_bump")
 flatsh = pi3d.Shader("uv_flat")

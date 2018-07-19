@@ -13,7 +13,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create()
+DISPLAY = pi3d.Display.create(frames_per_second=30)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 #TODO doesn't cope with z direction properly

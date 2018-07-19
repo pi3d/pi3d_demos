@@ -22,7 +22,7 @@ KEYBOARD = pi3d.Keyboard()
 LOGGER = pi3d.Log(__name__, level='INFO')
 
 BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
-DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
+DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
 WIDTH, HEIGHT = DISPLAY.width, DISPLAY.height
 CAMERA = pi3d.Camera(is_3d=False)
 SHADER = pi3d.Shader('uv_flat')

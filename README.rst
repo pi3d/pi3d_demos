@@ -2,61 +2,22 @@ pi3d_demos
 ==========
 
 Demos and support files for pi3d (3D graphics python package for the
-raspberry pi)
+raspberry pi and other platforms)
 
 In order to run these demos you need to have pi3d. You should look at
 pi3d.github.io/html/index.html for instructions on install and using it.
 
-The zip file is currently about 28MB and unzips to about 40MB of which
-a small number of large files used in ConferenceHall, Triceratops, Silo,
-TigerTank and Jukebox contribute half.
+To download these demos simply use the ``Clone or download`` button above,
+choose ``Download ZIP`` and extract the zip in a convenient location.
 
-These demos give examples of how you can structure your work and allow
-different projects to share resource. i.e. directory structure::
+The zip file is currently about 60MB and unzips to about 80MB of which 56MB
+is contributed by
 
-    /home/pi/
-       |-MyWork
-       |---images             # general1.jpg
-       |---models             # house.obj house.mtl house.jpg
-       |---python
-       |-----roller           # rollercoaster.py
-       |-------roller_images  # rollpic1.jpg
-       |-------roller_shaders # rollshader1.vs, .fs
-       |---test_results
-       |---xyz
-       |-Music
-        ... etc
-       |-pi3d
-       |---experiments
-       |---images
-       |---pi3d
-       |-----constants
-       |-----event
-        ... etc
-       |-pi3d_demos
-       |---fonts
-       |---models
-       |-----AllSaints
-       |-----Buckfast Abbey
-       |-----ConferenceHall
-       |... etc
-       |---textures
-       |-----biplane
-       |-----ecubes
-       |-------Cloudy
-        ... etc
-
-then, say, in /home/pi/MyWork/python/roller/rollercoaster.py::
-
-    ...
-    import sys
-    sys.path.append("/home/pi/pi3d")
-    import pi3d
-    ...
-    mymodel1 = pi3d.Model("../../models/house.obj")
-    mymodel2 = pi3d.Model("/home/pi/pi3d_demos/models/teapot.obj")
-    mytex1 = pi3d.Texture("../../images/general1.jpg")
-    mytex2 = pi3d.Texture("roller_images/rollpic1.jpg")
-    myshader1 = pi3d.Shader("uv_flat") # generic from pi3d package
-    mypost = pi3d.PostProcess("roller_shaders/rollshader1")
-    ...
+exercise01.mpg 35.1M in VideoWalk.py
+hygdata001.csv 6.9M in Starfield.py
+Triceratops.egg 4.4M in TriceratopsModel.py
+conferencehall.egg 2.9M in ConferenceHall.py
+floorCompleteMap.png 1.5M in ConferenceHall.py
+lwallCompleteMap.png 1.2M in ConferenceHall.py
+60miles.mp3	51946219 2.7M in Jukebox.py
+BuckfastAbbey.egg 1.4M in BuckfastAbbey.py

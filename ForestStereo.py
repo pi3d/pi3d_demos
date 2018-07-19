@@ -35,7 +35,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(w=1200, h=600)
+DISPLAY = pi3d.Display.create(w=1200, h=600, frames_per_second=30)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
@@ -139,6 +139,8 @@ start_vector = CAMERA.camera_3d.get_direction()
 while DISPLAY.loop_running():
   l_or_k_pressed = False # to stop routine camera movement for cases where l or k pressed
   #Press ESCAPE to terminate
+  mx, my = mymouse.position()
+  buttons = mymouse.button_status()
   k = mykeys.read()
   if k >-1: # or buttons > mymouse.BUTTON_UP:
     dx, dy, dz = CAMERA.get_direction()
@@ -214,6 +216,3 @@ while DISPLAY.loop_running():
     mytrees1.draw()
     CAMERA.end_capture(i)
   CAMERA.draw()
-
-  mx, my = mymouse.position()
-  buttons = mymouse.button_status()

@@ -35,7 +35,7 @@ min_dist = 1.001
 max_dist = 0.001 + float(MAX_BALL_SIZE) / MIN_BALL_SIZE
 
 BACKGROUND_COLOR = (0.0, 0.0, 0.0, 0.0)
-DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR)
+DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=40)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
 KEYBOARD = pi3d.Keyboard()
 

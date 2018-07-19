@@ -10,7 +10,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=100, y=100)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
 DISPLAY.set_background(1.0,0.4,0.6,1)    	# r,g,b,alpha
 pi3d.Light((5, -10, -20), (0.6, 0.6, 0.5), (0.3, 0.3, 0.4))
 

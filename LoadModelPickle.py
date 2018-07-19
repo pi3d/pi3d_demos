@@ -15,7 +15,7 @@ import demo
 import pi3d
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100,
-                         background=(0.2, 0.4, 0.6, 1))
+                         background=(0.2, 0.4, 0.6, 1), frames_per_second=30)
 shader = pi3d.Shader("uv_reflect")
 #========================================
 # this is a bit of a one off because the texture has transparent parts

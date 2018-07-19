@@ -8,7 +8,7 @@ import numpy as np
 
 LINES = True # change this to see bar graph
 
-display = pi3d.Display.create(x=100, y=100)
+display = pi3d.Display.create(x=100, y=100, frames_per_second=30)
 font = pi3d.Font("fonts/NotoSerif-Regular.ttf")
 key = pi3d.Keyboard()
 

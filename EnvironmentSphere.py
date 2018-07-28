@@ -11,6 +11,7 @@ from math import cos, sin, radians
 DISPLAY = pi3d.Display.create(x=100, y=100,
                          background=(0.2, 0.4, 0.6, 1), frames_per_second=30)
 shader = pi3d.Shader("uv_reflect")
+matsh = pi3d.Shader("mat_reflect")
 flatsh = pi3d.Shader('uv_flat')
 #========================================
 # this is a bit of a one off because the texture has transparent parts
@@ -25,6 +26,16 @@ shinetex = pi3d.Texture("textures/photosphere.jpg")
 mymodel = pi3d.Model(file_string='models/teapot.obj', name='teapot')
 mymodel.set_shader(shader)
 mymodel.set_normal_shine(bumptex, 0.0, shinetex, 0.4)
+
+sphere1 = pi3d.Sphere(radius=0.25, x=2.0)
+sphere1.set_draw_details(matsh, [bumptex, shinetex], 4.0, 0.2)
+sphere1.set_material((0.4, 0.3, 0.1))
+sphere1.set_specular((0.6, 0.6, 0.8))
+
+sphere2 = pi3d.Sphere(radius=0.25, z=2.0)
+sphere2.set_draw_details(matsh, [bumptex], 4.0, 0.3)
+sphere2.set_material((0.2, 0.8, 0.6))
+sphere2.set_specular((0.8, 0.8, 1.1))
 
 mysphere = pi3d.Sphere(radius=400.0, rx=180, ry=180, invert=True)
 mysphere.set_draw_details(flatsh, [shinetex])
@@ -66,6 +77,8 @@ while DISPLAY.loop_running():
                    -dist * cos(radians(rot)) * cos(radians(tilt))))
   
   mymodel.draw()
+  sphere1.draw()
+  sphere2.draw()
   mysphere.draw()
   mymodel.rotateIncY(0.41)
   mymodel.rotateIncZ(0.12)

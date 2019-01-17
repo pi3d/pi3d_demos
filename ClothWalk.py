@@ -11,62 +11,81 @@ import numpy as np
 ########################################################################
 # cloth generation section
 ########################################################################
-def gcd(a, b):
-  """Return greatest common divisor using Euclid's Algorithm."""
-  while b:
-    a, b = b, a % b
-  return a
+class Cloth(object):
+  def _gcd(self, a, b):
+    """Return greatest common divisor using Euclid's Algorithm."""
+    while b:
+      a, b = b, a % b
+    return a
 
-def lcm(a, b):
-  """Return lowest common multiple."""
-  return a * b // gcd(a, b)
+  def _lcm(self, a, b):
+    """Return lowest common multiple."""
+    return a * b // self._gcd(a, b)
 
-EPM = 3200 # ends per gpu unit (aka warp threads)
-PPM = 3200 # picks per gpu unit (aka weft threads)
-yarn_colours = np.array([ # RGB values 0-255
-[50, 10, 20],
-[40, 55, 20],
-[120, 150, 40],
-[80, 200, 120],
-[30, 5, 110],
-[100, 10, 140],
-[255, 20, 220]])
-# yarn plan numbers refer to yarn_colours index (starting at 0 obviously)
-warp_plan = np.array(([3]*8 + [3,0,2]*2 + [4,4])*3 + [0]*7 + [5])
-weft_plan = np.array(([2]*8 + [1,5,4]*2 + [6,5])*3 + [0,1]*3 + [0,5])
-# draft aka heald, heddle, shaft, frame: the set of wires attached to a liftable frame
-# position in the array corresponds to warp thread number is the 'column' of the peg_plan
-draft_plan = np.array([0,1,2,3, 0,1,2,3, 1,0,3,2, 1,0,3,2]) # simple herringbone
-# peg or lifting plan, rows are weft insertions, column are shafts, 0 is down 1 is up
-peg_plan = np.array([
-[0,1,1,0],
-[1,1,0,0],
-[1,0,0,1],
-[0,0,1,1]])
+  def __init__(self, epm=3200, ppm=3200, yarn_colours=[[0, 0, 0], [255, 255, 255]],
+                warp_plan=[0], weft_plan=[1], draft_plan=[0, 1], peg_plan=[[1, 0], [1, 0]]):
+    self.epm = epm # ends per gpu unit (aka warp threads)
+    self.ppm = epm # picks per gpu unit (aka weft threads)
+    self.yarn_colours = np.array(yarn_colours)
+    # yarn plan numbers refer to yarn_colours index (starting at 0 obviously)
+    self.warp_plan = np.array(warp_plan)
+    self.weft_plan = np.array(weft_plan)
+    # draft aka heald, heddle, shaft, frame: the set of wires attached to a liftable frame
+    # position in the array corresponds to warp thread number is the 'column' of the peg_plan
+    self.draft_plan = np.array(draft_plan)
+    # peg or lifting plan, rows are weft insertions, column are shafts, 0 is down 1 is up
+    self.peg_plan = np.array(peg_plan)
+    self.tex = None
+    self.recalc()
 
-pick_rpt = peg_plan.shape[0] # length in 1st dimension of array
-draft_rpt = draft_plan.size # length of array
-weft_rpt = weft_plan.size
-warp_rpt = warp_plan.size
+  def recalc(self):
+    pick_rpt = self.peg_plan.shape[0] # length in 1st dimension of array
+    draft_rpt = self.draft_plan.size # length of array
+    weft_rpt = self.weft_plan.size
+    warp_rpt = self.warp_plan.size
 
-# find the size of the sample
-wv_width = lcm(warp_rpt, draft_rpt) # lowest common multiple of weave and yarn patterns
-wv_height = lcm(weft_rpt, pick_rpt)
+    # find the size of the sample
+    self.wv_width = self._lcm(warp_rpt, draft_rpt) # lowest common multiple of weave and yarn patterns
+    self.wv_height = self._lcm(weft_rpt, pick_rpt)
 
-# extend each of the plans to the size of the sample
-warp_plan = np.tile(warp_plan, (wv_width // warp_rpt))
-weft_plan = weft_plan.reshape((weft_rpt, 1)) # make into vertical array
-weft_plan = np.tile(weft_plan, (wv_height // weft_rpt, 1))
-draft_plan = np.tile(draft_plan, (wv_width // draft_rpt))
-peg_plan = np.tile(peg_plan, (wv_height // pick_rpt, 1))
+    # extend each of the plans to the size of the sample
+    self.warp_plan = np.tile(self.warp_plan, (self.wv_width // warp_rpt))
+    self.weft_plan = self.weft_plan.reshape((weft_rpt, 1)) # make into vertical array
+    self.weft_plan = np.tile(self.weft_plan, (self.wv_height // weft_rpt, 1))
+    self.draft_plan = np.tile(self.draft_plan, (self.wv_width // draft_rpt))
+    self.peg_plan = np.tile(self.peg_plan, (self.wv_height // pick_rpt, 1))
 
-lifts = peg_plan[:,draft_plan] # generate an up/down map for the plan
-# then fill it with the yarn for warp if it's up or weft if it's down
-yarn_plan = lifts * warp_plan + (lifts * -1 + 1) * weft_plan
-wv = yarn_colours[yarn_plan].astype(np.uint8) # wv takes the [R,G,B] from yarn colours
+    lifts = self.peg_plan[:, self.draft_plan] # generate an up/down map for the plan
+    # then fill it with the yarn for warp if it's up or weft if it's down
+    self.yarn_plan = lifts * self.warp_plan + (lifts * -1 + 1) * self.weft_plan
+    wv = self.yarn_colours[self.yarn_plan].astype(np.uint8) # wv takes the [R,G,B] from yarn colours
+    self.img = wv # ndarray in case needed elsewhere
+    if self.tex is None:
+      self.tex = pi3d.Texture(wv)
+    else:
+      self.tex.update_ndarray(self.img)
+    ########################################################################
 
-clothimg = pi3d.Texture(wv)
-########################################################################
+
+cloth = Cloth(
+  yarn_colours = [ # RGB values 0-255
+    [50, 10, 20],  #0 = brown
+    [40, 55, 20],  #1 = kaki
+    [120, 150, 40],#2 = dull yellow
+    [80, 200, 120],#3 = teal
+    [30, 5, 110],  #4 = royal blue
+    [100, 10, 140],#5 = purple
+    [255, 20, 220] #6 = violet
+  ],
+  warp_plan = ([3] * 8 + [3, 0, 2] * 2 + [4, 4]) * 3 + [0] * 7 + [5],
+  weft_plan = ([2] * 8 + [1, 5, 4] * 2 + [6, 5]) * 3 + [0, 1] * 3 + [0, 5],
+  draft_plan = [0,1,2,3, 0,1,2,3, 1,0,3,2, 1,0,3,2], # simple herringbone
+  peg_plan = [
+    [0,1,1,0],
+    [1,1,0,0],
+    [1,0,0,1],
+    [0,0,1,1]
+  ])
 
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
@@ -101,14 +120,14 @@ mountimg1 = pi3d.Texture("textures/mountains3_512.jpg")
 mymap = pi3d.ElevationMap("textures/mountainsHgt.jpg", name="map",
                      width=mapwidth, depth=mapdepth, height=mapheight,
                      ntiles=128, divx=32, divy=32) #testislands.jpg
-mymap.set_draw_details(shader, [clothimg, bumpimg, reflimg], 128.0 * wv_width / 8.0, 0.0)
+mymap.set_draw_details(shader, [cloth.tex, bumpimg, reflimg], 128.0 * cloth.wv_width / 8.0, 0.0)
 mymap.set_fog(*FOG)
 
 #Create monument
 monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
 monument.set_shader(shinesh)
-monument.set_draw_details(shinesh, [clothimg, bumpimg, reflimg], ntiles=PPM/8,
-                          shiny=0.03, umult=EPM/wv_width, vmult=PPM/wv_height)
+monument.set_draw_details(shinesh, [cloth.tex, bumpimg, reflimg], ntiles=cloth.ppm/8,
+                          shiny=0.03, umult=cloth.epm/cloth.wv_width, vmult=cloth.ppm/cloth.wv_height)
 monument.set_fog(*FOG)
 monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 12.0, 235.0)
 monument.scale(20.0, 20.0, 20.0)
@@ -178,6 +197,21 @@ while DISPLAY.loop_running():
       scshots += 1
     elif k==10:   #key RETURN
       mc = 0
+    elif k==ord('y'): # yellowify
+      cloth.yarn_colours[3] = [255, 255, 0]
+      cloth.recalc()
+    elif k==ord('u'): # alter weft plan
+      cloth.weft_plan = np.array(([3] * 15 + [2] * 10) * 2 + [0] * 7)
+      cloth.recalc()
+    elif k==ord('i'): # alter warp plan
+      cloth.warp_plan = np.array(([0] * 13 + [4] * 13) * 2 + [0] * 4)
+      cloth.recalc()
+    elif k==ord('o'): # alter peg plan to hopsack
+      cloth.peg_plan = np.array([[0,0,1,1],[0,0,1,1],[1,1,0,0],[1,1,0,0]])
+      cloth.recalc()
+    elif k==ord('p'): # alter draft plan to non-herringbone
+      cloth.draft_plan = np.array([3,2,1,0] * 4)
+      cloth.recalc()
     elif k==27:  #Escape key
       mykeys.close()
       mymouse.stop()

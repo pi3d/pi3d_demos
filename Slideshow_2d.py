@@ -45,7 +45,6 @@ sfg = tex_load(iFiles[pic_num])
 # PointText and TextBlock
 font = pi3d.Font(FONT_FILE, codepoints=' 0123456789.s#', grid_size=4, shadow_radius=4.0,
                  shadow=(0,0,0,128))
-font.im.save('font_im.png')
 text = pi3d.PointText(font, CAMERA, max_chars=50, point_size=200)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=0,
                            z=0.1, rot=0.0, char_count=15,

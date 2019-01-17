@@ -2,7 +2,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 ''' Simplified slideshow system using ImageSprite and without threading for background
 loading of images (so may show delay for v large images).
-    Also has a minimal use of PointText and TextBlock system
+    Also has a minimal use of PointText and TextBlock system with reduced  codepoints
+and reduced grid_size to give better resolution for large characters.
+
     ESC to quit, 's' to reverse, any other key to move on one.
 '''
 import os
@@ -13,8 +15,8 @@ import pi3d
 
 TMDELAY = 10.0
 DA = 0.01 # delta alpha
-DIR = '/home/patrick/python/pi3d_demos/textures'
-FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
+DIR = '/home/pi/pi3d_demos/textures'
+FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
 
 def tex_load(fname):
     tex = pi3d.Texture(fname, blend=True, m_repeat=True)

@@ -15,8 +15,8 @@ import pi3d
 
 TMDELAY = 10.0
 DA = 0.01 # delta alpha
-DIR = '/home/pi/pi3d_demos/textures'
-FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
+DIR = 'textures'
+FONT_FILE = 'fonts/NotoSans-Regular.ttf'
 
 def tex_load(fname):
     tex = pi3d.Texture(fname, blend=True, m_repeat=True)
@@ -67,7 +67,7 @@ while DISPLAY.loop_running():
             random.shuffle(iFiles)
             pic_num = 0
         sfg = tex_load(iFiles[pic_num])
-          
+
     if a < 1.0:
         a += DA
         sbg.draw() # background only needs to be drawn if fg alpha < 1

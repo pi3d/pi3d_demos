@@ -25,8 +25,7 @@ def tex_load(fname):
     slide.set_alpha(0.0)
     return slide
 
-DISPLAY = pi3d.Display.create(background=(0.0, 0.0, 0.0, 1.0), frames_per_second=27,
-                             tk=False, samples=2)
+DISPLAY = pi3d.Display.create(background=(0.0, 0.0, 0.0, 1.0), frames_per_second=27)
 
 shader = pi3d.Shader("uv_flat")
 CAMERA = pi3d.Camera(is_3d=False)

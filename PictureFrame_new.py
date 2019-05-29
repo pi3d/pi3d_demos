@@ -44,7 +44,7 @@ delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 # some functions to tidy subsequent code
 #####################################################
 def tex_load(fname):
-    tex = pi3d.Texture(fname, blend=True, m_repeat=True, automatic_resize=False)
+    tex = pi3d.Texture(fname, blend=True, m_repeat=True)
     return tex
 
 def tidy_name(path_name):

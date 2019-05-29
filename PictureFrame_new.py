@@ -122,8 +122,8 @@ try:
 
   # set up MQTT listening
   client = mqtt.Client()
-  client.username_pw_set("mhqolkbo", "z6kSmrc3spxP")
-  client.connect("postman.cloudmqtt.com", 16845, 60)
+  client.username_pw_set("orhellow", "z6kfIctiONxP") # replace with your own id
+  client.connect("postman.cloudmqtt.com", 16845, 60) # replace with your own server
   client.loop_start()
   client.subscribe("frame/date_from", qos=0)
   client.subscribe("frame/date_to", qos=0)

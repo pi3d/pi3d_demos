@@ -12,7 +12,7 @@ NB this testing process won't necessarily pick up
 faults with mouse or keyboard input or incorrect rendering of output.
 """
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import run, Popen, PIPE, STDOUT
 import time
 import sys
 

@@ -70,12 +70,13 @@ def get_files(dt_from=None, dt_to=None):
               if EXIF_DATID is not None and (dt_from is not None or dt_to is not None):
                 try:
                   im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
+                  #print(filename, end="")
                   dt = time.mktime(
                         time.strptime(im._getexif()[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-                  if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
-                    include_flag = False
                 except: # NB should really check error here but it's almost certainly due to lack of exif data
-                  include_flag = True # could use os date info or try parsing file name for testing just reject
+                  dt = os.path.getmtime(file_path_name) # so use file last modified date
+                if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
+                  include_flag = False
               if include_flag:
                 file_list.append(file_path_name) 
   if shuffle:

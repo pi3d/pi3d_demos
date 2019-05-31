@@ -22,8 +22,8 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-#PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
-PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
+#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 RESHUFFLE_NUM = 5 # times through before reshuffling
@@ -38,6 +38,7 @@ shuffle = True # shuffle on reloading
 date_from = None
 date_to = None
 quit = False
+paused = False # NB must be set to True after the first iteration of the show!
 
 delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 
@@ -103,7 +104,7 @@ try:
   def on_message(client, userdata, message):
     # TODO not ideal to have global but probably only reasonable way to do it
     global pic_num, iFiles, nFi, date_from, date_to, time_delay
-    global delta_alpha, fade_time, shuffle, quit
+    global delta_alpha, fade_time, shuffle, quit, paused, pic_num, nexttm
     msg = message.payload.decode("utf-8")
     if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
       df = msg.split(":")
@@ -120,6 +121,13 @@ try:
       shuffle = True if msg == "True" else False
     elif message.topic == "frame/quit":
       quit = True
+    elif message.topic == "frame/paused":
+      paused = not paused # toggle from previous value
+    elif message.topic == "frame/back":
+      pic_num -= 2
+      if pic_num < -1:
+        pic_num = -1
+      nexttm = time.time() - 1.0
     iFiles, nFi = get_files(date_from, date_to)
     pic_num = 0
 
@@ -134,6 +142,8 @@ try:
   client.subscribe("frame/fade_time", qos=0)
   client.subscribe("frame/shuffle", qos=0)
   client.subscribe("frame/quit", qos=0)
+  client.subscribe("frame/paused", qos=0)
+  client.subscribe("frame/back", qos=0)
   client.on_connect = on_connect
   client.on_message = on_message
 except Exception as e:
@@ -172,7 +182,7 @@ num_run_through = 0
 while DISPLAY.loop_running():
   tm = time.time()
   if nFi > 0:
-    if tm > nexttm: # this must run first iteration of loop
+    if tm > nexttm and not paused: # this must run first iteration of loop
       nexttm = tm + time_delay
       a = 0.0 # alpha - proportion front image to back
       if sfg is None:
@@ -224,6 +234,8 @@ while DISPLAY.loop_running():
     nexttm = time.time() - 1.0
   if k==27 or quit: #ESC
     break
+  if k==ord(' '):
+    paused = not paused
   if k==ord('s'): # go back a picture
     pic_num -= 2
     if pic_num < -1:

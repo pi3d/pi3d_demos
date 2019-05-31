@@ -25,6 +25,7 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
+FIT = True
 RESHUFFLE_NUM = 5 # times through before reshuffling
 FONT_FILE = 'fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
@@ -152,7 +153,10 @@ kbd = pi3d.Keyboard()
 nexttm = 0.0
 iFiles, nFi = get_files(date_from, date_to)
 pic_num = 0
-sfg = tex_load(iFiles[pic_num])
+if nFi > 0:
+  sfg = tex_load(iFiles[pic_num])
+else:
+  sfg = None
 
 # PointText and TextBlock
 font = pi3d.Font(FONT_FILE, codepoints=CODEPOINTS, grid_size=7, shadow_radius=4.0,
@@ -167,45 +171,52 @@ text.add_text_block(textblock)
 num_run_through = 0
 while DISPLAY.loop_running():
   tm = time.time()
-  if tm > nexttm: # this must run first iteration of loop
-    nexttm = tm + time_delay
-    a = 0.0 # alpha - proportion front image to back
-    sbg = sfg # swap Textures front to back
-    pic_num += 1
-    if pic_num >= nFi:
-      num_run_through += 1
-      if shuffle and num_run_through >= RESHUFFLE_NUM:
-        num_run_through = 0
-        random.shuffle(iFiles)
-      pic_num = 0
-    sfg = tex_load(iFiles[pic_num]) # load new Texture for front
-    slide.set_textures([sfg, sbg])
-    slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
-    slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
-    w_rat = DISPLAY.width / sfg.ix # screen width c.f. image width
-    h_rat = DISPLAY.height / sfg.iy # and height
-    if w_rat > h_rat: # make it fit width - leave gap left and right
-      slide.unif[42] = w_rat / h_rat # width
-      slide.unif[43] = 1.0
-      slide.unif[48] = (slide.unif[42] - 1.0) * 0.5 # offset
-      slide.unif[49] = 0.0
-    else: # otherwise fit height - leave gap top and bottom
-      slide.unif[42] = 1.0
-      slide.unif[43] = h_rat / w_rat # height
-      slide.unif[48] = 0.0
-      slide.unif[49] = (slide.unif[43] - 1.0) * 0.5 # offset
-    # set the file name as the description
-    textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num])))
+  if nFi > 0:
+    if tm > nexttm: # this must run first iteration of loop
+      nexttm = tm + time_delay
+      a = 0.0 # alpha - proportion front image to back
+      if sfg is None:
+        sfg = tex_load(iFiles[pic_num])
+      sbg = sfg # swap Textures front to back
+      pic_num += 1
+      if pic_num >= nFi:
+        num_run_through += 1
+        if shuffle and num_run_through >= RESHUFFLE_NUM:
+          num_run_through = 0
+          random.shuffle(iFiles)
+        pic_num = 0
+      sfg = tex_load(iFiles[pic_num]) # load new Texture for front
+      slide.set_textures([sfg, sbg])
+      slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
+      slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
+      wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
+      if (wh_rat > 1.0 and FIT) or (wh_rat <= 1.0 and not FIT):
+        sz1, sz2, os1, os2 = 42, 43, 48, 49
+      else:
+        sz1, sz2, os1, os2 = 43, 42, 49, 48
+        wh_rat = 1.0 / wh_rat
+      slide.unif[sz1] = wh_rat
+      slide.unif[sz2] = 1.0
+      slide.unif[os1] = (wh_rat - 1.0) * 0.5
+      slide.unif[os2] = 0.0
+      # set the file name as the description
+      textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num])))
+      text.regen()
 
-  if a < 1.0:
-    a += delta_alpha
-    slide.unif[44] = a
-    # this sets alpha for the TextBlock from 0 to 1 then back to 0
-    textblock.colouring.set_colour(alpha=(1.0 - abs(1.0 - 2.0 * a)))
+    if a < 1.0:
+      a += delta_alpha
+      slide.unif[44] = a
+      # this sets alpha for the TextBlock from 0 to 1 then back to 0
+      textblock.colouring.set_colour(alpha=(1.0 - abs(1.0 - 2.0 * a)))
+      text.regen()
 
-  slide.draw()
+    slide.draw()
 
-  text.regen()
+  else:
+    textblock.set_text("NO IMAGES SELECTED")
+    textblock.colouring.set_colour(alpha=1.0)
+    text.regen()
+
   text.draw()
 
   k = kbd.read()

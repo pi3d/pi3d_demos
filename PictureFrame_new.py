@@ -25,6 +25,7 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
+RESHUFFLE_NUM = 5 # times through before reshuffling
 FONT_FILE = 'fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 #####################################################
@@ -33,7 +34,6 @@ CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 g
 time_delay = 10.0 # between slides
 fade_time = 3.0
 shuffle = True # shuffle on reloading
-check_num = 200 # number to show before reshuffling
 date_from = None
 date_to = None
 quit = False
@@ -73,7 +73,8 @@ def get_files(dt_from=None, dt_to=None):
                   #print(filename, end="")
                   dt = time.mktime(
                         time.strptime(im._getexif()[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-                except: # NB should really check error here but it's almost certainly due to lack of exif data
+                except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
+                  print(e)
                   dt = os.path.getmtime(file_path_name) # so use file last modified date
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
@@ -163,6 +164,7 @@ textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 
+num_run_through = 0
 while DISPLAY.loop_running():
   tm = time.time()
   if tm > nexttm: # this must run first iteration of loop
@@ -170,8 +172,11 @@ while DISPLAY.loop_running():
     a = 0.0 # alpha - proportion front image to back
     sbg = sfg # swap Textures front to back
     pic_num += 1
-    if pic_num >= nFi: 
-      random.shuffle(iFiles)
+    if pic_num >= nFi:
+      num_run_through += 1
+      if shuffle and num_run_through >= RESHUFFLE_NUM:
+        num_run_through = 0
+        random.shuffle(iFiles)
       pic_num = 0
     sfg = tex_load(iFiles[pic_num]) # load new Texture for front
     slide.set_textures([sfg, sbg])

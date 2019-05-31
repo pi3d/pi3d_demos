@@ -5,7 +5,15 @@ varying vec2 texcoordoutb;
 
 void main(void) {
   vec4 texf = texture2D(tex0, texcoordoutf);
+  if (texcoordoutf[0] < 0.0 || texcoordoutf[0] > 1.0 ||
+      texcoordoutf[1] < 0.0 || texcoordoutf[1] > 1.0) {
+    texf.a = unif[15][2];
+  }
   vec4 texb = texture2D(tex1, texcoordoutb);
+  if (texcoordoutb[0] < 0.0 || texcoordoutb[0] > 1.0 ||
+      texcoordoutb[1] < 0.0 || texcoordoutf[1] > 1.0) {
+    texb.a = unif[15][2];
+  }
 
   // blending
   float a = unif[14][2];

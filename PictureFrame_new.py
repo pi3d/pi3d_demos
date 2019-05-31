@@ -26,6 +26,8 @@ PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
 #PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
+EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
+BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
 FONT_FILE = 'fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
@@ -104,14 +106,17 @@ try:
   def on_message(client, userdata, message):
     # TODO not ideal to have global but probably only reasonable way to do it
     global pic_num, iFiles, nFi, date_from, date_to, time_delay
-    global delta_alpha, fade_time, shuffle, quit, paused, pic_num, nexttm
+    global delta_alpha, fade_time, shuffle, quit, paused, nexttm
     msg = message.payload.decode("utf-8")
+    reselect = False
     if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
       df = msg.split(":")
       date_from = tuple(int(i) for i in df)
+      reselect = False
     elif message.topic == "frame/date_to":
       df = msg.split(":")
       date_to = tuple(int(i) for i in df)
+      reselect = False
     elif message.topic == "frame/time_delay":
       time_delay = float(msg)
     elif message.topic == "frame/fade_time":
@@ -119,6 +124,7 @@ try:
       delta_alpha = 1.0 / (FPS * fade_time)
     elif message.topic == "frame/shuffle":
       shuffle = True if msg == "True" else False
+      reselect = False
     elif message.topic == "frame/quit":
       quit = True
     elif message.topic == "frame/paused":
@@ -128,8 +134,9 @@ try:
       if pic_num < -1:
         pic_num = -1
       nexttm = time.time() - 1.0
-    iFiles, nFi = get_files(date_from, date_to)
-    pic_num = 0
+    if reselect:
+      iFiles, nFi = get_files(date_from, date_to)
+      pic_num = 0
 
   # set up MQTT listening
   client = mqtt.Client()
@@ -150,12 +157,13 @@ except Exception as e:
   print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=-1, y=-1, frames_per_second=FPS)
+DISPLAY = pi3d.Display.create(x=-1, y=-1, frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
 shader = pi3d.Shader("shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
+slide.unif[47] = EDGE_ALPHA
 
 kbd = pi3d.Keyboard()
 

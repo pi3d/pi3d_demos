@@ -87,7 +87,7 @@ def get_files(dt_from=None, dt_to=None):
 
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
 for k in ExifTags.TAGS:
-  if ExifTags.TAGS[k] == 'DateTime':
+  if ExifTags.TAGS[k] == 'DateTimeOriginal':
     EXIF_DATID = k
     break
 

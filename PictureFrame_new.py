@@ -112,11 +112,11 @@ try:
     if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
       df = msg.split(":")
       date_from = tuple(int(i) for i in df)
-      reselect = False
+      reselect = True
     elif message.topic == "frame/date_to":
       df = msg.split(":")
       date_to = tuple(int(i) for i in df)
-      reselect = False
+      reselect = True
     elif message.topic == "frame/time_delay":
       time_delay = float(msg)
     elif message.topic == "frame/fade_time":
@@ -124,7 +124,7 @@ try:
       delta_alpha = 1.0 / (FPS * fade_time)
     elif message.topic == "frame/shuffle":
       shuffle = True if msg == "True" else False
-      reselect = False
+      reselect = True
     elif message.topic == "frame/quit":
       quit = True
     elif message.topic == "frame/paused":

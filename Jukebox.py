@@ -14,7 +14,7 @@ import demo
 import pi3d
 
 def _tex_load(tex_list, slot, fName):
-  tex_list[slot] = pi3d.Texture(fName)
+  tex_list[slot] = pi3d.Texture(fName, m_repeat=True) # tiling uses alternate mirroring to avoid seams
   
 # Setup display and initialise pi3d
 DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=40)
@@ -47,9 +47,9 @@ myshape.radialCopy(asphere, step=72)
 myshape.position(0.0, 0.0, 5.0)
 myshape.set_draw_details(shader, [tex_list[0]], 8.0, 0.1)
 
-mysprite = pi3d.Sprite(w=15.0, h=15.0)
+mysprite = pi3d.Sprite(w=30.0, h=30.0) # size big enought to overflow screen...
 mysprite.position(0.0, 0.0, 15.0)
-mysprite.set_draw_details(flatsh, [tex_list[0]])
+mysprite.set_draw_details(flatsh, [tex_list[0]], umult=4.0, vmult=4.0) # use u/vmult to scale image
 
 # Fetch key presses.
 mykeys = pi3d.Keyboard()
@@ -127,7 +127,7 @@ while DISPLAY.loop_running():
     """change the pictures and start a thread to load into tex_list"""
     pic_next += pic_dt
     myshape.set_draw_details(shader, [tex_list[slot % 2]])
-    mysprite.set_draw_details(flatsh, [tex_list[slot % 2]])
+    mysprite.set_draw_details(flatsh, [tex_list[slot % 2]], umult=4.0, vmult=4.0)
     slot += 1
     t = threading.Thread(target=_tex_load, args=(tex_list, slot % 2, tFiles[slot % nTex]))
     t.daemon = True

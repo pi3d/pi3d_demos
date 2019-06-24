@@ -12,7 +12,7 @@ NB this testing process won't necessarily pick up
 faults with mouse or keyboard input or incorrect rendering of output.
 """
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import run, Popen, PIPE, STDOUT
 import time
 import sys
 
@@ -26,13 +26,13 @@ else:
 
 FACTOR = 1.0 # increase for lower power i.e. on RPi A or B
 
-test_list = [["Amazing", 10], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
+test_list = [["Amazing", 10], ["Billboard", 6], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
             ["ClothWalk", 6], ["Clouds3d", 5], ["CollisionBalls", 5],
             ["Conway", 5], ["DogFight", 10], ["Earth", 4], ["EnvironmentSphere", 5],
             ["FilterDemo", 10], ["FixedString", 5], ["ForestStereo", 6], ["ForestQuickNumbers", 6],
             ["ForestWalk", 6], ["Gui", 6], ["IceGrow", 6], ["LoadModelObj", 5],
             ["LoadModelPickle", 5], ["MarsStation", 13], ["Minimal_2d", 4],
-            ["Minimal", 4], ["NumpyBalls", 5], ["Orbit", 5], ["PexDemo", 3], ["Pi3d2", 4],
+            ["Minimal", 4], ["NumpyBalls", 5], ["Orbit", 5], ["PexDemo", 3],
             ["Pi3d3", 4], ["PictureFrame", 7], ["Pong", 5], ["Post", 6],
             ["ProceduralTerrain", 10], ["RobotWalkabout", 8], ["Scenery", 15],
             ["Shapes", 5], ["Silo", 10], ["Slideshow_2d", 6],

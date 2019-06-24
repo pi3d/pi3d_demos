@@ -165,7 +165,7 @@ while DISPLAY.loop_running():
   myecube.position(xm, ym, zm)
 
   if flag:
-    tex.update_ndarray(image)
+    tex.update_ndarray(image, 0) # specify the first GL_TEXTURE0 i.e. first in buf[0].texture
     flag = False
   monument.draw()
   monument.rotateIncY(0.25)

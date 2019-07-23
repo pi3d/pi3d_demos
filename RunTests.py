@@ -25,19 +25,20 @@ else:
     pyname = "python"
 
 FACTOR = 1.0 # increase for lower power i.e. on RPi A or B
-
-test_list = [["Amazing", 10], ["Billboard", 6], ["Blur", 6], ["CastShadows", 6], ["ClashWalk", 6],
-            ["ClothWalk", 6], ["Clouds3d", 5], ["CollisionBalls", 5],
-            ["Conway", 5], ["DogFight", 10], ["Earth", 4], ["EnvironmentSphere", 5],
-            ["FilterDemo", 10], ["FixedString", 5], ["ForestStereo", 6], ["ForestQuickNumbers", 6],
-            ["ForestWalk", 6], ["Gui", 6], ["IceGrow", 6], ["LoadModelObj", 5],
-            ["LoadModelPickle", 5], ["MarsStation", 13], ["Minimal_2d", 4],
-            ["Minimal", 4], ["NumpyBalls", 5], ["Orbit", 5], ["PexDemo", 3],
-            ["Pi3d3", 4], ["PictureFrame", 7], ["Pong", 5], ["Post", 6],
-            ["ProceduralTerrain", 10], ["RobotWalkabout", 8], ["Scenery", 15],
-            ["Shapes", 5], ["Silo", 10], ["Slideshow_2d", 6],
-            ["Snake", 6], ["SpriteBalls", 6], ["StringMulti", 6],
-            ["TigerShadow", 10], ["TigerTank", 10], ["Water", 6]]
+# these should now be in order of increasing complexity
+test_list = [["Minimal", 4], ["Minimal_2d", 4], ["Clouds3d", 5], ["LoadModelObj", 5],
+              ["Shapes", 5], ["Water", 6], ["Snake", 6], ["LoadModelPickle", 5],
+              ["ForestWalk", 6], ["ForestQuickNumbers", 6], ["MarsStation", 13],
+              ["RobotWalkabout", 8], ["CollisionBalls", 5], ["Slideshow_2d", 6],
+              ["Amazing", 10], ["ClothWalk", 6], ["Earth", 4], ["EnvironmentSphere", 5],
+              ["FixedString", 5], ["PictureFrame_new", 7], ["Pong", 5],["Orbit", 5],
+              ["Silo", 10], ["TigerTank", 10], ["Post", 6], ["FilterDemo", 10], ["Billboard", 6],
+              ["Blur", 6], ["CastShadows", 6], ["StringMulti", 6],
+              ["ClashWalk", 6], ["Conway", 5], ["DogFight", 10],
+              ["ForestStereo", 6], ["Gui", 6], ["IceGrow", 6], ["NumpyBalls", 5],
+              ["PexDemo", 3], ["Pi3d3", 4], ["TigerShadow", 10], ["ProceduralTerrain", 10],
+              ["Scenery", 15], ["SpriteBalls", 6],
+            ]
 
 for t in test_list:
   p = Popen([pyname, t[0] + ".py"])

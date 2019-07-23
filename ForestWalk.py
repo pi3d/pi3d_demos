@@ -25,7 +25,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=200, y=200, frames_per_second=30)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
@@ -115,10 +115,10 @@ crab = False
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
-mymouse = pi3d.Mouse(restrict = False)
+mymouse = pi3d.Mouse(restrict=False)
 mymouse.start()
 
-CAMERA = pi3d.Camera(absolute=False)
+CAMERA = pi3d.Camera(absolute=False) # you can change this to True but below use: mx, my = mymouse.position()
 roll = 0.0
 # Display scene and rotate cuboid
 while DISPLAY.loop_running():
@@ -154,13 +154,14 @@ while DISPLAY.loop_running():
   mytrees3.draw()
 
   mx, my = mymouse.velocity() #change to position() if Camera switched to absolute=True (default)
-  buttons = mymouse.button_status()
+  buttons = -1 #mymouse.button_status()
 
   rot = - mx * 0.2
   tilt = my * 0.2
 
   #Press ESCAPE to terminate
   k = mykeys.read()
+  #print(len(DISPLAY.keys_pressed))
   if k >-1 or buttons > mymouse.BUTTON_UP:
     if k == 119 or buttons == mymouse.LEFT_BUTTON:  #key w forward
       step = [0.5, 0.0, 0.5]

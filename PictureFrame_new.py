@@ -15,7 +15,6 @@ import time
 import random
 import demo
 import pi3d
-import paho.mqtt.client as mqtt
 
 from PIL import Image, ExifTags # these are needed for getting exif data from images
 
@@ -48,8 +47,12 @@ delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 # some functions to tidy subsequent code
 #####################################################
 def tex_load(fname):
+  try:
     tex = pi3d.Texture(fname, blend=True, m_repeat=True)
-    return tex
+  except Exception as e:
+    print('''Couldn't load file {} (probably related to Apple and or Adobe
+      making assumptions about hardware!!): {}'''.format(fname, e))
+  return tex
 
 def tidy_name(path_name):
     name = os.path.basename(path_name).upper()
@@ -100,6 +103,7 @@ for k in ExifTags.TAGS:
 # MQTT functionality - see http://pi3d.github.io/html/FAQ.html
 ##############################################
 try:
+  import paho.mqtt.client as mqtt
   def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT broker")
 
@@ -157,7 +161,7 @@ except Exception as e:
   print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=-1, y=-1, frames_per_second=FPS, background=BACKGROUND)
+DISPLAY = pi3d.Display.create(frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
 shader = pi3d.Shader("shaders/blend_new")

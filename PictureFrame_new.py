@@ -21,8 +21,8 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
-#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
+PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
@@ -179,6 +179,7 @@ if nFi > 0:
   sfg = tex_load(iFiles[pic_num])
 else:
   sfg = None
+  print('No files selected!')
 
 # PointText and TextBlock
 font = pi3d.Font(FONT_FILE, codepoints=CODEPOINTS, grid_size=7, shadow_radius=4.0,

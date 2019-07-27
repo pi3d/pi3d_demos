@@ -28,7 +28,7 @@ FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
-FONT_FILE = 'fonts/NotoSans-Regular.ttf'
+FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 #####################################################
 # these variables can be altered using mqtt messaging
@@ -100,7 +100,7 @@ for k in ExifTags.TAGS:
     break
 
 ##############################################
-# MQTT functionality - see http://pi3d.github.io/html/FAQ.html
+# MQTT functionality - see https://www.thedigitalpictureframe.com/
 ##############################################
 try:
   import paho.mqtt.client as mqtt

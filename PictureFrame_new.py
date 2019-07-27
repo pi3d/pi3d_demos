@@ -164,7 +164,7 @@ except Exception as e:
 DISPLAY = pi3d.Display.create(frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
-shader = pi3d.Shader("shaders/blend_new")
+shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = EDGE_ALPHA

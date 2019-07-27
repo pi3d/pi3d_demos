@@ -15,21 +15,20 @@ import time
 import random
 import demo
 import pi3d
-import paho.mqtt.client as mqtt
 
 from PIL import Image, ExifTags # these are needed for getting exif data from images
 
 #####################################################
 # these variables are constants
 #####################################################
-PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
-#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
+PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
-FONT_FILE = 'fonts/NotoSans-Regular.ttf'
+FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 #####################################################
 # these variables can be altered using mqtt messaging
@@ -48,8 +47,12 @@ delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 # some functions to tidy subsequent code
 #####################################################
 def tex_load(fname):
+  try:
     tex = pi3d.Texture(fname, blend=True, m_repeat=True)
-    return tex
+  except Exception as e:
+    print('''Couldn't load file {} (probably related to Apple and or Adobe
+      making assumptions about hardware!!): {}'''.format(fname, e))
+  return tex
 
 def tidy_name(path_name):
     name = os.path.basename(path_name).upper()
@@ -97,9 +100,10 @@ for k in ExifTags.TAGS:
     break
 
 ##############################################
-# MQTT functionality - see http://pi3d.github.io/html/FAQ.html
+# MQTT functionality - see https://www.thedigitalpictureframe.com/
 ##############################################
 try:
+  import paho.mqtt.client as mqtt
   def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT broker")
 
@@ -157,7 +161,7 @@ except Exception as e:
   print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=-1, y=-1, frames_per_second=FPS, background=BACKGROUND)
+DISPLAY = pi3d.Display.create(frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
 shader = pi3d.Shader("shaders/blend_new")
@@ -175,6 +179,7 @@ if nFi > 0:
   sfg = tex_load(iFiles[pic_num])
 else:
   sfg = None
+  print('No files selected!')
 
 # PointText and TextBlock
 font = pi3d.Font(FONT_FILE, codepoints=CODEPOINTS, grid_size=7, shadow_radius=4.0,

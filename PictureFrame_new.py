@@ -21,7 +21,6 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-#PIC_DIR = '/home/patrick/Pictures/2019/image_sequence/test1' #'textures'
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
@@ -50,8 +49,9 @@ def tex_load(fname):
   try:
     tex = pi3d.Texture(fname, blend=True, m_repeat=True)
   except Exception as e:
-    print('''Couldn't load file {} (probably related to Apple and or Adobe
-      making assumptions about hardware!!): {}'''.format(fname, e))
+    print('''Couldn't load file {}
+            (probably related to Apple and or Adobe making assumptions about hardware!!): {}'''.format(fname, e))
+    tex = None
   return tex
 
 def tidy_name(path_name):
@@ -109,7 +109,7 @@ try:
 
   def on_message(client, userdata, message):
     # TODO not ideal to have global but probably only reasonable way to do it
-    global pic_num, iFiles, nFi, date_from, date_to, time_delay
+    global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
     global delta_alpha, fade_time, shuffle, quit, paused, nexttm
     msg = message.payload.decode("utf-8")
     reselect = False
@@ -134,13 +134,13 @@ try:
     elif message.topic == "frame/paused":
       paused = not paused # toggle from previous value
     elif message.topic == "frame/back":
-      pic_num -= 2
-      if pic_num < -1:
-        pic_num = -1
+      next_pic_num -= 2
+      if next_pic_num < -1:
+        next_pic_num = -1
       nexttm = time.time() - 1.0
     if reselect:
       iFiles, nFi = get_files(date_from, date_to)
-      pic_num = 0
+      next_pic_num = 0
 
   # set up MQTT listening
   client = mqtt.Client()
@@ -174,12 +174,12 @@ kbd = pi3d.Keyboard()
 # images in iFiles list
 nexttm = 0.0
 iFiles, nFi = get_files(date_from, date_to)
-pic_num = 0
-if nFi > 0:
-  sfg = tex_load(iFiles[pic_num])
-else:
-  sfg = None
+next_pic_num = 0
+sfg = None
+sbg = None
+if nFi == 0:
   print('No files selected!')
+  exit()
 
 # PointText and TextBlock
 font = pi3d.Font(FONT_FILE, codepoints=CODEPOINTS, grid_size=7, shadow_radius=4.0,
@@ -187,7 +187,7 @@ font = pi3d.Font(FONT_FILE, codepoints=CODEPOINTS, grid_size=7, shadow_radius=4.
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                            z=0.1, rot=0.0, char_count=199,
-                           text_format="{}".format(tidy_name(iFiles[pic_num])), size=0.99, 
+                           text_format="{}".format(tidy_name(iFiles[next_pic_num])), size=0.99, 
                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 
@@ -198,17 +198,20 @@ while DISPLAY.loop_running():
     if tm > nexttm and not paused: # this must run first iteration of loop
       nexttm = tm + time_delay
       a = 0.0 # alpha - proportion front image to back
-      if sfg is None:
+      sbg = sfg
+      sfg = None
+      while sfg is None: # keep going through until a usable picture is found TODO break out how?
+        pic_num = next_pic_num
         sfg = tex_load(iFiles[pic_num])
-      sbg = sfg # swap Textures front to back
-      pic_num += 1
-      if pic_num >= nFi:
-        num_run_through += 1
-        if shuffle and num_run_through >= RESHUFFLE_NUM:
-          num_run_through = 0
-          random.shuffle(iFiles)
-        pic_num = 0
-      sfg = tex_load(iFiles[pic_num]) # load new Texture for front
+        next_pic_num += 1
+        if next_pic_num >= nFi:
+          num_run_through += 1
+          if shuffle and num_run_through >= RESHUFFLE_NUM:
+            num_run_through = 0
+            random.shuffle(iFiles)
+          next_pic_num = 0
+      if sbg is None: # first time through
+        sbg = sfg
       slide.set_textures([sfg, sbg])
       slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
       slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
@@ -250,9 +253,9 @@ while DISPLAY.loop_running():
   if k==ord(' '):
     paused = not paused
   if k==ord('s'): # go back a picture
-    pic_num -= 2
-    if pic_num < -1:
-      pic_num = -1
+    next_pic_num -= 2
+    if next_pic_num < -1:
+      next_pic_num = -1
 
 try:
   client.loop_stop()

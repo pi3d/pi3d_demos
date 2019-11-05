@@ -1,11 +1,12 @@
-precision mediump float;
+#version 120
+//precision mediump float;
 
 attribute vec3 vertex;
 attribute vec3 normal;
 attribute vec2 texcoord;
 
 uniform mat4 modelviewmatrix[2]; // [0] model movement in real coords, [1] in camera coords
-uniform vec3 unib[4];
+uniform vec3 unib[5];
 //uniform pointsize => unib[2][2]
 uniform vec3 unif[20];
 //uniform vec3 eye > unif[6]

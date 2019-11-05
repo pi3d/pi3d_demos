@@ -1,7 +1,9 @@
 /////SHIFT RGB FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 uniform sampler2D tex0;
 uniform sampler2D tex1;
@@ -46,6 +48,8 @@ vec4 ts (sampler2D s, float distance){
   vec2 newuv = uv + vec2(cos(direction), sin(direction)) * distance;
   return vec4(HSVtoRGB(vec3(hue, 0.0, 0.0) + RGBtoHSV(texture2D(s, newuv).rgb)), 1.0);
 }
+
+//fragcolor
 
 void main(void){
   vec4 c = texture2D(tex0, uv);

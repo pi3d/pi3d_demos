@@ -1,7 +1,8 @@
 /////DISPLACEMENT FILTER/////
 //http://pixelshaders.com
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -14,6 +15,8 @@ float t = unif[16][0];
 float stripes(vec2 p, float steps) {
   return fract(p.x*steps);
 }
+
+//fragcolor
 
 void main(void) {
   vec4 color = texture2D(tex0, uv);

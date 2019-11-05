@@ -1,7 +1,9 @@
 /////RADIAL BLUR FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 uniform sampler2D tex0;
 uniform sampler2D tex1;
@@ -15,6 +17,8 @@ float Amount = unif[17][0]; //blur radial amount
 float BlurR = unif[17][1]; //blur rotation amount
 
 #define step 0.0625
+
+//fragcolor
 
 void main(void){
   gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);

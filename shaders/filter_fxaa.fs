@@ -3,7 +3,8 @@
 //NB This will only work if the mipmap=False setting is used for tex0
 //i.e. mypost = pi3d.PostProcess("shader/filter_fxaa", mipmap=False)
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 dNW;
 varying vec2 dNE;
@@ -13,6 +14,8 @@ varying vec2 uv;
 
 uniform sampler2D tex0;
 uniform vec3 unif[20];
+
+//fragcolor
 
 void main( void ) {
   float FXAA_SPAN_MAX = 8.0;

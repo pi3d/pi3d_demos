@@ -1,7 +1,8 @@
 /////LENS DISTORTION FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -14,6 +15,8 @@ uniform vec3 unif[20];
 vec2 centre = vec2(unif[16]);
 float radius = unif[16][2];
 float mag_inv = 0.95; // 1.0/magnification
+
+//fragcolor
 
 void main(void) {
   vec2 c = vec2(centre.x + 0.5, centre.y + 0.5);

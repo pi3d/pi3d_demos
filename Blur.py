@@ -49,8 +49,8 @@ Strings """ + unichr(255) + ' ' + unichr(256) + ' ' + unichr(257)
 # character 255 should appear, character 256 should not.
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=10, y=10, w=900, h=600, frames_per_second=25, window_title='Blur demo')
-DISPLAY.set_background(0.4, 0.6, 0.8, 1.0)      # r,g,b,alpha
+DISPLAY = pi3d.Display.create(x=10, y=10, w=900, h=600, frames_per_second=25, window_title='Blur demo', use_glx=True)
+DISPLAY.set_background(0.0, 0.0, 0.0, 0.0)      # r,g,b,alpha
 
 persp_cam = pi3d.Camera.instance() # default instance camera perspecive view
 ortho_cam = pi3d.Camera(is_3d=False) # 2d orthographic view camera

@@ -1,4 +1,5 @@
-precision mediump float;
+#version 120
+//precision mediump float;
 
 uniform sampler2D tex0;
 uniform sampler2D tex1;
@@ -12,6 +13,8 @@ uniform vec3 unif[19];
 
 varying vec2 pix_invf;
 varying vec2 pix_invb;
+
+//fragcolor
 
 void main(void) {
   float edge_alpha = 0.2; // change how much the 'infill' shows <<<<<<<<<<<<<<<<<<<<<<<

@@ -1,13 +1,17 @@
 /////SEPIA FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 uniform sampler2D tex0;
 uniform vec3 unif[20];
 
 float viInner = 0.0; //vignette gradient inner
 float viOuter = 1.0; //vignette gradient outer
+
+//fragcolor
 
 void main(void){
   vec4 c = texture2D(tex0, uv);

@@ -1,7 +1,8 @@
 /////DISPLACEMENT FILTER/////
 //http://pixelshaders.com
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -16,6 +17,8 @@ float size = unif[16][1];
 float wrap(float x) {
   return abs(mod(x, 2.0) - 1.0);
 }
+
+//fragcolor
 
 void main(void) {
   vec2 p = uv;

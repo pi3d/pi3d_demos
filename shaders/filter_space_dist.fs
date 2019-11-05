@@ -1,7 +1,8 @@
 /////SPATIAL DISTORTION FILTER/////
 //http://pixelshaders.com
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -10,6 +11,8 @@ uniform vec3 unif[20];
 // time unif[16][0]
 
 float t = unif[16][0];
+
+//fragcolor
 
 void main(void) {
   vec2 newuv = uv + vec2(sin(uv.y * 80.0 + t * 6.0) * 0.03, 0.0);

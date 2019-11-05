@@ -1,4 +1,5 @@
-precision mediump float;
+#version 120
+//precision mediump float;
 
 attribute vec3 vertex;
 attribute vec3 normal;
@@ -16,6 +17,8 @@ uniform vec3 unif[20];
 //varying vec2 corner;
 //varying float subsize;
 varying vec4 colour;
+
+//fragcolor
 
 void main(void) {
   gl_Position = modelviewmatrix[1] * vec4(vertex,1.0);

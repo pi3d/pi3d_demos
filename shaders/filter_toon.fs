@@ -1,12 +1,16 @@
 /////CARTOON FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 varying vec2 d;
 uniform sampler2D tex0;
 uniform vec3 unif[20];
 // outline color unif[16] in python unif 48,49,50
+
+//fragcolor
 
 void main(void){
   vec4 c1 = texture2D(tex0, uv);

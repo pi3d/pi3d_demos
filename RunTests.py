@@ -31,7 +31,7 @@ test_list = [["Minimal", 4], ["Minimal_2d", 4], ["Clouds3d", 5], ["LoadModelObj"
               ["ForestWalk", 6], ["ForestQuickNumbers", 6], ["MarsStation", 13],
               ["RobotWalkabout", 8], ["CollisionBalls", 5], ["Slideshow_2d", 6],
               ["Amazing", 10], ["ClothWalk", 6], ["Earth", 4], ["EnvironmentSphere", 5],
-              ["FixedString", 5], ["PictureFrame_new", 7], ["Pong", 5],["Orbit", 5],
+              ["FixedString", 5], ["PictureFrame", 7], ["Pong", 5],["Orbit", 5],
               ["Silo", 10], ["TigerTank", 10], ["Post", 6], ["FilterDemo", 10], ["Billboard", 6],
               ["Blur", 6], ["CastShadows", 6], ["StringMulti", 6],
               ["ClashWalk", 6], ["Conway", 5], ["DogFight", 10],

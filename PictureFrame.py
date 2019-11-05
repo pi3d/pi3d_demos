@@ -21,15 +21,16 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+PIC_DIR = '/home/patrick/python/pi3d_demos/textures/temp' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
-FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
+FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
-USE_MQTT = True
+USE_MQTT = False
 #####################################################
 # these variables can be altered using mqtt messaging
 #####################################################
@@ -163,10 +164,10 @@ if USE_MQTT:
     print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(frames_per_second=FPS, background=BACKGROUND)
+DISPLAY = pi3d.Display.create(x=20,y=20,frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
-shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
+shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = EDGE_ALPHA

@@ -176,7 +176,6 @@ def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle, shadows=None):
 
 # Update display before we begin (user might have moved window)
 win.update()
-DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 is_running = True
 

@@ -106,7 +106,6 @@ omx, omy = mymouse.position()
 
 # Update display before we begin (user might have moved window)
 win.update()
-DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 CAMERA = pi3d.Camera.instance()
 #inputs.get_mouse_movement()

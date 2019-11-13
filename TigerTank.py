@@ -223,9 +223,7 @@ smode = False #sniper mode
 def limit_tilt(tilt):
   return elev + ((tilt - 5) if tilt > 5.0 else 0.0)
 
-# Update display before we begin (user might have moved window)
 win.update()
-DISPLAY.resize(win.winx, win.winy, win.width, win.height - bord)
 
 is_running = True
 #try:

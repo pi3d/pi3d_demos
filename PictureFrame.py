@@ -23,15 +23,15 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
-PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
+PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
-#FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
-FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
+FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
+#FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 USE_MQTT = True
 RECENT_N = 4 # shuffle the most recent ones to play before the rest
@@ -214,9 +214,9 @@ if USE_MQTT:
 
 DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
-
-#shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
-shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
+print(DISPLAY.opengl.gl_id)
+shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
+#shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = EDGE_ALPHA

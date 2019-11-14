@@ -44,5 +44,5 @@ documentation/Makefile
 *.db
 
 # path to pi3d specific to machine
-demo.py
+#demo.py
 

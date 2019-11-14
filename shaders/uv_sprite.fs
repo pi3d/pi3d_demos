@@ -1,11 +1,14 @@
-precision mediump float;
+#version 120
+//precision mediump float;
 
 uniform sampler2D tex0;
 uniform sampler2D tex1;
 uniform sampler2D tex2;
-uniform vec3 unib[4];
+uniform vec3 unib[5];
 
 varying float texnum;
+
+//fragcolor
 
 void main(void) {
   vec4 texc = vec4(0.0);

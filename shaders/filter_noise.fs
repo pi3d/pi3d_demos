@@ -1,7 +1,8 @@
 /////NOISE FILTER/////
 //http://pixelshaders.com
 
-precision lowp float;
+#version 120
+//precision lowp float;
 
 varying vec2 uv;
 
@@ -46,6 +47,8 @@ float nestedNoise(vec2 p) {
   float y = movingNoise(p + 20.0);
   return movingNoise(p + vec2(x, y));
 }
+
+//fragcolor
 
 void main(void) { 
   vec4 color = texture2D(tex0, uv);

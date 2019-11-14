@@ -1,7 +1,9 @@
 /////CHARCOAL FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 varying vec2 d;
 uniform sampler2D tex0;
@@ -11,6 +13,8 @@ uniform vec3 unif[20];
 
 vec3 charcoal = unif[16];
 vec3 paper = unif[17];
+
+//fragcolor
 
 void main(void){
   vec4 c1 = texture2D(tex0, uv);

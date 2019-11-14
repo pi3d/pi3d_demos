@@ -1,7 +1,9 @@
 /////COLORIZE FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
+
 varying vec2 uv;
 varying vec2 d;
 uniform sampler2D tex0;
@@ -9,6 +11,8 @@ uniform vec3 unif[20];
 //color0 unif[16] in python 48,49,50 = 1.0, 0.5, 0.0 say
 //color1 unif[17] in python 51,52,53 = 0.0, 1.0, 0.5 say
 //color2 unif[18] in python 54,55,56 = 0.5, 0.0, 1.0 say
+
+//fragcolor
 
 void main(void){
   vec4 c1 = texture2D(tex0, uv);     //from sampler

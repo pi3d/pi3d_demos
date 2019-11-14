@@ -1,7 +1,8 @@
 /////CRYSTALOGRAPHY FILTER/////
 //http://pixelshaders.com
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -23,6 +24,8 @@ float wave(vec2 p, float angle) {
 float wrap(float x) {
   return abs(mod(x, 2.0) - 1.0);
 }
+
+//fragcolor
 
 void main(void) {
   vec4 color = texture2D(tex0, uv);

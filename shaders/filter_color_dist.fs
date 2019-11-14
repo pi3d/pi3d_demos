@@ -1,7 +1,8 @@
 /////COLOR DISTORTION FILTER/////
 //http://pixelshaders.com
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -14,6 +15,8 @@ vec3 dist = unif[16];
 float wave(float x, float amount) {
   return (sin(x * amount) + 1.0) * .5;
 }
+
+//fragcolor
 
 void main(void) {
   vec4 color = texture2D(tex0, uv);

@@ -1,7 +1,8 @@
 /////SHIFT RGB FILTER/////
 //www.cloneproduction.net
 
-precision mediump float;
+#version 120
+//precision mediump float;
 
 varying vec2 uv;
 
@@ -12,6 +13,8 @@ uniform vec3 unif[20];
 
 float spread = unif[16][0];
 #define factor 0.04
+
+//fragcolor
 
 void main(void){
   vec2 f = uv * spread;

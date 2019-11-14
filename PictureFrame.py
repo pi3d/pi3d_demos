@@ -23,15 +23,15 @@ from PIL import Image, ExifTags # these are needed for getting exif data from im
 #####################################################
 # these variables are constants
 #####################################################
-PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
-#PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
+PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
-FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
-#FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
+#FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
+FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 USE_MQTT = True
 RECENT_N = 4 # shuffle the most recent ones to play before the rest
@@ -47,11 +47,12 @@ date_from = None
 date_to = None
 quit = False
 paused = False # NB must be set to True after the first iteration of the show!
-
+#####################################################
+# only alter below here if you're keen to experiment!
+#####################################################
 delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 last_file_change = 0.0 # holds last change time in directory structure
 next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory every hour
-
 #####################################################
 # some functions to tidy subsequent code
 #####################################################
@@ -187,7 +188,7 @@ if USE_MQTT:
         next_pic_num -= 2
         if next_pic_num < -1:
           next_pic_num = -1
-        nexttm = time.time() - 1.0
+        nexttm = time.time() - 86400.0
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
         next_pic_num = 0
@@ -214,8 +215,8 @@ if USE_MQTT:
 DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
-shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
-#shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
+#shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
+shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = EDGE_ALPHA
@@ -246,7 +247,7 @@ num_run_through = 0
 while DISPLAY.loop_running():
   tm = time.time()
   if nFi > 0:
-    if tm > nexttm and not paused: # this must run first iteration of loop
+    if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
       nexttm = tm + time_delay
       a = 0.0 # alpha - proportion front image to back
       sbg = sfg
@@ -307,7 +308,7 @@ while DISPLAY.loop_running():
 
   k = kbd.read()
   if k != -1:
-    nexttm = time.time() - 1.0
+    nexttm = time.time() - 86400.0
   if k==27 or quit: #ESC
     break
   if k==ord(' '):

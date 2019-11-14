@@ -3,8 +3,6 @@
 varying vec2 texcoordoutf;
 varying vec2 texcoordoutb;
 
-//fragcolor
-
 void main(void) {
   vec4 texf = texture2D(tex0, texcoordoutf);
   if (texcoordoutf[0] < 0.0 || texcoordoutf[0] > 1.0 ||

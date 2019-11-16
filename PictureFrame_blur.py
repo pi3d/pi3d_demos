@@ -58,7 +58,7 @@ next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory ever
 #####################################################
 def tex_load(fname, orientation, size=None):
   try:
-    im = Image.open(fname)
+    im = Image.open(fname).convert("RGB")
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     if orientation == 3:
@@ -84,7 +84,8 @@ def tex_load(fname, orientation, size=None):
         box = (x, y, x + w, y + h) 
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.BLUR)
+        im_b = im_b.filter(ImageFilter.BoxBlur(6))
+        #im_b = im_b.filter(ImageFilter.BLUR)
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),

@@ -18,13 +18,13 @@ import random
 import demo
 import pi3d
 
-from PIL import Image, ExifTags # these are needed for getting exif data from images
+from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 
 #####################################################
 # these variables are constants
 #####################################################
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
-#PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
+#PIC_DIR = '/home/patrick/python/pi3d_demos/textures/temp' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
@@ -56,7 +56,7 @@ next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory ever
 #####################################################
 # some functions to tidy subsequent code
 #####################################################
-def tex_load(fname, orientation):
+def tex_load(fname, orientation, size=None):
   try:
     im = Image.open(fname)
     if orientation == 2:
@@ -73,7 +73,23 @@ def tex_load(fname, orientation):
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
     if orientation == 8:
         im = im.transpose(Image.ROTATE_90)
-    tex = pi3d.Texture(im, blend=True, m_repeat=True)
+    if size is not None:
+      wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
+      if abs(wh_rat - 1.0) > 0.01: # make a blurred background
+        (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
+        if wh_rat > 1.0:
+          (sc_b, sc_f) = (sc_f, sc_b) # swap round
+        (w, h) =  (round(size[0] / sc_b), round(size[1] / sc_b))
+        (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
+        box = (x, y, x + w, y + h) 
+        blr_sz = (int(x * 512 / size[0]) for x in size)
+        im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
+        im_b = im_b.filter(ImageFilter.BLUR)
+        im_b = im_b.resize(size, resample=Image.BICUBIC)
+        im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
+        im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
+                            round(0.5 * (im_b.size[1] - im.size[1]))))
+    tex = pi3d.Texture(im_b, blend=True, m_repeat=True, automatic_resize=True)
   except Exception as e:
     print('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None
@@ -254,7 +270,7 @@ while DISPLAY.loop_running():
       sfg = None
       while sfg is None: # keep going through until a usable picture is found TODO break out how?
         pic_num = next_pic_num
-        sfg = tex_load(iFiles[pic_num][0], iFiles[pic_num][1])
+        sfg = tex_load(iFiles[pic_num][0], iFiles[pic_num][1], (DISPLAY.width, DISPLAY.height))
         next_pic_num += 1
         if next_pic_num >= nFi:
           num_run_through += 1

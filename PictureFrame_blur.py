@@ -24,10 +24,10 @@ from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif
 # these variables are constants
 #####################################################
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
-#PIC_DIR = '/home/patrick/python/pi3d_demos/textures/temp' #'textures'
+#PIC_DIR = '/home/patrick/python/pi3d_demos/textures/' #'textures'
 FPS = 20
 FIT = True
-EDGE_ALPHA = 0.0 # see background colour at edge. 1.0 would show reflection of image
+EDGE_ALPHA = 0.5 # see background colour at edge. 1.0 would show reflection of image
 BACKGROUND = (0.2, 0.2, 0.2, 1.0)
 RESHUFFLE_NUM = 5 # times through before reshuffling
 FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
@@ -37,6 +37,7 @@ USE_MQTT = True
 RECENT_N = 4 # shuffle the most recent ones to play before the rest
 SHOW_NAMES = False
 CHECK_DIR_TM = 60.0 # seconds to wait between checking if directory has changed
+BLUR_EDGES = True # use blurred version of image to fill edges
 #####################################################
 # these variables can be altered using mqtt messaging
 #####################################################
@@ -73,7 +74,7 @@ def tex_load(fname, orientation, size=None):
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
     if orientation == 8:
         im = im.transpose(Image.ROTATE_90)
-    if size is not None:
+    if BLUR_EDGES and size is not None:
       wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
       if abs(wh_rat - 1.0) > 0.01: # make a blurred background
         (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
@@ -84,13 +85,13 @@ def tex_load(fname, orientation, size=None):
         box = (x, y, x + w, y + h) 
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.BoxBlur(6))
-        #im_b = im_b.filter(ImageFilter.BLUR)
+        im_b = im_b.filter(ImageFilter.BoxBlur(8))
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
-    tex = pi3d.Texture(im_b, blend=True, m_repeat=True, automatic_resize=True)
+        im = im_b # have to do this as paste applies in place
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=True)
   except Exception as e:
     print('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None

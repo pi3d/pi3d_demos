@@ -34,13 +34,13 @@ FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
 #FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 USE_MQTT = True
-RECENT_N = 50 # shuffle the most recent ones to play before the rest
+RECENT_N = 4 # shuffle the most recent ones to play before the rest
 SHOW_NAMES = False
 CHECK_DIR_TM = 60.0 # seconds to wait between checking if directory has changed
 #####################################################
 BLUR_EDGES = True # use blurred version of image to fill edges - no point if FIT = False
 BLUR_AMOUNT = 12 # larger values than 12 will increase processing load quite a bit
-BLUR_ZOOM = 1.0 # must be greater than 1.0 -> expands the backgorund to just fill the space around the image
+BLUR_ZOOM = 1.0 # must be >= 1.0 which expands the backgorund to just fill the space around the image
 #####################################################
 # these variables can be altered using MQTT messaging
 #####################################################
@@ -54,6 +54,8 @@ paused = False # NB must be set to True after the first iteration of the show!
 #####################################################
 # only alter below here if you're keen to experiment!
 #####################################################
+if BLUR_ZOOM < 1.0:
+  BLUR_ZOOM = 1.0
 delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 last_file_change = 0.0 # holds last change time in directory structure
 next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory every hour
@@ -233,7 +235,8 @@ if USE_MQTT:
     print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS, background=BACKGROUND)
+DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS,
+              display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 print(DISPLAY.opengl.gl_id)
 shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")

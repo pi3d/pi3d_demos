@@ -51,7 +51,7 @@ to be viewed through a grid. See https://github.com/pi3d/pi3d_demos/make_grid.py
 
 # load shader
 shader = pi3d.Shader("uv_bump")
-shinesh = pi3d.Shader("uv_reflect")
+shinesh = pi3d.Shader("mat_reflect")
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png", mipmap=False)
@@ -113,8 +113,8 @@ monument.set_shader(shinesh)
 monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
 monument.set_fog(*FOG)
 monument.translate(100.0, -mymap.calcHeight(100.0, 235) + 12.0, 235.0)
-monument.scale(20.0, 20.0, 20.0)
-monument.rotateToY(65)
+monument.scale(10.0, 10.0, 10.0)
+monument.rotateToY(-115)
 
 #screenshot number
 scshots = 1

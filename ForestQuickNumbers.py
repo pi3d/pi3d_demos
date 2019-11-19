@@ -20,7 +20,7 @@ pi3d.Light(lightpos=(1, -1, -3), lightcol =(1.0, 1.0, 0.8), lightamb=(0.25, 0.2,
 
 # load shader
 shader = pi3d.Shader("uv_bump")
-shinesh = pi3d.Shader("uv_reflect")
+shinesh = pi3d.Shader("mat_reflect")
 flatsh = pi3d.Shader("uv_flat")
 
 tree2img = pi3d.Texture("textures/tree2.png", mipmap=False)
@@ -82,9 +82,9 @@ monument = pi3d.Model(file_string="models/pi3d.obj", name="monument")
 monument.set_shader(shinesh)
 monument.set_normal_shine(bumpimg, 16.0, reflimg, 0.4)
 monument.set_fog(*FOG)
-monument.translate(100.0, -mymap.calcHeight(100.0, 230) + 5.8, 230.0)
-monument.scale(20.0, 20.0, 20.0)
-monument.rotateToY(65)
+monument.translate(100.0, -mymap.calcHeight(100.0, 240) + 5.8, 240.0)
+monument.scale(10.0, 10.0,10.0)
+monument.rotateToY(-115)
 
 #screenshot number
 scshots = 1

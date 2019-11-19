@@ -34,12 +34,15 @@ FONT_FILE = '/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf'
 #FONT_FILE = '/home/patrick/python/pi3d_demos/fonts/NotoSans-Regular.ttf'
 CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
 USE_MQTT = True
-RECENT_N = 4 # shuffle the most recent ones to play before the rest
+RECENT_N = 50 # shuffle the most recent ones to play before the rest
 SHOW_NAMES = False
 CHECK_DIR_TM = 60.0 # seconds to wait between checking if directory has changed
-BLUR_EDGES = True # use blurred version of image to fill edges
 #####################################################
-# these variables can be altered using mqtt messaging
+BLUR_EDGES = True # use blurred version of image to fill edges - no point if FIT = False
+BLUR_AMOUNT = 12 # larger values than 12 will increase processing load quite a bit
+BLUR_ZOOM = 1.0 # must be greater than 1.0 -> expands the backgorund to just fill the space around the image
+#####################################################
+# these variables can be altered using MQTT messaging
 #####################################################
 time_delay = 10.0 # between slides
 fade_time = 3.0
@@ -80,12 +83,12 @@ def tex_load(fname, orientation, size=None):
         (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
         if wh_rat > 1.0:
           (sc_b, sc_f) = (sc_f, sc_b) # swap round
-        (w, h) =  (round(size[0] / sc_b), round(size[1] / sc_b))
+        (w, h) =  (round(size[0] / sc_b / BLUR_ZOOM), round(size[1] / sc_b / BLUR_ZOOM))
         (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
-        box = (x, y, x + w, y + h) 
+        box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.BoxBlur(8))
+        im_b = im_b.filter(ImageFilter.BoxBlur(BLUR_AMOUNT))
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),

@@ -37,9 +37,12 @@ USE_MQTT = True
 RECENT_N = 4 # shuffle the most recent ones to play before the rest
 SHOW_NAMES = False
 CHECK_DIR_TM = 60.0 # seconds to wait between checking if directory has changed
-BLUR_EDGES = True # use blurred version of image to fill edges
 #####################################################
-# these variables can be altered using mqtt messaging
+BLUR_EDGES = True # use blurred version of image to fill edges - no point if FIT = False
+BLUR_AMOUNT = 12 # larger values than 12 will increase processing load quite a bit
+BLUR_ZOOM = 1.0 # must be >= 1.0 which expands the backgorund to just fill the space around the image
+#####################################################
+# these variables can be altered using MQTT messaging
 #####################################################
 time_delay = 10.0 # between slides
 fade_time = 3.0
@@ -51,6 +54,8 @@ paused = False # NB must be set to True after the first iteration of the show!
 #####################################################
 # only alter below here if you're keen to experiment!
 #####################################################
+if BLUR_ZOOM < 1.0:
+  BLUR_ZOOM = 1.0
 delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
 last_file_change = 0.0 # holds last change time in directory structure
 next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory every hour
@@ -80,12 +85,12 @@ def tex_load(fname, orientation, size=None):
         (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
         if wh_rat > 1.0:
           (sc_b, sc_f) = (sc_f, sc_b) # swap round
-        (w, h) =  (round(size[0] / sc_b), round(size[1] / sc_b))
+        (w, h) =  (round(size[0] / sc_b / BLUR_ZOOM), round(size[1] / sc_b / BLUR_ZOOM))
         (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
-        box = (x, y, x + w, y + h) 
+        box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.BoxBlur(8))
+        im_b = im_b.filter(ImageFilter.BoxBlur(BLUR_AMOUNT))
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
@@ -230,7 +235,8 @@ if USE_MQTT:
     print("MQTT not set up because of: {}".format(e))
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS, background=BACKGROUND)
+DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=FPS,
+              display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 print(DISPLAY.opengl.gl_id)
 shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")

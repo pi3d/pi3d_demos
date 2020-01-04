@@ -24,7 +24,7 @@ from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif
 # these variables are constants
 #####################################################
 PIC_DIR = '/home/pi/pi3d_demos/textures' #'textures'
-#PIC_DIR = '/home/patrick/python/pi3d_demos/textures/' #'textures'
+#PIC_DIR = '/home/patrick/python/pi3d_demos/textures' #'textures'
 FPS = 20
 FIT = True
 EDGE_ALPHA = 0.5 # see background colour at edge. 1.0 would show reflection of image
@@ -41,6 +41,8 @@ CHECK_DIR_TM = 60.0 # seconds to wait between checking if directory has changed
 BLUR_EDGES = False # use blurred version of image to fill edges - will override FIT = False
 BLUR_AMOUNT = 12 # larger values than 12 will increase processing load quite a bit
 BLUR_ZOOM = 1.0 # must be >= 1.0 which expands the backgorund to just fill the space around the image
+KENBURNS = False # will set FIT->False and BLUR_EDGES->False
+KEYBOARD = False # set to False when running headless to avoid curses error. True for debugging
 #####################################################
 # these variables can be altered using MQTT messaging
 #####################################################
@@ -54,6 +56,10 @@ paused = False # NB must be set to True after the first iteration of the show!
 #####################################################
 # only alter below here if you're keen to experiment!
 #####################################################
+if KENBURNS:
+  kb_up = True
+  FIT = False
+  BLUR_EDGES = False
 if BLUR_ZOOM < 1.0:
   BLUR_ZOOM = 1.0
 delta_alpha = 1.0 / (FPS * fade_time) # delta alpha
@@ -64,7 +70,8 @@ next_check_tm = time.time() + CHECK_DIR_TM # check if new file or directory ever
 #####################################################
 def tex_load(fname, orientation, size=None):
   try:
-    im = Image.open(fname).convert("RGB")
+    im = Image.open(fname)
+    im.putalpha(255) # this will convert to RGBA and set alpha to opaque
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     if orientation == 3:
@@ -90,13 +97,14 @@ def tex_load(fname, orientation, size=None):
         box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.BoxBlur(BLUR_AMOUNT))
+        im_b = im_b.filter(ImageFilter.GaussianBlur(BLUR_AMOUNT))
         im_b = im_b.resize(size, resample=Image.BICUBIC)
+        im_b.putalpha(round(255 * EDGE_ALPHA))  # to apply the same EDGE_ALPHA as the no blur method.
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=True)
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=False, free_after_load=True)
   except Exception as e:
     print('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None
@@ -245,7 +253,8 @@ slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = EDGE_ALPHA
 
-kbd = pi3d.Keyboard()
+if KEYBOARD:
+  kbd = pi3d.Keyboard()
 
 # images in iFiles list
 nexttm = 0.0
@@ -301,10 +310,21 @@ while DISPLAY.loop_running():
       slide.unif[sz2] = 1.0
       slide.unif[os1] = (wh_rat - 1.0) * 0.5
       slide.unif[os2] = 0.0
+      if KENBURNS:
+          xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
+          slide.unif[48] = 0.0
+          slide.unif[49] = 0.0
+          kb_up = not kb_up
       # set the file name as the description
       if SHOW_NAMES:
         textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
         text.regen()
+    if KENBURNS:
+      t_factor = nexttm - tm
+      if kb_up:
+        t_factor = time_delay - t_factor
+      slide.unif[48] = xstep * t_factor
+      slide.unif[49] = ystep * t_factor
 
     if a < 1.0: # transition is happening
       a += delta_alpha
@@ -330,21 +350,23 @@ while DISPLAY.loop_running():
 
   text.draw()
 
-  k = kbd.read()
-  if k != -1:
-    nexttm = time.time() - 86400.0
-  if k==27 or quit: #ESC
-    break
-  if k==ord(' '):
-    paused = not paused
-  if k==ord('s'): # go back a picture
-    next_pic_num -= 2
-    if next_pic_num < -1:
-      next_pic_num = -1
+  if KEYBOARD:
+    k = kbd.read()
+    if k != -1:
+      nexttm = time.time() - 86400.0
+    if k==27 or quit: #ESC
+      break
+    if k==ord(' '):
+      paused = not paused
+    if k==ord('s'): # go back a picture
+      next_pic_num -= 2
+      if next_pic_num < -1:
+        next_pic_num = -1
 
 try:
   client.loop_stop()
 except Exception as e:
   print("this was going to fail if previous try failed!")
-kbd.close()
+if KEYBOARD:
+  kbd.close()
 DISPLAY.destroy()

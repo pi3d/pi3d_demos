@@ -63,6 +63,8 @@ x = 0.0
 dx = 0.001
 clear = True
 # Display scene and rotate shape
+n = 0
+start = time.time()
 while DISPLAY.loop_running():
   tm = tm + dt
   sc = (sc + ds) % 10.0
@@ -85,6 +87,7 @@ while DISPLAY.loop_running():
   myshape.scale(1.0 + mx/1000.0, 1.0 + my/1000.0, 1.0 + mx/1000.0)
   myshape.rotateIncY(0.6471)
   myshape.rotateIncX(0.0613)
+  n += 1
 
   k = mykeys.read()
   if k==ord('p'): # take screen shot
@@ -95,3 +98,4 @@ while DISPLAY.loop_running():
     break
   elif k > -1: # any other key toggle OffScreenTexture clear
     clear = not clear
+print("{:.1f}fps".format(n / (time.time() - start)))

@@ -1,26 +1,15 @@
 /////RADIAL BLUR FILTER/////
 //www.cloneproduction.net
-
-#version 120
-//precision mediump float;
+#include std_head_fs.inc
 
 varying vec2 uv;
-uniform sampler2D tex0;
-uniform sampler2D tex1;
-uniform vec3 unif[20];
-// centre position unif[16][0],[1] in python unif 48,49
-// radial amount unif[17][0] in python unif 51
-// rotation amount unif[17][1] in python unif 52
-
-vec2 BlurXY = vec2 (unif[16]); //blur center position
-float Amount = unif[17][0]; //blur radial amount
-float BlurR = unif[17][1]; //blur rotation amount
 
 #define step 0.0625
 
-//fragcolor
-
 void main(void){
+  vec2 BlurXY = vec2 (unif[16]); //blur center position
+  float Amount = unif[17][0]; //blur radial amount
+  float BlurR = unif[17][1]; //blur rotation amount
   gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   vec2 piv = vec2(BlurXY.x + 0.5, BlurXY.y + 0.5);
   float wd = texture2D(tex1, uv).x;

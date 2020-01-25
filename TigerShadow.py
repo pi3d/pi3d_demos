@@ -168,8 +168,8 @@ def drawTiger(x, y, z, rot, roll, pitch, turret, gunangle, shadows=None):
   tank_gun.rotateToZ(gunangle)
   if shadows == None:
     if len(tank_body.buf[0].textures) == 2: # i.e. first time drawn add shadow texture
-      tank_body.buf[0].textures.append(myshadows)
-      tank_turret.buf[0].textures.append(myshadows)
+      tank_body.buf[0].textures.append(myshadows.color)
+      tank_turret.buf[0].textures.append(myshadows.color)
     tank_body.draw(light_camera=myshadows.LIGHT_CAM)
   else:
     shadows.cast_shadow(tank_body)
@@ -246,7 +246,7 @@ try:
     cottages.draw()
 
     #mymap.draw()           # Draw the landscape
-    mymap.draw(shader, [mountimg1, bumpimg, myshadows], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
+    mymap.draw(shader, [mountimg1, bumpimg, myshadows.color], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
 
     myecube.position(xm, ym, zm)
     myecube.draw()  #Draw environment cube

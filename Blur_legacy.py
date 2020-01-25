@@ -49,7 +49,7 @@ Strings """ + unichr(255) + ' ' + unichr(256) + ' ' + unichr(257)
 # character 255 should appear, character 256 should not.
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=10, y=10, w=900, h=600, frames_per_second=25, window_title='Blur demo', use_glx=True)
+DISPLAY = pi3d.Display.create(x=10, y=10, w=900, h=600, frames_per_second=2500, window_title='Blur demo', use_glx=True)
 DISPLAY.set_background(0.0, 0.0, 0.0, 0.0)      # r,g,b,alpha
 
 persp_cam = pi3d.Camera.instance() # default instance camera perspecive view
@@ -60,8 +60,7 @@ pi3d.Light((0, 5, 0))
 #create shaders
 shader = pi3d.Shader("uv_reflect")
 flatsh = pi3d.Shader("uv_flat")
-blursh = pi3d.Shader("shaders/filter_blurdistance")
-defocus = pi3d.PostProcess(shader=blursh)
+defocus = pi3d.Defocus()
 
 #Create textures
 shapeimg = pi3d.Texture("textures/straw1.jpg")
@@ -96,15 +95,16 @@ mykeys = pi3d.Keyboard()
 # Display scene and rotate shape
 while DISPLAY.loop_running():
 
-  defocus.start_capture()
+  defocus.start_blur()
   # 1. drawing objects now renders to an offscreen texture ####################
   mysprite.draw()
   myshape.draw()
-  defocus.end_capture()
-  # 2. drawing now back to screen. The texture can now be used by defocus.draw()
+  defocus.end_blur()
+  # 2. drawing now back to screen. The texture can now be used by defocus.blur()
 
   # 3. redraw these two objects applying a distance blur effect ###############
-  defocus.draw({42:0.8, 43:0.1, 44:0.004, 48:0.99}) # 4 is focal distance, >= 9 distance will get
+  defocus.blur(myshape, 4, 9, 5) # 4 is focal distance, >= 9 distance will get
+  defocus.blur(mysprite, 4, 9, 5) # 5 x blurring, nearer than focus also blurs
 
   myshape.rotateIncY(1.247)
   myshape.rotateIncX(0.1613)

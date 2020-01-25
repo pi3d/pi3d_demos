@@ -1,21 +1,13 @@
 /////SPATIAL DISTORTION FILTER/////
 //http://pixelshaders.com
-
-#version 120
-//precision mediump float;
+#include std_head_fs.inc
 
 varying vec2 uv;
 
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// time unif[16][0]
-
-float t = unif[16][0];
-
-//fragcolor
-
 void main(void) {
+  float t = unif[16][0];
   vec2 newuv = uv + vec2(sin(uv.y * 80.0 + t * 6.0) * 0.03, 0.0);
   gl_FragColor = texture2D(tex0, newuv);
-  gl_FragColor.a = unif[5][2];
+  gl_FragColor.a = 1.0;
+  //gl_FragColor = vec4(1.0,1.0,0.0,1.0);
 }

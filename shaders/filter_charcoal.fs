@@ -1,22 +1,13 @@
 /////CHARCOAL FILTER/////
 //www.cloneproduction.net
-
-#version 120
-//precision mediump float;
+#include std_head_fs.inc
 
 varying vec2 uv;
 varying vec2 d;
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// charcoal color unif[16] in python unif 48,49,50
-// paper color unif[17] in python unif 51, 52, 53
-
-vec3 charcoal = unif[16];
-vec3 paper = unif[17];
-
-//fragcolor
 
 void main(void){
+  vec3 charcoal = unif[16];
+  vec3 paper = unif[17];
   vec4 c1 = texture2D(tex0, uv);
   //attempt to stop 'wrapping'
   vec4 c2 = texture2D(tex0, uv + vec2(clamp(d.x, 0.0, 1.0), 0));

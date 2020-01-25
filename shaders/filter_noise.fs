@@ -1,21 +1,8 @@
 /////NOISE FILTER/////
 //http://pixelshaders.com
-
-#version 120
-//precision lowp float;
+#include std_head_fs.inc
 
 varying vec2 uv;
-
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// time unif[16][0]
-// scale unif[16][1]
-// limit unif[16][2]
-
-float t = unif[16][0];
-float scale = unif[16][1];
-float limit = unif[16][2];
-float r[10];
 
 float noise(vec2 p) {
   return fract(sin(p.x + p.y * 10000.0) * 10000.0);
@@ -31,6 +18,7 @@ float smoothNoise(vec2 p) {
 }
 
 float movingNoise(vec2 p) {
+  float t = unif[16][0];
   float total =   smoothNoise(p - t) +
                   smoothNoise(p*2.0 + t) * 0.5 +
                   smoothNoise(p*4.0 - t) * 0.25 +
@@ -48,8 +36,6 @@ float nestedNoise(vec2 p) {
   return movingNoise(p + vec2(x, y));
 }
 
-//fragcolor
-
 void main(void) { 
   vec4 color = texture2D(tex0, uv);
   
@@ -57,5 +43,5 @@ void main(void) {
   float brightness = nestedNoise(p);
 
   gl_FragColor = mix(color, vec4(1.0), brightness);
-  gl_FragColor.a = unif[5][2];
+  gl_FragColor.a = 1.0;
 }

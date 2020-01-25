@@ -19,13 +19,13 @@ the slope_factor argument. NB the Camera movements are relative, by setting
 the argument absolute=False
 """
 
-import math,random
+import math,random, time
 
 import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=3000)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
@@ -121,6 +121,8 @@ mymouse.start()
 CAMERA = pi3d.Camera(absolute=False) # you can change this to True but below use: mx, my = mymouse.position()
 roll = 0.0
 # Display scene and rotate cuboid
+n = 0
+start = time.time()
 while DISPLAY.loop_running():
   xm, ym, zm = CAMERA.relocate(rot, tilt, point=[xm, ym, zm], distance=step, 
                               normal=norm, crab=crab, slope_factor=1.5)
@@ -148,7 +150,7 @@ while DISPLAY.loop_running():
       mymap.position(math.copysign(1000,xm), 0.0, math.copysign(1000,zm))
       mymap.draw()
   mymap.position(0.0, 0.0, 0.0)
-  myecube.draw()
+  #myecube.draw()
   mytrees1.draw()
   mytrees2.draw()
   mytrees3.draw()
@@ -159,6 +161,7 @@ while DISPLAY.loop_running():
   rot = - mx * 0.2
   tilt = my * 0.2
 
+  n += 1
   #Press ESCAPE to terminate
   k = mykeys.read()
   #print(len(DISPLAY.keys_pressed))
@@ -192,3 +195,4 @@ while DISPLAY.loop_running():
     halfsize = mapsize / 2.0
     xm = (xm + halfsize) % mapsize - halfsize # wrap location to stay on map -500 to +500
     zm = (zm + halfsize) % mapsize - halfsize
+print("{:.1f}fps".format(n / (time.time() - start)))

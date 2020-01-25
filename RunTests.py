@@ -24,7 +24,7 @@ else:
   else:
     pyname = "python"
 
-FACTOR = 2.0 # increase for lower power i.e. on RPi A or B
+FACTOR = 1.0 # increase for lower power i.e. on RPi A or B
 # these should now be in order of increasing complexity
 test_list = [["Minimal", 4], ["Minimal_2d", 4], ["Clouds3d", 5], ["LoadModelObj", 5],
               ["Shapes", 5], ["Water", 6], ["Snake", 6], ["LoadModelPickle", 5],

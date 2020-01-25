@@ -135,7 +135,7 @@ while DISPLAY.loop_running():
   myshadows.end_cast()
 
   myplane.draw()
-  mymap.draw(shader, [mountimg1, bumpimg, myshadows], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
+  mymap.draw(shader, [mountimg1, bumpimg, myshadows.color], 128.0, 0.0, light_camera=myshadows.LIGHT_CAM)
   myecube.draw()
   mytrees2.draw()
   mytrees3.draw()

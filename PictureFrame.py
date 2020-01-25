@@ -104,7 +104,10 @@ def tex_load(fname, orientation, size=None):
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=False, free_after_load=True)
+      do_resize = False
+    else:
+      do_resize = True
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=do_resize, free_after_load=True)
   except Exception as e:
     print('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None

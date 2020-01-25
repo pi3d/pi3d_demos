@@ -1,26 +1,16 @@
 /////DISPLACEMENT FILTER/////
 //http://pixelshaders.com
-
-#version 120
-//precision mediump float;
+#include std_head_fs.inc
 
 varying vec2 uv;
-
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// time unif[16][0]
-// size unif[16][1]
-
-float t = unif[16][0];
-float size = unif[16][1];
 
 float wrap(float x) {
   return abs(mod(x, 2.0) - 1.0);
 }
 
-//fragcolor
-
 void main(void) {
+  float t = unif[16][0];
+  float size = unif[16][1];
   vec2 p = uv;
 
   p.x = mod(p.x, size);

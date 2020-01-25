@@ -29,9 +29,9 @@ try:
     import pickle
     mymodel = pickle.load(f)
 except Exception as e:
-  print("exception was {}".format(e))
-  """ could be IOError for missing file or various errors from trying to
-  load a file pickled with a different version of python or pickle etc"""
+  print("""    exception was {} - could be IOError for missing file or various errors from trying to
+  load a file pickled with a different version of python or pickle etc
+  'd' to save this model as pickle file""".format(e))
 # load bump and reflection textures
   bumptex = pi3d.Texture("textures/floor_nm.jpg")
   shinetex = pi3d.Texture("textures/stars.jpg")

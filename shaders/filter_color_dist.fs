@@ -1,27 +1,17 @@
 /////COLOR DISTORTION FILTER/////
 //http://pixelshaders.com
+#include std_head_fs.inc
 
-#version 120
-//precision mediump float;
-
-varying vec2 uv;
-
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// distortion amount rgb unif[16]
-
-vec3 dist = unif[16];
+varying vec2 texcoordout;
 
 float wave(float x, float amount) {
-  return (sin(x * amount) + 1.0) * .5;
+  return (sin(x * amount) + 1.0) * 0.5;
 }
 
-//fragcolor
-
 void main(void) {
-  vec4 color = texture2D(tex0, uv);
-  gl_FragColor.r = wave(color.r, dist.r);
-  gl_FragColor.g = wave(color.g, dist.g);
-  gl_FragColor.b = wave(color.b, dist.b);
-  gl_FragColor.a = unif[5][2];
+  vec4 color = texture2D(tex0, texcoordout);
+  gl_FragColor.r = wave(color.r, unif[16][0]);
+  gl_FragColor.g = wave(color.g, unif[16][1]);
+  gl_FragColor.b = wave(color.b, unif[16][2]);
+  gl_FragColor.a = 1.0;
 }

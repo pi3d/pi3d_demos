@@ -1,20 +1,8 @@
 /////CRYSTALOGRAPHY FILTER/////
 //http://pixelshaders.com
-
-#version 120
-//precision mediump float;
+#include std_head_fs.inc
 
 varying vec2 uv;
-
-uniform sampler2D tex0;
-uniform vec3 unif[20];
-// time unif[16][0]
-// scale unif[16][1]
-// limit unif[16][2]
-
-float t = unif[16][0];
-float scale = unif[16][1];
-float limit = unif[16][2];
 
 float wave(vec2 p, float angle) {
   vec2 direction = vec2(cos(angle), sin(angle));
@@ -25,9 +13,10 @@ float wrap(float x) {
   return abs(mod(x, 2.0) - 1.0);
 }
 
-//fragcolor
-
 void main(void) {
+  float t = unif[16][0];
+  float scale = unif[16][1];
+  float limit = unif[16][2];
   vec4 color = texture2D(tex0, uv);
   
   vec2 p = (uv - 0.5) * scale;

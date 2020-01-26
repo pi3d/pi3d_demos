@@ -126,4 +126,3 @@ while DISPLAY.loop_running():
     defocus.delete_buffers()
     DISPLAY.destroy()
     break
-

@@ -25,7 +25,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=3000)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
@@ -150,7 +150,7 @@ while DISPLAY.loop_running():
       mymap.position(math.copysign(1000,xm), 0.0, math.copysign(1000,zm))
       mymap.draw()
   mymap.position(0.0, 0.0, 0.0)
-  #myecube.draw()
+  myecube.draw()
   mytrees1.draw()
   mytrees2.draw()
   mytrees3.draw()

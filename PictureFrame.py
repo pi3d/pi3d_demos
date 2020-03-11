@@ -10,6 +10,9 @@ and https://www.cloudmqtt.com/plans.html
 
 USING exif info to rotate images
 
+    by default the global KEYBOARD is set False so the only way to stop the
+    probram is Alt-F4 or reboot. If you intend to test from command line set
+    KEYBOARD True. After that:
     ESC to quit, 's' to reverse, any other key to move on one.
 '''
 import os
@@ -107,7 +110,8 @@ def tex_load(fname, orientation, size=None):
       do_resize = False
     else:
       do_resize = True
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=do_resize, free_after_load=True)
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=do_resize,
+                       free_after_load=True)
   except Exception as e:
     print('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None

@@ -9,6 +9,10 @@ void main(void) {
   vec2 fcoord = vec2(0.0, 0.0);
   // because the for loops cant run over variable size we have to use a 5 x 5 grid and vary the spread that is sampled
   // obviously this will lead to grainy effects with large amounts of blur
+  // unif[14][0] the focus distance
+  // unif[14][1] the depth of focus (how narrow or broad a band in focus)
+  // unif[14][2] the amount of blurring to apply
+  // unif[16][0] distance at which objects stop being visible
   float depth = texture2D(tex1, texcoordout)[0]; //TODO correct dist formula
   float spread = clamp(unif[14][2] * abs((depth - unif[14][0]) / unif[14][1]), 0.0, unif[14][2]);
   for (float i = -2.0; i < 3.0; i += 1.0) {

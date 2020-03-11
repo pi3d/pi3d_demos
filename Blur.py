@@ -45,7 +45,6 @@ justified
 multiline
 unicode æ ö ¼
 Strings """ + unichr(255) + ' ' + unichr(256) + ' ' + unichr(257)
-
 # character 255 should appear, character 256 should not.
 
 # Setup display and initialise pi3d
@@ -104,7 +103,13 @@ while DISPLAY.loop_running():
   # 2. drawing now back to screen. The texture can now be used by defocus.draw()
 
   # 3. redraw these two objects applying a distance blur effect ###############
-  defocus.draw({42:0.8, 43:0.1, 44:0.004, 48:0.99}) # 4 is focal distance, >= 9 distance will get
+  defocus.draw({42:0.8, 43:0.1, 44:0.004, 48:0.99})
+  # these values go from 0 at the near plane to 1.0 at the far plane
+  # but not linearly! Try adjusting these values
+  # 42 => unif[14][0] the focus distance
+  # 43 => unif[14][1] the depth of focus (how narrow or broad a band in focus)
+  # 44 => unif[14][2] the amount of blurring to apply
+  # 48 => unif[16][0] distance at which objects stop being visible
 
   myshape.rotateIncY(1.247)
   myshape.rotateIncX(0.1613)
@@ -126,4 +131,3 @@ while DISPLAY.loop_running():
     defocus.delete_buffers()
     DISPLAY.destroy()
     break
-

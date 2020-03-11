@@ -57,7 +57,7 @@ mylathe = pi3d.Lathe(path=((0.0, 1.0), (0.6, 1.2), (0.8, 1.4), (1.09, 1.7),
                       (0.1, 0.2), (1.0, 0.05), (1.0, 0.0), (0.001, 0.0), (0.0, 0.0)),
          sides=24, name="Cup", x=0, y=-1, z=10, sx=0.8, sy=0.8, sz=0.8)
 mylathe.set_draw_details(matsh, [shapebump, shapeshine], 0.0, 1.0)
-mylathe.set_alpha(0.5)
+mylathe.set_alpha(0.3)
 mytorus = pi3d.Torus(radius=1, thickness=0.3, ringrots=12, sides=24, name="Torus",
         x=2, y=-1, z=10)
 myhemisphere = pi3d.Sphere(radius=1, sides=24, slices=24, hemi=0.5, name="hsphere",

@@ -24,7 +24,7 @@ else:
   else:
     pyname = "python"
 
-FACTOR = 1.0 # increase for lower power i.e. on RPi A or B
+FACTOR = 1.0 # increase for lower power i.e. 0.5 on x86/64, 1.0 Pi3/4/5, 2.0 on Pi A or B
 # these should now be in order of increasing complexity
 test_list = [["Minimal", 4], ["Minimal_2d", 4], ["Clouds3d", 5], ["LoadModelObj", 5],
               ["Shapes", 5], ["Water", 6], ["Snake", 6], ["LoadModelPickle", 5],
@@ -33,11 +33,11 @@ test_list = [["Minimal", 4], ["Minimal_2d", 4], ["Clouds3d", 5], ["LoadModelObj"
               ["Amazing", 10], ["ClothWalk", 6], ["Earth", 4], ["EnvironmentSphere", 5],
               ["FixedString", 5], ["PictureFrame", 7], ["Pong", 5],["Orbit", 5],
               ["Silo", 10], ["TigerTank", 10], ["Post", 6], ["FilterDemo", 10], ["Billboard", 6],
-              ["Blur", 6], ["CastShadows", 6], ["StringMulti", 6],
+              ["Blur", 6], ["CastShadows", 6], ["StringMulti", 6], ["Polygon", 4],
               ["ClashWalk", 6], ["Conway", 5], ["DogFight", 10],
               ["ForestStereo", 6], ["Gui", 6], ["IceGrow", 6], ["NumpyBalls", 5],
-              ["PexDemo", 3], ["Pi3d3", 4], ["TigerShadow", 10], ["ProceduralTerrain", 10],
-              ["Scenery", 15], ["SpriteBalls", 6],
+              ["PexDemo", 3], ["Pi3d3", 4], ["TigerShadow", 10], ["ProceduralTerrain", 6],
+              ["Scenery", 15], ["SpriteBalls", 6], ["SpriteMulti", 6]
             ]
 
 for t in test_list:

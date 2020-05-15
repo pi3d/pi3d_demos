@@ -23,6 +23,7 @@ void main(void) {
     gl_FragColor = mix(texb, texf, a);
   } else if (unif[18][0] <= 1.0) {
     // burn /////////////////////////////////////////////////////////////
+    a += 0.01;
     float y = 1.0 - smoothstep(a, a * 1.2, length(texf.rgb) * 0.577 + 0.01);
     gl_FragColor = mix(texb, texf * y, step(1.0, y));
   } else {

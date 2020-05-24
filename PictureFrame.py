@@ -180,12 +180,24 @@ if config.USE_MQTT:
       msg = message.payload.decode("utf-8")
       reselect = False
       if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
-        df = msg.split(":")
-        date_from = tuple(int(i) for i in df)
+        try:
+          msg = msg.replace(".",":").replace("/",":").replace("-",":")
+          df = msg.split(":")
+          date_from = tuple(int(i) for i in df)
+          if len(date_from) != 3:
+            raise Exception("invalid date format")
+        except:
+          date_from = None
         reselect = True
       elif message.topic == "frame/date_to":
-        df = msg.split(":")
-        date_to = tuple(int(i) for i in df)
+        try:
+          msg = msg.replace(".",":").replace("/",":").replace("-",":")
+          df = msg.split(":")
+          date_to = tuple(int(i) for i in df)
+          if len(date_to) != 3:
+            raise Exception("invalid date format")
+        except:
+          date_from = None
         reselect = True
       elif message.topic == "frame/time_delay":
         time_delay = float(msg)
@@ -309,6 +321,10 @@ while DISPLAY.loop_running():
       if config.SHOW_NAMES:
         textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
         text.regen()
+      else: # could have a NO IMAGES selected and being drawn
+        textblock.set_text(text_format="{}".format(" "))
+        textblock.colouring.set_colour(alpha=0.0)
+        text.regen()
     if config.KENBURNS:
       t_factor = nexttm - tm
       if kb_up:
@@ -318,7 +334,7 @@ while DISPLAY.loop_running():
 
     if a < 1.0: # transition is happening
       a += delta_alpha
-      slide.unif[44] = a
+      slide.unif[44] = a * a * (3.0 - 2.0 * a)
       if config.SHOW_NAMES:
         # this sets alpha for the TextBlock from 0 to 1 then back to 0
         textblock.colouring.set_colour(alpha=(1.0 - abs(1.0 - 2.0 * a)))

@@ -24,9 +24,14 @@ parse.add_argument("-d", "--verbose",       default=False, type=str_to_bool, hel
 parse.add_argument("-e", "--edge_alpha",    default=0.5, type=float, help="background colour at edge. 1.0 would show reflection of image")
 parse.add_argument("-f", "--fps",           default=20.0, type=float)
 parse.add_argument("-g", "--background",    default=(0.2, 0.2, 0.3, 1.0), type=str_to_tuple, help="RGBA to fill edges when fitting")
+parse.add_argument("-i", "--no_files_img",  default="PictureFrame2020img.jpg", help="image to show if none selected")
 parse.add_argument("-j", "--blend_type",    default="blend", choices=["blend", "burn", "bump"], help="type of blend the shader can do")
 parse.add_argument("-k", "--keyboard",      default=False, type=str_to_bool, help="set to False when running headless to avoid curses error. True for debugging")
-parse.add_argument("-m", "--use_mqtt",      default=False, type=str_to_bool)
+parse.add_argument("-m", "--use_mqtt",      default=False)
+parse.add_argument(      "--mqtt_server",   default="mqtt.eclipse.org")
+parse.add_argument(      "--mqtt_port",     default=1883, type=int)
+parse.add_argument(      "--mqtt_login",    default="")
+parse.add_argument(      "--mqtt_password", default="")
 parse.add_argument("-n", "--recent_n",      default=10, type=int, help="when shuffling the keep n most recent ones to play before the rest")
 parse.add_argument("-o", "--font_file",     default="/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf")
 parse.add_argument("-p", "--pic_dir",       default="/home/pi/pi3d_demos/textures")
@@ -51,9 +56,14 @@ VERBOSE = args.verbose
 EDGE_ALPHA = args.edge_alpha
 FPS = args.fps
 BACKGROUND = args.background
+NO_FILES_IMG = args.no_files_img
 BLEND_TYPE = BLEND_OPTIONS[args.blend_type]
 KEYBOARD = args.keyboard
 USE_MQTT = args.use_mqtt
+MQTT_SERVER = args.mqtt_server
+MQTT_PORT = args.mqtt_port
+MQTT_LOGIN = args.mqtt_login
+MQTT_PASSWORD = args.mqtt_password
 RECENT_N = args.recent_n
 FONT_FILE = args.font_file
 PIC_DIR = args.pic_dir

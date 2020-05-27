@@ -380,7 +380,7 @@ while DISPLAY.loop_running():
   if nFi <= 0:
     textblock.set_text("NO IMAGES SELECTED")
     textblock.colouring.set_colour(alpha=1.0)
-    next_tm = tm
+    next_tm = tm + 1.0
     text.regen()
 
   text.draw()

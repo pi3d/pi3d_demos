@@ -231,8 +231,10 @@ if config.USE_MQTT:
       elif message.topic == "frame/delete":
         f_to_delete = iFiles[pic_num][0]
         f_name_to_delete = os.path.split(f_to_delete)[1]
-        os.rename(f_to_delete, os.path.join(
-            os.path.expanduser("~/.local/share/Trash/files"), f_name_to_delete))
+        move_to_dir = os.path.expanduser("~/Pictures/Trash")
+        if not os.path.exists(move_to_dir):
+          os.makedirs(move_to_dir)
+        os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
         iFiles.pop(pic_num)
         nFi -= 1
         nexttm = time.time() - 86400.0
@@ -315,8 +317,17 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
+      # set the file name as the description
+      if config.SHOW_NAMES:
+        textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
+        text.regen()
+      else: # could have a NO IMAGES selected and being drawn
+        textblock.set_text(text_format="{}".format(" "))
+        textblock.colouring.set_colour(alpha=0.0)
+        text.regen()
     else:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
+      sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
     if sbg is None: # first time through
@@ -339,14 +350,6 @@ while DISPLAY.loop_running():
         slide.unif[48] = 0.0
         slide.unif[49] = 0.0
         kb_up = not kb_up
-    # set the file name as the description
-    if config.SHOW_NAMES:
-      textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
-      text.regen()
-    else: # could have a NO IMAGES selected and being drawn
-      textblock.set_text(text_format="{}".format(" "))
-      textblock.colouring.set_colour(alpha=0.0)
-      text.regen()
 
   if config.KENBURNS:
     t_factor = nexttm - tm
@@ -357,6 +360,8 @@ while DISPLAY.loop_running():
 
   if a < 1.0: # transition is happening
     a += delta_alpha
+    if a > 1.0:
+      a = 1.0
     slide.unif[44] = a * a * (3.0 - 2.0 * a)
     if config.SHOW_NAMES:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0

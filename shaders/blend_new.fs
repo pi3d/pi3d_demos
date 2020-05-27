@@ -17,16 +17,19 @@ void main(void) {
 
   // blending
   float a = unif[14][2];
-
+  gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
   // simple fade //////////////////////////////////////////////////////
-  gl_FragColor = mix(texb, texf, a);
-
-  // burn /////////////////////////////////////////////////////////////
-  //float y = 1.0 - smoothstep(a, a * 1.2, length(texf.rgb) * 0.577 + 0.01);
-  //gl_FragColor = mix(texb, texf * y, step(1.0, y));
-
-  // bump /////////////////////////////////////////////////////////////
-  //vec4 light = vec4(0.577, 0.577, 0.577, 1.0);
-  //float ffact = dot(light, texf);
-  //gl_FragColor = mix(texb * (1.0 + a * (ffact - 1.0)), texf, clamp(2.0 * a - 1.0, 0.0, 1.0));
+  if (unif[18][0] <= 0.0) {
+    gl_FragColor = mix(texb, texf, a);
+  } else if (unif[18][0] <= 1.0) {
+    // burn /////////////////////////////////////////////////////////////
+    a += 0.01;
+    float y = 1.0 - smoothstep(a, a * 1.2, length(texf.rgb) * 0.577 + 0.01);
+    gl_FragColor = mix(texb, texf * y, step(1.0, y));
+  } else {
+    // bump /////////////////////////////////////////////////////////////
+    vec4 light = vec4(1.0, -1.0, -1.0, 1.0);
+    float ffact = dot(light, texf);
+    gl_FragColor = mix(texb * (1.0 + a * (ffact - 1.0)), texf, clamp(2.0 * a - 1.0, 0.0, 1.0));
+  }
 }

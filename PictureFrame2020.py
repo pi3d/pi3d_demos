@@ -54,7 +54,7 @@ def tex_load(fname, orientation, size=None):
     im = Image.open(fname)
     (w, h) = im.size
     if w > MAX_SIZE:
-        im = im.resize((1920, int(h * MAX_SIZE / w)))
+        im = im.resize((MAX_SIZE, int(h * MAX_SIZE / w)))
     elif h > MAX_SIZE:
         im = im.resize((int(w * MAX_SIZE / h), MAX_SIZE))
     if orientation == 2:

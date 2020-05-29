@@ -15,13 +15,11 @@ USING exif info to rotate images
 import os
 import time
 import random
-import math
 import demo
 import pi3d
 
-from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
-import PictureFrame2020config as config
+import config
 
 #####################################################
 # these variables can be altered using MQTT messaging
@@ -39,7 +37,7 @@ paused = False # NB must be set to True *only* after the first iteration of the 
 #####################################################
 if config.KENBURNS:
   kb_up = True
-  config.FIT = False
+  FIT = False
   config.BLUR_EDGES = False
 if config.BLUR_ZOOM < 1.0:
   config.BLUR_ZOOM = 1.0
@@ -52,24 +50,20 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 def tex_load(fname, orientation, size=None):
   try:
     im = Image.open(fname)
-    (w, h) = im.size
-    if w > MAX_SIZE:
-        im = im.resize((MAX_SIZE, int(h * MAX_SIZE / w)))
-    elif h > MAX_SIZE:
-        im = im.resize((int(w * MAX_SIZE / h), MAX_SIZE))
+    im.putalpha(255) # this will convert to RGBA and set alpha to opaque
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
-    elif orientation == 3:
+    if orientation == 3:
         im = im.transpose(Image.ROTATE_180) # rotations are clockwise
-    elif orientation == 4:
+    if orientation == 4:
         im = im.transpose(Image.FLIP_TOP_BOTTOM)
-    elif orientation == 5:
+    if orientation == 5:
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
-    elif orientation == 6:
+    if orientation == 6:
         im = im.transpose(Image.ROTATE_270)
-    elif orientation == 7:
+    if orientation == 7:
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
-    elif orientation == 8:
+    if orientation == 8:
         im = im.transpose(Image.ROTATE_90)
     if config.BLUR_EDGES and size is not None:
       wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
@@ -159,7 +153,6 @@ def get_files(dt_from=None, dt_to=None):
     file_list.sort() # if not suffled; sort by name
   return file_list, len(file_list) # tuple of file list, number of pictures
 
-
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
 EXIF_ORIENTATION = None
 for k in ExifTags.TAGS:
@@ -172,9 +165,6 @@ for k in ExifTags.TAGS:
 ##############################################
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
 ##############################################
-iFiles = []
-nFi = 0
-next_pic_num = 0
 if config.USE_MQTT:
   try:
     import paho.mqtt.client as mqtt
@@ -189,24 +179,12 @@ if config.USE_MQTT:
       msg = message.payload.decode("utf-8")
       reselect = False
       if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
-        try:
-          msg = msg.replace(".",":").replace("/",":").replace("-",":")
-          df = msg.split(":")
-          date_from = tuple(int(i) for i in df)
-          if len(date_from) != 3:
-            raise Exception("invalid date format")
-        except:
-          date_from = None
+        df = msg.split(":")
+        date_from = tuple(int(i) for i in df)
         reselect = True
       elif message.topic == "frame/date_to":
-        try:
-          msg = msg.replace(".",":").replace("/",":").replace("-",":")
-          df = msg.split(":")
-          date_to = tuple(int(i) for i in df)
-          if len(date_to) != 3:
-            raise Exception("invalid date format")
-        except:
-          date_from = None
+        df = msg.split(":")
+        date_to = tuple(int(i) for i in df)
         reselect = True
       elif message.topic == "frame/time_delay":
         time_delay = float(msg)
@@ -228,24 +206,14 @@ if config.USE_MQTT:
       elif message.topic == "frame/subdirectory":
         subdirectory = msg
         reselect = True
-      elif message.topic == "frame/delete":
-        f_to_delete = iFiles[pic_num][0]
-        f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("~/Pictures/Trash")
-        if not os.path.exists(move_to_dir):
-          os.makedirs(move_to_dir)
-        os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
-        iFiles.pop(pic_num)
-        nFi -= 1
-        nexttm = time.time() - 86400.0
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
         next_pic_num = 0
 
     # set up MQTT listening
     client = mqtt.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) # replace with your own id
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) # replace with your own server
+    client.username_pw_set("orhellow", "z6kfIctiONxP") # replace with your own id
+    client.connect("postman.cloudmqtt.com", 16845, 60) # replace with your own server
     client.loop_start()
     client.subscribe("frame/date_from", qos=0)
     client.subscribe("frame/date_to", qos=0)
@@ -256,7 +224,6 @@ if config.USE_MQTT:
     client.subscribe("frame/paused", qos=0)
     client.subscribe("frame/back", qos=0)
     client.subscribe("frame/subdirectory", qos=0)
-    client.subscribe("frame/delete", qos=0)
     client.on_connect = on_connect
     client.on_message = on_message
   except Exception as e:
@@ -268,11 +235,11 @@ DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
               display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
-shader = pi3d.Shader(config.SHADER)
+#shader = pi3d.Shader("/home/pi/pi3d_demos/shaders/blend_new")
+shader = pi3d.Shader("/home/patrick/python/pi3d_demos/shaders/blend_new")
 slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = config.EDGE_ALPHA
-slide.unif[54] = config.BLEND_TYPE
 
 if config.KEYBOARD:
   kbd = pi3d.Keyboard()
@@ -283,28 +250,23 @@ iFiles, nFi = get_files(date_from, date_to)
 next_pic_num = 0
 sfg = None # slide for background
 sbg = None # slide for foreground
-#if nFi == 0:
-#  print('No files selected!')
-#  exit()
+if nFi == 0:
+  print('No files selected!')
+  exit()
 
-# PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
-grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
-                shadow=(0,0,0,128))
-text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
-textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
-                          z=0.1, rot=0.0, char_count=199,
-                          text_format="{}".format(" "), size=0.99, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-text.add_text_block(textblock)
-
+# FixedString. If SHOW_NAMES is False then this is just used for no images message
+text = pi3d.FixedString(config.FONT_FILE, "place-holder", justify="L")
+flatsh = pi3d.Shader("uv_flat")
+text.set_shader(flatsh)
+text.sprite.position(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4, z=0.1)
 
 num_run_through = 0
 while DISPLAY.loop_running():
   tm = time.time()
-  if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
-    if nFi > 0:
+  if nFi > 0:
+    if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
       nexttm = tm + time_delay
+      a = 0.0 # alpha - proportion front image to back
       sbg = sfg
       sfg = None
       while sfg is None: # keep going through until a usable picture is found TODO break out how?
@@ -317,74 +279,65 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
+      if sbg is None: # first time through
+        sbg = sfg
+      slide.set_textures([sfg, sbg])
+      slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
+      slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
+      wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
+      if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
+        sz1, sz2, os1, os2 = 42, 43, 48, 49
+      else:
+        sz1, sz2, os1, os2 = 43, 42, 49, 48
+        wh_rat = 1.0 / wh_rat
+      slide.unif[sz1] = wh_rat
+      slide.unif[sz2] = 1.0
+      slide.unif[os1] = (wh_rat - 1.0) * 0.5
+      slide.unif[os2] = 0.0
+      if config.KENBURNS:
+          xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
+          slide.unif[48] = 0.0
+          slide.unif[49] = 0.0
+          kb_up = not kb_up
       # set the file name as the description
-      if config.SHOW_NAMES_TM > 0.0:
-        textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
-        text.regen()
-      else: # could have a NO IMAGES selected and being drawn
-        textblock.set_text(text_format="{}".format(" "))
-        textblock.colouring.set_colour(alpha=0.0)
-        text.regen()
-    else:
-      sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
-      sbg = sfg
-
-    a = 0.0 # alpha - proportion front image to back
-    name_tm = tm + config.SHOW_NAMES_TM
-    if sbg is None: # first time through
-      sbg = sfg
-    slide.set_textures([sfg, sbg])
-    slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
-    slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
-    wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
-    if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
-      sz1, sz2, os1, os2 = 42, 43, 48, 49
-    else:
-      sz1, sz2, os1, os2 = 43, 42, 49, 48
-      wh_rat = 1.0 / wh_rat
-    slide.unif[sz1] = wh_rat
-    slide.unif[sz2] = 1.0
-    slide.unif[os1] = (wh_rat - 1.0) * 0.5
-    slide.unif[os2] = 0.0
+      if config.SHOW_NAMES:
+        raw_str = "THIS IS A STRING WITH {} EMBEDDED IN IT THAT WILL BE CHOPPED UP".format(
+            tidy_name(iFiles[pic_num][0])).split(" ")
+        new_str = [""]
+        for w in raw_str:
+          if len(new_str[-1]) > 20:
+            new_str.append("")
+          new_str[-1] = new_str[-1] + w + " "
+        text = pi3d.FixedString(config.FONT_FILE, "\n".join(new_str), justify="L")
+        text.set_shader(flatsh)
+        text.sprite.position(x=-DISPLAY.width * 0.2, y=-DISPLAY.height * 0.3, z=0.1)
     if config.KENBURNS:
-        xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
-        slide.unif[48] = 0.0
-        slide.unif[49] = 0.0
-        kb_up = not kb_up
+      t_factor = nexttm - tm
+      if kb_up:
+        t_factor = time_delay - t_factor
+      slide.unif[48] = xstep * t_factor
+      slide.unif[49] = ystep * t_factor
 
-  if config.KENBURNS:
-    t_factor = nexttm - tm
-    if kb_up:
-      t_factor = time_delay - t_factor
-    slide.unif[48] = xstep * t_factor
-    slide.unif[49] = ystep * t_factor
+    if a < 1.0: # transition is happening
+      a += delta_alpha
+      slide.unif[44] = a
+      if config.SHOW_NAMES:
+        text.sprite.set_alpha(1.0 - abs(1.0 - 2.0 * a))
+    else: # no transition effect safe to resuffle etc
+      if tm > next_check_tm:
+        if check_changes():
+          iFiles, nFi = get_files(date_from, date_to)
+          num_run_through = 0
+          next_pic_num = 0
+        next_check_tm = tm + config.CHECK_DIR_TM # once per hour
 
-  if a < 1.0: # transition is happening
-    a += delta_alpha
-    if a > 1.0:
-      a = 1.0
-    slide.unif[44] = a * a * (3.0 - 2.0 * a)
-  else: # no transition effect safe to resuffle etc
-    if tm > next_check_tm:
-      if check_changes():
-        iFiles, nFi = get_files(date_from, date_to)
-        num_run_through = 0
-        next_pic_num = 0
-      next_check_tm = tm + config.CHECK_DIR_TM # once per hour
+    slide.draw()
 
-  slide.draw()
-
-  if nFi <= 0:
-    textblock.set_text("NO IMAGES SELECTED")
-    textblock.colouring.set_colour(alpha=1.0)
-    next_tm = tm + 1.0
-    text.regen()
-  elif tm < name_tm:
-      # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm) / config.SHOW_NAMES_TM
-      alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-      textblock.colouring.set_colour(alpha=alpha)
-      text.regen()
+  else:
+    pass
+    #textblock.set_text("NO IMAGES SELECTED")
+    #textblock.colouring.set_colour(alpha=1.0)
+    #text.regen()
 
   text.draw()
 

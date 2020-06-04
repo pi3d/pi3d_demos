@@ -231,7 +231,7 @@ if config.USE_MQTT:
       elif message.topic == "frame/delete":
         f_to_delete = iFiles[pic_num][0]
         f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("~/Pictures/Trash")
+        move_to_dir = os.path.expanduser("~/DeletedPictures")
         if not os.path.exists(move_to_dir):
           os.makedirs(move_to_dir)
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))

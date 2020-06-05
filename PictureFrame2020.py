@@ -392,7 +392,7 @@ while DISPLAY.loop_running():
     k = kbd.read()
     if k != -1:
       nexttm = time.time() - 86400.0
-    if k==27 or quit: #ESC
+    if k==27: #ESC
       break
     if k==ord(' '):
       paused = not paused
@@ -400,6 +400,8 @@ while DISPLAY.loop_running():
       next_pic_num -= 2
       if next_pic_num < -1:
         next_pic_num = -1
+  if quit: # set by MQTT
+    break
 
 try:
   client.loop_stop()

@@ -53,6 +53,8 @@ def tex_load(fname, orientation, size=None):
   try:
     im = Image.open(fname)
     (w, h) = im.size
+    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
+        MAX_SIZE = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > MAX_SIZE:
         im = im.resize((MAX_SIZE, int(h * MAX_SIZE / w)))
     elif h > MAX_SIZE:
@@ -89,7 +91,8 @@ def tex_load(fname, orientation, size=None):
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=True, free_after_load=True)
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
+                        free_after_load=True)
   except Exception as e:
     if config.VERBOSE:
         print('''Couldn't load file {} giving error: {}'''.format(fname, e))
@@ -231,7 +234,7 @@ if config.USE_MQTT:
       elif message.topic == "frame/delete":
         f_to_delete = iFiles[pic_num][0]
         f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("~/Pictures/Trash")
+        move_to_dir = os.path.expanduser("~/DeletedPictures")
         if not os.path.exists(move_to_dir):
           os.makedirs(move_to_dir)
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
@@ -287,7 +290,7 @@ sbg = None # slide for foreground
 #  print('No files selected!')
 #  exit()
 
-# PointText and TextBlock. If SHOW_NAMES is False then this is just used for no images message
+# PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
                 shadow=(0,0,0,128))
@@ -318,7 +321,7 @@ while DISPLAY.loop_running():
             random.shuffle(iFiles)
           next_pic_num = 0
       # set the file name as the description
-      if config.SHOW_NAMES:
+      if config.SHOW_NAMES_TM > 0.0:
         textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
         text.regen()
       else: # could have a NO IMAGES selected and being drawn
@@ -330,6 +333,7 @@ while DISPLAY.loop_running():
       sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
+    name_tm = tm + config.SHOW_NAMES_TM
     if sbg is None: # first time through
       sbg = sfg
     slide.set_textures([sfg, sbg])
@@ -363,10 +367,6 @@ while DISPLAY.loop_running():
     if a > 1.0:
       a = 1.0
     slide.unif[44] = a * a * (3.0 - 2.0 * a)
-    if config.SHOW_NAMES:
-      # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      textblock.colouring.set_colour(alpha=(1.0 - abs(1.0 - 2.0 * a)))
-      text.regen()
   else: # no transition effect safe to resuffle etc
     if tm > next_check_tm:
       if check_changes():
@@ -382,6 +382,12 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
+  elif tm < name_tm:
+      # this sets alpha for the TextBlock from 0 to 1 then back to 0
+      dt = (config.SHOW_NAMES_TM - name_tm + tm) / config.SHOW_NAMES_TM
+      alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
+      textblock.colouring.set_colour(alpha=alpha)
+      text.regen()
 
   text.draw()
 
@@ -389,7 +395,7 @@ while DISPLAY.loop_running():
     k = kbd.read()
     if k != -1:
       nexttm = time.time() - 86400.0
-    if k==27 or quit: #ESC
+    if k==27: #ESC
       break
     if k==ord(' '):
       paused = not paused
@@ -397,6 +403,8 @@ while DISPLAY.loop_running():
       next_pic_num -= 2
       if next_pic_num < -1:
         next_pic_num = -1
+  if quit: # set by MQTT
+    break
 
 try:
   client.loop_stop()

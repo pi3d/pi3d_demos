@@ -95,6 +95,8 @@ def tex_load(fname, orientation, size=None):
         im = im_b # have to do this as paste applies in place
     tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
                         free_after_load=True)
+    #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
+    #                    mipmap=config.AUTO_RESIZE, free_after_load=True)
   except Exception as e:
     if config.VERBOSE:
         print('''Couldn't load file {} giving error: {}'''.format(fname, e))

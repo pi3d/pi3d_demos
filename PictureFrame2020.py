@@ -53,6 +53,8 @@ def tex_load(fname, orientation, size=None):
   try:
     im = Image.open(fname)
     (w, h) = im.size
+    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
+        MAX_SIZE = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > MAX_SIZE:
         im = im.resize((MAX_SIZE, int(h * MAX_SIZE / w)))
     elif h > MAX_SIZE:
@@ -89,7 +91,8 @@ def tex_load(fname, orientation, size=None):
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=True, free_after_load=True)
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
+                        free_after_load=True)
   except Exception as e:
     if config.VERBOSE:
         print('''Couldn't load file {} giving error: {}'''.format(fname, e))

@@ -104,6 +104,7 @@ def tex_load(fname, orientation, size=None):
   return tex
 
 def tidy_name(path_name):
+    name = os.path.basename(path_name)
     name = ''.join([c for c in name if c in config.CODEPOINTS])
     return name
 
@@ -387,7 +388,7 @@ while DISPLAY.loop_running():
     text.regen()
   elif tm < name_tm:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm) / config.SHOW_NAMES_TM
+      dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       textblock.colouring.set_colour(alpha=alpha)
       text.regen()

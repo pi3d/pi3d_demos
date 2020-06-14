@@ -53,12 +53,14 @@ def tex_load(fname, orientation, size=None):
   try:
     im = Image.open(fname)
     (w, h) = im.size
+    max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
-        MAX_SIZE = 3840 # TODO check if mipmapping should be turned off with this setting.
-    if w > MAX_SIZE:
-        im = im.resize((MAX_SIZE, int(h * MAX_SIZE / w)))
-    elif h > MAX_SIZE:
-        im = im.resize((int(w * MAX_SIZE / h), MAX_SIZE))
+        print("got here")
+        max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
+    if w > max_dimension:
+        im = im.resize((max_dimension, int(h * max_dimension / w)))
+    elif h > max_dimension:
+        im = im.resize((int(w * max_dimension / h), max_dimension))
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     elif orientation == 3:
@@ -93,6 +95,8 @@ def tex_load(fname, orientation, size=None):
         im = im_b # have to do this as paste applies in place
     tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
                         free_after_load=True)
+    #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
+    #                    mipmap=config.AUTO_RESIZE, free_after_load=True)
   except Exception as e:
     if config.VERBOSE:
         print('''Couldn't load file {} giving error: {}'''.format(fname, e))
@@ -100,7 +104,7 @@ def tex_load(fname, orientation, size=None):
   return tex
 
 def tidy_name(path_name):
-    name = os.path.basename(path_name).upper()
+    name = os.path.basename(path_name)
     name = ''.join([c for c in name if c in config.CODEPOINTS])
     return name
 
@@ -384,7 +388,7 @@ while DISPLAY.loop_running():
     text.regen()
   elif tm < name_tm:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm) / config.SHOW_NAMES_TM
+      dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       textblock.colouring.set_colour(alpha=alpha)
       text.regen()

@@ -81,4 +81,4 @@ SUBDIRECTORY = args.subdirectory
 BLUR_ZOOM = args.blur_zoom
 AUTO_RESIZE = args.auto_resize
 
-CODEPOINTS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ., _-/' # limit to 49 ie 7x7 grid_size
+CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size

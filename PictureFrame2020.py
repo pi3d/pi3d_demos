@@ -104,7 +104,6 @@ def tex_load(fname, orientation, size=None):
   return tex
 
 def tidy_name(path_name):
-    name = os.path.basename(path_name).upper()
     name = ''.join([c for c in name if c in config.CODEPOINTS])
     return name
 

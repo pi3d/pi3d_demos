@@ -55,7 +55,6 @@ def tex_load(fname, orientation, size=None):
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
-        print("got here")
         max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > max_dimension:
         im = im.resize((max_dimension, int(h * max_dimension / w)))
@@ -96,7 +95,7 @@ def tex_load(fname, orientation, size=None):
     tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
                         free_after_load=True)
     #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
-    #                    mipmap=config.AUTO_RESIZE, free_after_load=True)
+    #                    mipmap=config.AUTO_RESIZE, free_after_load=True) # poss try this if still some artifacts with full resolution
   except Exception as e:
     if config.VERBOSE:
         print('''Couldn't load file {} giving error: {}'''.format(fname, e))

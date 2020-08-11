@@ -49,9 +49,27 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 #####################################################
 # some functions to tidy subsequent code
 #####################################################
-def tex_load(fname, orientation, size=None):
+def tex_load(pic_num, iFiles, size=None):
+  global date_from, date_to
+  if type(pic_num) is int:
+    fname = iFiles[pic_num][0]
+    orientation = iFiles[pic_num][1]
+  else: # allow file name to be passed to this function ie for missing file image
+    fname = pic_num
+    orientation = 1
   try:
     im = Image.open(fname)
+    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
+      if iFiles[pic_num][3] is None: # dt set to None before exif read
+        (orientation, dt) = get_exif_info(fname, im)
+        iFiles[pic_num][1] = orientation
+        iFiles[pic_num][3] = dt
+      if date_from is not None:
+        if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
+          return None
+      if date_to is not None:
+        if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
+          return None
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
@@ -137,23 +155,14 @@ def get_files(dt_from=None, dt_to=None):
               file_path_name = os.path.join(root, filename)
               include_flag = True
               orientation = 1 # this is default - unrotated
-              if EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                try:
-                  im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
-                  #print(filename, end="")
-                  exif_data = im._getexif()
-                  #print('orientation is {}'.format(exif_data[EXIF_ORIENTATION]))
-                  dt = time.mktime(
-                        time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-                  orientation = int(exif_data[EXIF_ORIENTATION])
-                except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
-                  if config.VERBOSE:
-                    print('trying to read exif', e)
-                  dt = os.path.getmtime(file_path_name) # so use file last modified date
+              dt = None # if exif data not read - used for checking in tex_load
+              if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
+                (orientation, dt) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
-                file_list.append((file_path_name, orientation, os.path.getmtime(file_path_name))) # iFiles now list of tuples (file_name, orientation) 
+                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date] 
+                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt])
   if shuffle:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
@@ -165,6 +174,20 @@ def get_files(dt_from=None, dt_to=None):
     file_list.sort() # if not suffled; sort by name
   return file_list, len(file_list) # tuple of file list, number of pictures
 
+def get_exif_info(file_path_name, im=None):
+  try:
+    if im is None:
+      im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
+    exif_data = im._getexif() # TODO check if/when this becomes proper function
+    dt = time.mktime(
+        time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
+    orientation = int(exif_data[EXIF_ORIENTATION])
+  except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
+    if config.VERBOSE:
+      print('trying to read exif', e)
+    dt = os.path.getmtime(file_path_name) # so use file last modified date
+    orientation = 1
+  return (orientation, dt)
 
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
 EXIF_ORIENTATION = None
@@ -289,9 +312,6 @@ iFiles, nFi = get_files(date_from, date_to)
 next_pic_num = 0
 sfg = None # slide for background
 sbg = None # slide for foreground
-#if nFi == 0:
-#  print('No files selected!')
-#  exit()
 
 # PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
@@ -313,9 +333,10 @@ while DISPLAY.loop_running():
       nexttm = tm + time_delay
       sbg = sfg
       sfg = None
-      while sfg is None: # keep going through until a usable picture is found TODO break out how?
+      start_pic_num = next_pic_num
+      while sfg is None: # keep going through until a usable picture is found
         pic_num = next_pic_num
-        sfg = tex_load(iFiles[pic_num][0], iFiles[pic_num][1], (DISPLAY.width, DISPLAY.height))
+        sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
         next_pic_num += 1
         if next_pic_num >= nFi:
           num_run_through += 1
@@ -323,6 +344,9 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
+        if next_pic_num == start_pic_num:
+          nFi = 0
+          break
       # set the file name as the description
       if config.SHOW_NAMES_TM > 0.0:
         textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
@@ -331,7 +355,7 @@ while DISPLAY.loop_running():
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)
         text.regen()
-    else:
+    if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
       sbg = sfg
 

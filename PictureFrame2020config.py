@@ -46,6 +46,7 @@ parse.add_argument("-x", "--shuffle",       default=True, type=str_to_bool, help
 parse.add_argument("-y", "--subdirectory",  default="", help="subdir of pic_dir - can be changed by MQTT")
 parse.add_argument("-z", "--blur_zoom",     default=1.0, type=float, help="must be >= 1.0 which expands the backgorund to just fill the space around the image")
 parse.add_argument(      "--auto_resize",   default=True, type=str_to_bool, help="set this to false if you want to use 4K resolution on Raspberry Pi 4. You should ensure your images are the correct size for the display")
+parse.add_argument(      "--delay_exif",    default=False, type=str_to_bool, help="set this to true if there are a large number of images and it takes too long on start")
 args = parse.parse_args()
 
 
@@ -80,5 +81,6 @@ SHUFFLE = args.shuffle
 SUBDIRECTORY = args.subdirectory
 BLUR_ZOOM = args.blur_zoom
 AUTO_RESIZE = args.auto_resize
+DELAY_EXIF = args.delay_exif
 
 CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size

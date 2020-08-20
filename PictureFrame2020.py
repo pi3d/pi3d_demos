@@ -58,7 +58,11 @@ def tex_load(pic_num, iFiles, size=None):
     fname = pic_num
     orientation = 1
   try:
-    im = Image.open(fname)
+    ext = os.path.splitext(fname)[1].lower()
+    if ext in ('.heif','.heic'):
+      im = convert_heif(fname)
+    else:
+      im = Image.open(fname)
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
       if iFiles[pic_num][3] is None: # dt set to None before exif read
         (orientation, dt) = get_exif_info(fname, im)
@@ -143,7 +147,7 @@ def get_files(dt_from=None, dt_to=None):
     dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
   global shuffle, EXIF_DATID, last_file_change
   file_list = []
-  extensions = ['.png','.jpg','.jpeg'] # can add to these
+  extensions = ['.png','.jpg','.jpeg','.heif','.heic'] # can add to these
   picture_dir = os.path.join(config.PIC_DIR, subdirectory)
   for root, _dirnames, filenames in os.walk(picture_dir):
       mod_tm = os.stat(root).st_mtime # time of alteration in a directory
@@ -197,6 +201,17 @@ for k in ExifTags.TAGS:
   if ExifTags.TAGS[k] == 'Orientation':
     EXIF_ORIENTATION = k
 
+def convert_heif(fname):
+    try:
+        import pyheif
+        from PIL import Image
+
+        heif_file = pyheif.read(fname)
+        image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data,
+                                "raw", heif_file.mode, heif_file.stride)
+        return image
+    except:
+        print("have you installed pyheif?")
 
 ##############################################
 # MQTT functionality - see https://www.thedigitalpictureframe.com/

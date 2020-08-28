@@ -79,9 +79,9 @@ def tex_load(pic_num, iFiles, size=None):
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
         max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > max_dimension:
-        im = im.resize((max_dimension, int(h * max_dimension / w)))
+        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
     elif h > max_dimension:
-        im = im.resize((int(w * max_dimension / h), max_dimension))
+        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     elif orientation == 3:
@@ -111,6 +111,11 @@ def tex_load(pic_num, iFiles, size=None):
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im_b.putalpha(round(255 * config.EDGE_ALPHA))  # to apply the same EDGE_ALPHA as the no blur method.
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
+        """resize can use Image.LANCZOS (alias for Image.ANTIALIAS) for resampling
+        for better rendering of high-contranst diagonal lines. NB downscaled large
+        images are rescaled near the start of this try block if w or h > max_dimension
+        so those lines might need changing too.
+        """
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place

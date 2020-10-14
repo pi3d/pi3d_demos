@@ -8,6 +8,10 @@ an array rather than a string path or PIL.Image
 The video frame extraction to numpy array is based on this page from zulco
 https://zulko.github.io/blog/2013/09/27/read-and-write-video-frames-in-python-using-ffmpeg/
 
+As at Oct 2020 using RPi v4 with OS Buster and fake KMS graphics driver
+ffmpeg as included seems to work fine, however the comments below might
+apply for other setups. 
+
 Initially I installed ffmpeg using apt-get on the RPi but the results were 
 pretty hopeless so I followed the instructions here http://owenashurst.com/?p=242 
 exactly i.e. copy paste from his page (but skipped the optional libfaac 
@@ -45,7 +49,7 @@ def pipe_thread():
     st_tm = time.time()
     if pipe is None:
       pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE, bufsize=-1)
-    image =  np.fromstring(pipe.stdout.read(H * W * P), dtype='uint8')
+    image =  np.frombuffer(pipe.stdout.read(H * W * P), dtype='uint8')
     pipe.stdout.flush() # presumably nothing else has arrived since read()
     pipe.stderr.flush() # ffmpeg sends commentary to stderr
     if len(image) < H * W * P: # end of video, reload

@@ -18,10 +18,13 @@ import random
 import math
 import demo
 import pi3d
+import locale
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 import PictureFrame2020config as config
+
+locale.setlocale(locale.LC_TIME, config.LOCALE)
 
 #####################################################
 # these variables can be altered using MQTT messaging
@@ -64,10 +67,11 @@ def tex_load(pic_num, iFiles, size=None):
     else:
       im = Image.open(fname)
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
-      if iFiles[pic_num][3] is None: # dt set to None before exif read
-        (orientation, dt) = get_exif_info(fname, im)
+      if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
+        (orientation, dt, fdt) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
+        iFiles[pic_num][4] = fdt
       if date_from is not None:
         if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
           return None
@@ -165,13 +169,14 @@ def get_files(dt_from=None, dt_to=None):
               include_flag = True
               orientation = 1 # this is default - unrotated
               dt = None # if exif data not read - used for checking in tex_load
+              fdt = None
               if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                (orientation, dt) = get_exif_info(file_path_name)
+                (orientation, dt, fdt) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
-                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date] 
-                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt])
+                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date]
+                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt, fdt])
   if shuffle:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
@@ -190,13 +195,14 @@ def get_exif_info(file_path_name, im=None):
     exif_data = im._getexif() # TODO check if/when this becomes proper function
     dt = time.mktime(
         time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
+    fdt = time.strftime(config.SHOW_TEXT_FM, time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
     orientation = int(exif_data[EXIF_ORIENTATION])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
       print('trying to read exif', e)
     dt = os.path.getmtime(file_path_name) # so use file last modified date
     orientation = 1
-  return (orientation, dt)
+  return (orientation, dt, fdt)
 
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
 EXIF_ORIENTATION = None
@@ -333,14 +339,14 @@ next_pic_num = 0
 sfg = None # slide for background
 sbg = None # slide for foreground
 
-# PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
+# PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
                 shadow=(0,0,0,128))
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,
-                          text_format="{}".format(" "), size=0.99, 
+                          text_format="{}".format(" "), size=0.99,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 
@@ -368,8 +374,11 @@ while DISPLAY.loop_running():
           nFi = 0
           break
       # set the file name as the description
-      if config.SHOW_NAMES_TM > 0.0:
-        textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
+      if config.SHOW_TEXT_TM > 0.0:
+        if config.SHOW_TEXT == 0.0:
+          textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
+        elif config.SHOW_TEXT == 1.0:
+          textblock.set_text(text_format="{}".format(iFiles[pic_num][4]))
         text.regen()
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
@@ -380,7 +389,7 @@ while DISPLAY.loop_running():
       sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
-    name_tm = tm + config.SHOW_NAMES_TM
+    text_tm = tm + config.SHOW_TEXT_TM
     if sbg is None: # first time through
       sbg = sfg
     slide.set_textures([sfg, sbg])
@@ -429,9 +438,9 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < name_tm:
+  elif tm < text_tm:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
+      dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       textblock.colouring.set_colour(alpha=alpha)
       text.regen()

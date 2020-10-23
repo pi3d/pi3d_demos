@@ -39,6 +39,7 @@ parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders
 parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times through before reshuffling")
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
+parse.add_argument(      "--show_text_sz",  default=50, type=int, help="text size")
 parse.add_argument(      "--show_text",     default="name", choices=["name", "date"], help="text to show over the image")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
@@ -78,6 +79,7 @@ SHADER = args.shader
 RESHUFFLE_NUM = args.reshuffle_num
 SHOW_TEXT_TM = args.show_text_tm
 SHOW_TEXT_FM = args.show_text_fm
+SHOW_TEXT_SZ = args.show_text_sz
 SHOW_TEXT = TEXT_OPTIONS[args.show_text]
 FIT = args.fit
 KENBURNS = args.kenburns

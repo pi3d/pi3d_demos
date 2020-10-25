@@ -50,6 +50,19 @@ delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
 last_file_change = 0.0 # holds last change time in directory structure
 next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
 #####################################################
+# retrieve locations from text file
+#####################################################
+gps_data = {}
+if config.SHOW_TEXT == 2.0:
+  import googlemaps
+  if os.path.isfile(config.GOOGLE_PATH):
+    with open(config.GOOGLE_PATH) as gps_file:
+      for line in gps_file:
+        if line == '\n':
+          continue
+        (name, var) = line.partition('=')[::2]
+        gps_data[name] = var.rstrip('\n')
+#####################################################
 # some functions to tidy subsequent code
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -68,10 +81,11 @@ def tex_load(pic_num, iFiles, size=None):
       im = Image.open(fname)
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
       if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
-        (orientation, dt, fdt) = get_exif_info(fname, im)
+        (orientation, dt, fdt, location) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = fdt
+        iFiles[pic_num][5] = location
       if date_from is not None:
         if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
           return None
@@ -170,13 +184,14 @@ def get_files(dt_from=None, dt_to=None):
               orientation = 1 # this is default - unrotated
               dt = None # if exif data not read - used for checking in tex_load
               fdt = None
+              location = " "
               if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                (orientation, dt, fdt) = get_exif_info(file_path_name)
+                (orientation, dt, fdt, location) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
                 # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date]
-                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt, fdt])
+                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt, fdt, location])
   if shuffle:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
@@ -189,28 +204,91 @@ def get_files(dt_from=None, dt_to=None):
   return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
+  dt = os.path.getmtime(file_path_name)
+  fdt = None
+  orientation = 1
+  location = " "
   try:
     if im is None:
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
     exif_data = im._getexif() # TODO check if/when this becomes proper function
-    dt = time.mktime(
-        time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-    fdt = time.strftime(config.SHOW_TEXT_FM, time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-    orientation = int(exif_data[EXIF_ORIENTATION])
+    if EXIF_DATID in exif_data:
+      dt = time.mktime(time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
+      fdt = time.strftime(config.SHOW_TEXT_FM, time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
+    if EXIF_ORIENTATION in exif_data:
+      orientation = int(exif_data[EXIF_ORIENTATION])
+    if EXIF_GPSINFO in exif_data:
+      location = get_location(exif_data[EXIF_GPSINFO])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
       print('trying to read exif', e)
-    dt = os.path.getmtime(file_path_name) # so use file last modified date
-    orientation = 1
-  return (orientation, dt, fdt)
+  return (orientation, dt, fdt, location)
+
+def get_location(gps_info):
+  if config.SHOW_TEXT != 2.0:
+    return 'Location Not Configured'
+  lat = gps_info[EXIF_GPSINFO_LAT]
+  latRef = gps_info[EXIF_GPSINFO_LAT_REF]
+  lon = gps_info[EXIF_GPSINFO_LON]
+  lonRef = gps_info[EXIF_GPSINFO_LON_REF]
+  decimal_lat = (lat[0][0] / lat[0][1]) + (lat[1][0]/lat[1][1]/60) + (lat[2][0]/lat[2][1]/3600)
+  decimal_lon = (lon[0][0] / lon[0][1]) + (lon[1][0]/lon[1][1]/60) + (lon[2][0]/lon[2][1]/3600)
+  if latRef == 'S':
+    decimal_lat = -decimal_lat
+  if lonRef == 'W':
+    decimal_lon = -decimal_lon
+
+  if str(decimal_lat)+','+str(decimal_lon) not in gps_data:
+    try:
+      gmaps = googlemaps.Client(key=config.GOOGLE_KEY, timeout=5)
+      geocode_result = gmaps.reverse_geocode((decimal_lat, decimal_lon), language=locale.getdefaultlocale()[0])
+      for address in geocode_result:
+        locality = None
+        country = None
+        for address_component in address['address_components']:
+          if 'locality' in address_component['types']:
+            locality = address_component['long_name']
+          elif 'country' in address_component['types']:
+            country = address_component['long_name']
+
+        if locality != None and country != None:
+          formatted_address = locality + ', ' + country
+          gps_data[str(decimal_lat)+','+str(decimal_lon)] = formatted_address
+          with open(config.GOOGLE_PATH, 'a+') as file:
+            file.write(str(decimal_lat)+','+str(decimal_lon)+'='+formatted_address+'\n')
+          break
+    except Exception:
+      return 'Location Not Available'
+
+  if str(decimal_lat)+','+str(decimal_lon) in gps_data:
+    return gps_data[str(decimal_lat)+','+str(decimal_lon)]
+  else:
+    return " "
 
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
 EXIF_ORIENTATION = None
+EXIF_GPSINFO = None
 for k in ExifTags.TAGS:
   if ExifTags.TAGS[k] == 'DateTimeOriginal':
     EXIF_DATID = k
   if ExifTags.TAGS[k] == 'Orientation':
     EXIF_ORIENTATION = k
+  if ExifTags.TAGS[k] == 'GPSInfo':
+    EXIF_GPSINFO = k
+
+EXIF_GPSINFO_LAT = None
+EXIF_GPSINFO_LAT_REF = None
+EXIF_GPSINFO_LON = None
+EXIF_GPSINFO_LON_REF = None
+for k in ExifTags.GPSTAGS:
+  if ExifTags.GPSTAGS[k] == 'GPSLatitude':
+    EXIF_GPSINFO_LAT = k
+  if ExifTags.GPSTAGS[k] == 'GPSLatitudeRef':
+    EXIF_GPSINFO_LAT_REF = k
+  if ExifTags.GPSTAGS[k] == 'GPSLongitude':
+    EXIF_GPSINFO_LON = k
+  if ExifTags.GPSTAGS[k] == 'GPSLongitudeRef':
+    EXIF_GPSINFO_LON_REF = k
 
 def convert_heif(fname):
     try:
@@ -379,6 +457,8 @@ while DISPLAY.loop_running():
           textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
         elif config.SHOW_TEXT == 1.0:
           textblock.set_text(text_format="{}".format(iFiles[pic_num][4]))
+        elif config.SHOW_TEXT == 2.0:
+          textblock.set_text(text_format="{}".format(iFiles[pic_num][5]))
         text.regen()
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))

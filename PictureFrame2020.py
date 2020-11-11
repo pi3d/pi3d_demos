@@ -53,7 +53,7 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 # retrieve locations from text file
 #####################################################
 gps_data = {}
-if config.SHOW_TEXT == 2.0:
+if config.SHOW_TEXT == 2.0 or config.SHOW_TEXT == 3.0:
   import googlemaps
   if os.path.isfile(config.GOOGLE_PATH):
     with open(config.GOOGLE_PATH) as gps_file:
@@ -225,7 +225,7 @@ def get_exif_info(file_path_name, im=None):
   return (orientation, dt, fdt, location)
 
 def get_location(gps_info):
-  if config.SHOW_TEXT != 2.0:
+  if config.SHOW_TEXT != 2.0 and config.SHOW_TEXT != 3.0:
     return 'Location Not Configured'
   lat = gps_info[EXIF_GPSINFO_LAT]
   latRef = gps_info[EXIF_GPSINFO_LAT_REF]
@@ -456,9 +456,11 @@ while DISPLAY.loop_running():
         if config.SHOW_TEXT == 0.0:
           textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
         elif config.SHOW_TEXT == 1.0:
-          textblock.set_text(text_format="{}".format(iFiles[pic_num][4]))
+          textblock.set_text(text_format="{}".format(iFiles[pic_num][4].capitalize()))
         elif config.SHOW_TEXT == 2.0:
           textblock.set_text(text_format="{}".format(iFiles[pic_num][5]))
+        elif config.SHOW_TEXT == 3.0:
+          textblock.set_text(text_format="{}".format(iFiles[pic_num][5] + " @ " + iFiles[pic_num][4].capitalize()))
         text.regen()
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))

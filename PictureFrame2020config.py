@@ -40,7 +40,7 @@ parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times thr
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
 parse.add_argument(      "--show_text_sz",  default=50, type=int, help="text size")
-parse.add_argument(      "--show_text",     default="name", choices=["name", "date", "location"], help="text to show over the image")
+parse.add_argument(      "--show_text",     default="name", choices=["name", "date", "location", "location-date"], help="text to show over the image")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
@@ -57,7 +57,7 @@ args = parse.parse_args()
 
 
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader
-TEXT_OPTIONS = {"name":0.0, "date":1.0, "location":2.0}
+TEXT_OPTIONS = {"name":0.0, "date":1.0, "location":2.0, "location-date":3.0}
 ## set uppercase CONST style variables that can be accessed from PictureFrame
 BLUR_AMOUNT = args.blur_amount
 BLUR_EDGES = args.blur_edges
@@ -96,4 +96,4 @@ LOCALE = args.locale
 GOOGLE_KEY = args.google_key
 GOOGLE_PATH = args.google_path
 
-CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size
+CODEPOINTS = "1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß@'" # limit to 49 ie 7x7 grid_size

@@ -24,22 +24,22 @@ parse.add_argument("-d", "--verbose",       default=False, type=str_to_bool, hel
 parse.add_argument("-e", "--edge_alpha",    default=0.5, type=float, help="background colour at edge. 1.0 would show reflection of image")
 parse.add_argument("-f", "--fps",           default=20.0, type=float)
 parse.add_argument("-g", "--background",    default=(0.2, 0.2, 0.3, 1.0), type=str_to_tuple, help="RGBA to fill edges when fitting")
-parse.add_argument("-i", "--no_files_img",  default="PictureFrame2020img.jpg", help="image to show if none selected")
+parse.add_argument("-i", "--no_files_img",  default="/home/pi/pi3d_demos/PictureFrame2020img.jpg", help="image to show if none selected")
 parse.add_argument("-j", "--blend_type",    default="blend", choices=["blend", "burn", "bump"], help="type of blend the shader can do")
 parse.add_argument("-k", "--keyboard",      default=False, type=str_to_bool, help="set to False when running headless to avoid curses error. True for debugging")
 parse.add_argument("-m", "--use_mqtt",      default=False)
-parse.add_argument(      "--mqtt_server",   default="mqtt.eclipse.org")
+parse.add_argument(      "--mqtt_server",   default="localhost")
 parse.add_argument(      "--mqtt_port",     default=1883, type=int)
 parse.add_argument(      "--mqtt_login",    default="")
 parse.add_argument(      "--mqtt_password", default="")
-parse.add_argument("-n", "--recent_n",      default=0, type=int, help="when shuffling the keep n most recent ones to play before the rest")
+parse.add_argument("-n", "--recent_n",      default=0, type=int, help="when shuffling keep n most recent ones to play before the rest")
 parse.add_argument("-o", "--font_file",     default="/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf")
 parse.add_argument("-p", "--pic_dir",       default="/home/pi/Pictures")
 parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders/blend_new")
 parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times through before reshuffling")
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
-parse.add_argument(      "--show_text",     default="name", choices=["name", "date"], help="text to show over the image")
+parse.add_argument(      "--show_text",     default="name", choices=["name", "date", "name_and_date"], help="text to show over the image")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
@@ -54,7 +54,7 @@ args = parse.parse_args()
 
 
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader
-TEXT_OPTIONS = {"name":0.0, "date":1.0}
+TEXT_OPTIONS = {"name":0.0, "date":1.0, "name_and_date":2.0}
 ## set uppercase CONST style variables that can be accessed from PictureFrame
 BLUR_AMOUNT = args.blur_amount
 BLUR_EDGES = args.blur_edges

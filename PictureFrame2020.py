@@ -181,6 +181,7 @@ def get_files(dt_from=None, dt_to=None):
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
     temp_list_last = file_list[:-config.RECENT_N]
+    random.seed()
     random.shuffle(temp_list_first)
     random.shuffle(temp_list_last)
     file_list = temp_list_first + temp_list_last
@@ -189,19 +190,19 @@ def get_files(dt_from=None, dt_to=None):
   return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
+  dt = os.path.getmtime(file_path_name) # so use file last modified date
+  orientation = 1
   try:
     if im is None:
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
     exif_data = im._getexif() # TODO check if/when this becomes proper function
-    dt = time.mktime(
-        time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
-    fdt = time.strftime(config.SHOW_TEXT_FM, time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S'))
+    exif_dt = time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S')
+    dt = time.mktime(exif_dt)
     orientation = int(exif_data[EXIF_ORIENTATION])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
       print('trying to read exif', e)
-    dt = os.path.getmtime(file_path_name) # so use file last modified date
-    orientation = 1
+  fdt = time.strftime(config.SHOW_TEXT_FM, time.localtime(dt))
   return (orientation, dt, fdt)
 
 EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
@@ -274,11 +275,15 @@ if config.USE_MQTT:
       elif message.topic == "frame/quit":
         quit = True
       elif message.topic == "frame/paused":
-        paused = not paused # toggle from previous value
+        msg_val = msg.lower()
+        paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
+        paused = paused_vals[msg_val] if msg_val in paused_vals else not paused # toggle from previous value
       elif message.topic == "frame/back":
         next_pic_num -= 2
         if next_pic_num < -1:
           next_pic_num = -1
+        nexttm = time.time() - 86400.0
+      elif message.topic == "frame/next":
         nexttm = time.time() - 86400.0
       elif message.topic == "frame/subdirectory":
         subdirectory = msg
@@ -286,13 +291,25 @@ if config.USE_MQTT:
       elif message.topic == "frame/delete":
         f_to_delete = iFiles[pic_num][0]
         f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("~/DeletedPictures")
+        move_to_dir = os.path.expanduser("/home/pi/DeletedPictures")
         if not os.path.exists(move_to_dir):
           os.makedirs(move_to_dir)
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
         iFiles.pop(pic_num)
         nFi -= 1
         nexttm = time.time() - 86400.0
+      elif message.topic == "frame/text_on":
+          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT = 0.0
+      elif message.topic == "frame/date_on":
+          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT = 1.0
+      elif message.topic == "frame/date_text_on":
+          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT = 2.0
+      elif message.topic == "frame/text_off":
+          config.SHOW_TEXT_TM = 0.0
+
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
         next_pic_num = 0
@@ -310,13 +327,19 @@ if config.USE_MQTT:
     client.subscribe("frame/quit", qos=0)
     client.subscribe("frame/paused", qos=0)
     client.subscribe("frame/back", qos=0)
+    client.subscribe("frame/next", qos=0)
     client.subscribe("frame/subdirectory", qos=0)
     client.subscribe("frame/delete", qos=0)
+    client.subscribe("frame/text_on", qos=0)
+    client.subscribe("frame/date_on", qos=0)
+    client.subscribe("frame/date_text_on", qos=0)
+    client.subscribe("frame/text_off", qos=0)
     client.on_connect = on_connect
     client.on_message = on_message
+    client.publish("frame/paused", payload="off", qos=0)
   except Exception as e:
     if config.VERBOSE:
-      print("MQTT not set up because of: {}".format(e))
+      print("MQTT not set up because of: {}".format(e)) # sometimes starts paused
 ##############################################
 
 DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
@@ -370,15 +393,20 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
-        if next_pic_num == start_pic_num:
+        if next_pic_num == start_pic_num: #i.e. no images found 
           nFi = 0
           break
       # set the file name as the description
       if config.SHOW_TEXT_TM > 0.0:
-        if config.SHOW_TEXT == 0.0:
-          textblock.set_text(text_format="{}".format(tidy_name(iFiles[pic_num][0])))
-        elif config.SHOW_TEXT == 1.0:
-          textblock.set_text(text_format="{}".format(iFiles[pic_num][4]))
+        if config.SHOW_TEXT == 0.0: # name
+          txt = "{}".format(tidy_name(iFiles[pic_num][0]))
+        elif config.SHOW_TEXT == 1.0: # date
+          txt = text_format="{}".format(iFiles[pic_num][4])
+        elif config.SHOW_TEXT == 2.0: # date and name
+          txt = "{} {}".format(iFiles[pic_num][4], tidy_name(iFiles[pic_num][0]))
+        if paused:
+          txt = txt + " PAUSED"
+        textblock.set_text(text_format=txt)
         text.regen()
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
@@ -386,6 +414,9 @@ while DISPLAY.loop_running():
         text.regen()
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
+      if sfg is None:
+          print("NO FILES image not loaded, check path!")
+          break
       sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
@@ -438,7 +469,7 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < text_tm:
+  elif tm < text_tm and config.SHOW_TEXT_TM > 0.0:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
       dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))

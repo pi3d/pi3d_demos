@@ -243,6 +243,10 @@ if config.USE_MQTT:
       global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
       msg = message.payload.decode("utf-8")
+      try:
+        float_msg = float(msg)
+      except:
+        float_msg = 0.0
       reselect = False
       if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
         try:
@@ -265,9 +269,11 @@ if config.USE_MQTT:
           date_from = None
         reselect = True
       elif message.topic == "frame/time_delay":
-        time_delay = float(msg)
+        if float_msg > 0.0:
+          time_delay = float_msg
       elif message.topic == "frame/fade_time":
-        fade_time = float(msg)
+        if float_msg > 0.0:
+          fade_time = float_msg
         delta_alpha = 1.0 / (config.FPS * fade_time)
       elif message.topic == "frame/shuffle":
         shuffle = True if msg == "True" else False
@@ -299,13 +305,13 @@ if config.USE_MQTT:
         nFi -= 1
         nexttm = time.time() - 86400.0
       elif message.topic == "frame/text_on":
-          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 0.0
       elif message.topic == "frame/date_on":
-          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 1.0
       elif message.topic == "frame/date_text_on":
-          config.SHOW_TEXT_TM = 0.33 * config.TIME_DELAY
+          config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 2.0
       elif message.topic == "frame/text_off":
           config.SHOW_TEXT_TM = 0.0

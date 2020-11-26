@@ -24,7 +24,10 @@ from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 import PictureFrame2020config as config
 
-locale.setlocale(locale.LC_TIME, config.LOCALE)
+try:
+  locale.setlocale(locale.LC_TIME, config.LOCALE)
+except:
+  print("error trying to set local to {}".format(config.LOCALE))
 
 #####################################################
 # these variables can be altered using MQTT messaging

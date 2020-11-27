@@ -251,6 +251,7 @@ if config.USE_MQTT:
       except:
         float_msg = 0.0
       reselect = False
+      refresh = False
       if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
         try:
           msg = msg.replace(".",":").replace("/",":").replace("-",":")
@@ -287,13 +288,13 @@ if config.USE_MQTT:
         msg_val = msg.lower()
         paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
         paused = paused_vals[msg_val] if msg_val in paused_vals else not paused # toggle from previous value
+        next_pic_num -= 1
+        refresh = True
       elif message.topic == "frame/back":
         next_pic_num -= 2
-        if next_pic_num < -1:
-          next_pic_num = -1
-        nexttm = time.time() - 86400.0
+        refresh = True
       elif message.topic == "frame/next":
-        nexttm = time.time() - 86400.0
+        refresh = True
       elif message.topic == "frame/subdirectory":
         subdirectory = msg
         reselect = True
@@ -310,18 +311,31 @@ if config.USE_MQTT:
       elif message.topic == "frame/text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 0.0
+          next_pic_num -= 1
+          refresh = True
       elif message.topic == "frame/date_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 1.0
+          next_pic_num -= 1
+          refresh = True
       elif message.topic == "frame/date_text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT = 2.0
+          next_pic_num -= 1
+          refresh = True
       elif message.topic == "frame/text_off":
           config.SHOW_TEXT_TM = 0.0
+          next_pic_num -= 1
+          refresh = True
 
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
         next_pic_num = 0
+      if refresh:
+        if next_pic_num < -1:
+          next_pic_num = -1
+        nexttm = time.time() - 86400.0
+
 
     # set up MQTT listening
     client = mqtt.Client()
@@ -373,8 +387,8 @@ sbg = None # slide for foreground
 
 # PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
-                shadow=(0,0,0,128))
+font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=16.0,
+                shadow=(0,0,0,200))
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,

@@ -387,8 +387,8 @@ sbg = None # slide for foreground
 
 # PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=16.0,
-                shadow=(0,0,0,200))
+font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=20.0,
+                shadow=(0,0,0,255))
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,

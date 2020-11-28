@@ -387,14 +387,17 @@ sbg = None # slide for foreground
 
 # PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=20.0,
-                shadow=(0,0,0,255))
+font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size)
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,
                           text_format="{}".format(" "), size=0.99,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
+back_shader = pi3d.Shader("mat_flat")
+text_bkg = pi3d.Sprite(w=DISPLAY.width, h=50, y=-DISPLAY.height * 0.4, z=4.0)
+text_bkg.set_shader(back_shader)
+text_bkg.set_material((0, 0, 0))
 
 
 num_run_through = 0
@@ -434,6 +437,7 @@ while DISPLAY.loop_running():
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)
+        text_bkg.set_alpha(0.0)
         text.regen()
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
@@ -498,6 +502,8 @@ while DISPLAY.loop_running():
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       textblock.colouring.set_colour(alpha=alpha)
       text.regen()
+      text_bkg.set_alpha(alpha * 0.6)
+      text_bkg.draw()
 
   text.draw()
 

@@ -71,10 +71,11 @@ def tex_load(pic_num, iFiles, size=None):
       im = Image.open(fname)
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
       if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
-        (orientation, dt, fdt) = get_exif_info(fname, im)
+        (orientation, dt, fdt, location) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = fdt
+        iFiles[pic_num][5] = location
       if date_from is not None:
         if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
           return None
@@ -173,13 +174,19 @@ def get_files(dt_from=None, dt_to=None):
               orientation = 1 # this is default - unrotated
               dt = None # if exif data not read - used for checking in tex_load
               fdt = None
+              location = ""
               if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                (orientation, dt, fdt) = get_exif_info(file_path_name)
+                (orientation, dt, fdt, location) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
                 # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date]
-                file_list.append([file_path_name, orientation, os.path.getmtime(file_path_name), dt, fdt])
+                file_list.append([file_path_name,
+                                  orientation,
+                                  os.path.getmtime(file_path_name),
+                                  dt,
+                                  fdt,
+                                  location])
   if shuffle:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
@@ -195,26 +202,23 @@ def get_files(dt_from=None, dt_to=None):
 def get_exif_info(file_path_name, im=None):
   dt = os.path.getmtime(file_path_name) # so use file last modified date
   orientation = 1
+  location = ""
   try:
     if im is None:
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
     exif_data = im._getexif() # TODO check if/when this becomes proper function
-    exif_dt = time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S')
-    dt = time.mktime(exif_dt)
-    orientation = int(exif_data[EXIF_ORIENTATION])
+    if EXIF_DATID in exif_data:
+        exif_dt = time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S')
+        dt = time.mktime(exif_dt)
+    if EXIF_ORIENTATION in exif_data:
+        orientation = int(exif_data[EXIF_ORIENTATION])
+    if config.LOAD_GEOLOC and geo.EXIF_GPSINFO in exif_data:
+      location = geo.get_location(exif_data[geo.EXIF_GPSINFO])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
       print('trying to read exif', e)
   fdt = time.strftime(config.SHOW_TEXT_FM, time.localtime(dt))
-  return (orientation, dt, fdt)
-
-EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
-EXIF_ORIENTATION = None
-for k in ExifTags.TAGS:
-  if ExifTags.TAGS[k] == 'DateTimeOriginal':
-    EXIF_DATID = k
-  if ExifTags.TAGS[k] == 'Orientation':
-    EXIF_ORIENTATION = k
+  return (orientation, dt, fdt, location)
 
 def convert_heif(fname):
     try:
@@ -227,6 +231,17 @@ def convert_heif(fname):
         return image
     except:
         print("have you installed pyheif?")
+
+EXIF_DATID = None # this needs to be set before get_files() above can extract exif date info
+EXIF_ORIENTATION = None
+for k in ExifTags.TAGS:
+  if ExifTags.TAGS[k] == 'DateTimeOriginal':
+    EXIF_DATID = k
+  if ExifTags.TAGS[k] == 'Orientation':
+    EXIF_ORIENTATION = k
+
+if config.LOAD_GEOLOC:
+  import PictureFrame2020geo as geo
 
 ##############################################
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
@@ -310,21 +325,22 @@ if config.USE_MQTT:
         nexttm = time.time() - 86400.0
       elif message.topic == "frame/text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT = 0.0
+          config.SHOW_TEXT |= 1
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/date_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT = 1.0
+          config.SHOW_TEXT |= 2
           next_pic_num -= 1
           refresh = True
-      elif message.topic == "frame/date_text_on":
+      elif message.topic == "frame/location_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT = 2.0
+          config.SHOW_TEXT |= 4
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/text_off":
           config.SHOW_TEXT_TM = 0.0
+          config.SHOW_TEXT = 0
           next_pic_num -= 1
           refresh = True
 
@@ -424,16 +440,18 @@ while DISPLAY.loop_running():
           break
       # set the file name as the description
       if config.SHOW_TEXT_TM > 0.0:
-        if config.SHOW_TEXT == 0.0: # name
-          txt = "{}".format(tidy_name(iFiles[pic_num][0]))
-        elif config.SHOW_TEXT == 1.0: # date
-          txt = text_format="{}".format(iFiles[pic_num][4])
-        elif config.SHOW_TEXT == 2.0: # date and name
-          txt = "{} {}".format(iFiles[pic_num][4], tidy_name(iFiles[pic_num][0]))
+        txt = ""
+        if (config.SHOW_TEXT & 1) == 1: # name
+          txt += "{}".format(tidy_name(iFiles[pic_num][0]))
+        if (config.SHOW_TEXT & 2) == 2: # date
+          txt += " {}".format(iFiles[pic_num][4])
+        if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
+          txt += " {}".format(iFiles[pic_num][5])
         if paused:
-          txt = txt + " PAUSED"
-        textblock.set_text(text_format=txt)
-        text.regen()
+          txt += " PAUSED"
+        if txt != "":
+          textblock.set_text(text_format=txt)
+          text.regen()
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)

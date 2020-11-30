@@ -14,6 +14,17 @@ def str_to_bool(x):
 def str_to_tuple(x):
     return tuple(float(v) for v in x.replace("(","").replace(")","").split(","))
 
+def parse_show_text(txt):
+    show_text = 0
+    txt = txt.lower()
+    if "name" in txt:
+        show_text |= 1
+    if "date" in txt:
+        show_text |= 2
+    if "location" in txt:
+        show_text |= 4
+    return show_text
+
 # NB the reason that absolute paths are used here is because relative ones can lead
 #  to abiguity if the program is started automatically on boot.
 parse = argparse.ArgumentParser("start running a picture frame")
@@ -39,7 +50,7 @@ parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders
 parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times through before reshuffling")
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
-parse.add_argument(      "--show_text",     default="name", choices=["name", "date", "name_and_date"], help="text to show over the image")
+parse.add_argument(      "--show_text",     default="name", help="show text, include combination of words: name, date, location")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
@@ -50,11 +61,14 @@ parse.add_argument("-z", "--blur_zoom",     default=1.0, type=float, help="must 
 parse.add_argument(      "--auto_resize",   default=True, type=str_to_bool, help="set this to false if you want to use 4K resolution on Raspberry Pi 4. You should ensure your images are the correct size for the display")
 parse.add_argument(      "--delay_exif",    default=True, type=str_to_bool, help="set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images.")
 parse.add_argument(      "--locale",        default="en_US.utf8", help="set the locale")
+parse.add_argument(      "--load_geoloc",   default=False, type=str_to_bool, help="load geolocation code")
+parse.add_argument(      "--geo_key",       default="picture_frame_park_grange", help="set the google key - change to something unique to you")
+parse.add_argument(      "--geo_path",      default="gpsdata.txt", help="set the local file to store data from google - ignored if --load_geoloc is not true")
 args = parse.parse_args()
 
 
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader
-TEXT_OPTIONS = {"name":0.0, "date":1.0, "name_and_date":2.0}
+
 ## set uppercase CONST style variables that can be accessed from PictureFrame
 BLUR_AMOUNT = args.blur_amount
 BLUR_EDGES = args.blur_edges
@@ -78,7 +92,7 @@ SHADER = args.shader
 RESHUFFLE_NUM = args.reshuffle_num
 SHOW_TEXT_TM = args.show_text_tm
 SHOW_TEXT_FM = args.show_text_fm
-SHOW_TEXT = TEXT_OPTIONS[args.show_text]
+SHOW_TEXT = parse_show_text(args.show_text)
 FIT = args.fit
 KENBURNS = args.kenburns
 TIME_DELAY = args.time_delay
@@ -89,5 +103,9 @@ BLUR_ZOOM = args.blur_zoom
 AUTO_RESIZE = args.auto_resize
 DELAY_EXIF = args.delay_exif
 LOCALE = args.locale
+LOAD_GEOLOC = args.load_geoloc
+GEO_KEY = args.geo_key
+GEO_PATH = args.geo_path
+
 
 CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size

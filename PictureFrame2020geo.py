@@ -70,4 +70,4 @@ def get_location(gps_info):
   else:
     return gps_data[geo_key]
 
-  return ""
+  return "No GPS Data"

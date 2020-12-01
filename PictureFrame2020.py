@@ -325,17 +325,17 @@ if config.USE_MQTT:
         nexttm = time.time() - 86400.0
       elif message.topic == "frame/text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT |= 1
+          config.SHOW_TEXT ^= 1
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/date_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT |= 2
+          config.SHOW_TEXT ^= 2
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/location_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
-          config.SHOW_TEXT |= 4
+          config.SHOW_TEXT ^= 4
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/text_off":

@@ -371,7 +371,7 @@ if config.USE_MQTT:
     client.subscribe("frame/delete", qos=0)
     client.subscribe("frame/text_on", qos=0)
     client.subscribe("frame/date_on", qos=0)
-    client.subscribe("frame/date_text_on", qos=0)
+    client.subscribe("frame/location_on", qos=0)
     client.subscribe("frame/text_off", qos=0)
     client.on_connect = on_connect
     client.on_message = on_message

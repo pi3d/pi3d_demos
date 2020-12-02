@@ -449,14 +449,14 @@ while DISPLAY.loop_running():
           txt += " {}".format(iFiles[pic_num][5])
         if paused:
           txt += " PAUSED"
-        if txt != "":
-          textblock.set_text(text_format=txt)
-          text.regen()
+        if txt == "":
+          txt = " " #TODO fix TextBlock to cope with zero length strings
+        textblock.set_text(text_format=txt)
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)
         text_bkg.set_alpha(0.0)
-        text.regen()
+      text.regen()
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
       if sfg is None:
@@ -515,12 +515,13 @@ while DISPLAY.loop_running():
     next_tm = tm + 1.0
     text.regen()
   elif tm < text_tm and config.SHOW_TEXT_TM > 0.0:
-      # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
-      alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-      textblock.colouring.set_colour(alpha=alpha)
-      text.regen()
-      text_bkg.set_alpha(alpha * 0.6)
+    # this sets alpha for the TextBlock from 0 to 1 then back to 0
+    dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
+    alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
+    textblock.colouring.set_colour(alpha=alpha)
+    text.regen()
+    text_bkg.set_alpha(alpha * 0.6)
+    if len(textblock.text_format.strip()) > 0: #only draw background if text there
       text_bkg.draw()
 
   text.draw()

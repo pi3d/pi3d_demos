@@ -51,12 +51,21 @@ def get_location(gps_info):
   geo_key = "{:.4f},{:.4f}".format(decimal_lat, decimal_lon)
 
   if geo_key not in gps_data:
+    language = locale.getlocale()[0][:2]
     try:
       geolocator = Nominatim(user_agent=config.GEO_KEY)
-      location = geolocator.reverse(geo_key).address.split(",")
+      location = geolocator.reverse(geo_key, language=language).address.split(",")
       if len(location) > 2:
-        location_split = [location[i].strip() for i in (1, 2, -1)]
-        formatted_address = "{}, {}, {}".format(*location_split)
+        location_split = [loc.strip() for loc in location]
+        formatted_address = location_split[-1]
+        num_parts = 1
+        i = 1
+        while i < (len(location_split) - 1) and num_parts < 3:
+          part = location_split[i]
+          if any(c in config.CODEPOINTS for c in part):
+            formatted_address = "{}, {}".format(part, formatted_address)
+            num_parts += 1
+          i += 1
       else:
         formatted_address = location.join(", ")
       if len(formatted_address) > 0:

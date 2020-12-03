@@ -339,7 +339,7 @@ if config.USE_MQTT:
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/text_off":
-          config.SHOW_TEXT_TM = 0.0
+          #config.SHOW_TEXT_TM = 0.0
           config.SHOW_TEXT = 0
           next_pic_num -= 1
           refresh = True
@@ -411,7 +411,7 @@ textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 back_shader = pi3d.Shader("mat_flat")
-text_bkg = pi3d.Sprite(w=DISPLAY.width, h=50, y=-DISPLAY.height * 0.4, z=4.0)
+text_bkg = pi3d.Sprite(w=DISPLAY.width, h=100, y=-DISPLAY.height * 0.4 - 30, z=4.0)
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
 
@@ -439,19 +439,23 @@ while DISPLAY.loop_running():
           nFi = 0
           break
       # set the file name as the description
-      if config.SHOW_TEXT_TM > 0.0 or paused:
+      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
         txt = ""
+        gap = ""
         if (config.SHOW_TEXT & 1) == 1: # name
           txt += "{}".format(tidy_name(iFiles[pic_num][0]))
+          gap = " "
         if (config.SHOW_TEXT & 2) == 2: # date
-          txt += " {}".format(iFiles[pic_num][4])
+          txt += "{}{}".format(gap, iFiles[pic_num][4])
+          gap = " "
         if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-          txt += " {}".format(iFiles[pic_num][5])
+          txt += "{}{}".format(gap, iFiles[pic_num][5])
         if paused:
           txt += " PAUSED"
-        if txt == "":
-          txt = " " #TODO fix TextBlock to cope with zero length strings
-        textblock.set_text(text_format=txt)
+        #if txt == "":
+        #  txt = " " #TODO fix TextBlock to cope with zero length strings
+        print("=={}".format(txt))
+        textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)
@@ -514,7 +518,7 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < text_tm and config.SHOW_TEXT_TM > 0.0:
+  elif tm < text_tm and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
     # this sets alpha for the TextBlock from 0 to 1 then back to 0
     dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
     alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))

@@ -59,7 +59,7 @@ font_path = os.path.abspath(os.path.join(working_directory, 'fonts', 'NotoSans-R
 
 # Create pointFont and the text manager to use it
 pointFont = pi3d.Font(font_path, font_colour, codepoints=list(range(32,128)))
-text = pi3d.PointText(pointFont, CAMERA, max_chars=200, point_size=64)
+text = pi3d.PointText(pointFont, CAMERA, max_chars=220, point_size=64)
 
 #Basic static text
 newtxt = pi3d.TextBlock(-100, -50, 0.1, 0.0, 14, text_format="Static string",
@@ -87,8 +87,8 @@ text.add_text_block(newtxt)
 
 textSize = 0.1
 textGrowth=0.01
-sizingText = pi3d.TextBlock(-100, 150, 0.1, 0.0, 15,
-          text_format="Resizing text", size=textSize, spacing="F",
+sizingText = pi3d.TextBlock(-100, 150, 0.1, 0.0, 28,
+          text_format="Resizing text\non two lines", size=textSize, spacing="F",
           space=0.05, colour=(1.0, 1.0, 0.0, 1.0))
 text.add_text_block(sizingText)
 

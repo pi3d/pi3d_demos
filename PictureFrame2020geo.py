@@ -55,19 +55,13 @@ def get_location(gps_info):
     try:
       geolocator = Nominatim(user_agent=config.GEO_KEY)
       location = geolocator.reverse(geo_key, language=language).address.split(",")
-      if len(location) > 2:
-        location_split = [loc.strip() for loc in location]
-        formatted_address = location_split[-1]
-        num_parts = 1
-        i = 1
-        while i < (len(location_split) - 1) and num_parts < 3:
-          part = location_split[i]
-          if any(c in config.CODEPOINTS for c in part):
-            formatted_address = "{}, {}".format(part, formatted_address)
-            num_parts += 1
-          i += 1
-      else:
-        formatted_address = location.join(", ")
+      location_split = [loc.strip() for loc in location]
+      formatted_address = ""
+      comma = ""
+      for part in location_split:
+        if any(c in config.CODEPOINTS for c in part):
+          formatted_address = "{}{}{}".format(formatted_address, comma, part)
+          comma = ", "
       if len(formatted_address) > 0:
         gps_data[geo_key] = formatted_address
         with open(config.GEO_PATH, 'a+') as file:

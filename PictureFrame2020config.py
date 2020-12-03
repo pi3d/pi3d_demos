@@ -51,6 +51,7 @@ parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times thr
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
 parse.add_argument(      "--show_text",     default="name", help="show text, include combination of words: name, date, location")
+parse.add_argument(      "--text_width",    default=40, type=int, help="number of character before breaking into new line")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
@@ -93,6 +94,7 @@ RESHUFFLE_NUM = args.reshuffle_num
 SHOW_TEXT_TM = args.show_text_tm
 SHOW_TEXT_FM = args.show_text_fm
 SHOW_TEXT = parse_show_text(args.show_text)
+TEXT_WIDTH = args.text_width
 FIT = args.fit
 KENBURNS = args.kenburns
 TIME_DELAY = args.time_delay

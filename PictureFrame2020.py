@@ -439,7 +439,7 @@ while DISPLAY.loop_running():
           nFi = 0
           break
       # set the file name as the description
-      if config.SHOW_TEXT_TM > 0.0:
+      if config.SHOW_TEXT_TM > 0.0 or paused:
         txt = ""
         if (config.SHOW_TEXT & 1) == 1: # name
           txt += "{}".format(tidy_name(iFiles[pic_num][0]))

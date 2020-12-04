@@ -322,7 +322,7 @@ if config.USE_MQTT:
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
         iFiles.pop(pic_num)
         nFi -= 1
-        nexttm = time.time() - 86400.0
+        refresh = True
       elif message.topic == "frame/text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
@@ -339,8 +339,10 @@ if config.USE_MQTT:
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/text_off":
-          #config.SHOW_TEXT_TM = 0.0
           config.SHOW_TEXT = 0
+          next_pic_num -= 1
+          refresh = True
+      elif message.topic == "frame/text_refresh":
           next_pic_num -= 1
           refresh = True
 
@@ -373,6 +375,7 @@ if config.USE_MQTT:
     client.subscribe("frame/date_on", qos=0)
     client.subscribe("frame/location_on", qos=0)
     client.subscribe("frame/text_off", qos=0)
+    client.subscribe("frame/text_refresh", qos=0)
     client.on_connect = on_connect
     client.on_message = on_message
     client.publish("frame/paused", payload="off", qos=0)
@@ -404,7 +407,7 @@ sbg = None # slide for foreground
 # PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size)
-text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
+text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=config.SHOW_TEXT_SZ)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,
                           text_format="{}".format(" "), size=0.99,
@@ -425,6 +428,7 @@ while DISPLAY.loop_running():
       sbg = sfg
       sfg = None
       start_pic_num = next_pic_num
+      loop_count = 0
       while sfg is None: # keep going through until a usable picture is found
         pic_num = next_pic_num
         sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
@@ -435,7 +439,8 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
-        if next_pic_num == start_pic_num: #i.e. no images found 
+        loop_count += 1
+        if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
           break
       # set the file name as the description
@@ -452,9 +457,6 @@ while DISPLAY.loop_running():
           txt += "{}{}".format(gap, iFiles[pic_num][5])
         if paused:
           txt += " PAUSED"
-        #if txt == "":
-        #  txt = " " #TODO fix TextBlock to cope with zero length strings
-        print("=={}".format(txt))
         textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))

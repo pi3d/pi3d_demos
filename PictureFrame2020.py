@@ -260,6 +260,7 @@ if config.USE_MQTT:
       # TODO not ideal to have global but probably only reasonable way to do it
       global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
+      TRUTH_VALS = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
       msg = message.payload.decode("utf-8")
       try:
         float_msg = float(msg)
@@ -295,14 +296,15 @@ if config.USE_MQTT:
           fade_time = float_msg
         delta_alpha = 1.0 / (config.FPS * fade_time)
       elif message.topic == "frame/shuffle":
-        shuffle = True if msg == "True" else False
+        msg_val = msg.lower()
+        shuffle = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else False
         reselect = True
       elif message.topic == "frame/quit":
         quit = True
       elif message.topic == "frame/paused":
         msg_val = msg.lower()
-        paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
-        paused = paused_vals[msg_val] if msg_val in paused_vals else not paused # toggle from previous value
+        #paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
+        paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
         next_pic_num -= 1
         refresh = True
       elif message.topic == "frame/back":
@@ -357,34 +359,35 @@ if config.USE_MQTT:
 
     # set up MQTT listening
     client = mqtt.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) # replace with your own id
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) # replace with your own server
+    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
+    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    client.subscribe("frame/date_from", qos=0)
+    client.subscribe("frame/date_from", qos=0) # needs payload as 2019:06:01 or divided by "/", "-" or "."
     client.subscribe("frame/date_to", qos=0)
-    client.subscribe("frame/time_delay", qos=0)
-    client.subscribe("frame/fade_time", qos=0)
-    client.subscribe("frame/shuffle", qos=0)
+    client.subscribe("frame/time_delay", qos=0) # payload seconds for each slide
+    client.subscribe("frame/fade_time", qos=0) # payload seconds for fade time between slides
+    client.subscribe("frame/shuffle", qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
     client.subscribe("frame/quit", qos=0)
-    client.subscribe("frame/paused", qos=0)
+    client.subscribe("frame/paused", qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
     client.subscribe("frame/back", qos=0)
     client.subscribe("frame/next", qos=0)
-    client.subscribe("frame/subdirectory", qos=0)
-    client.subscribe("frame/delete", qos=0)
-    client.subscribe("frame/text_on", qos=0)
-    client.subscribe("frame/date_on", qos=0)
-    client.subscribe("frame/location_on", qos=0)
-    client.subscribe("frame/text_off", qos=0)
-    client.subscribe("frame/text_refresh", qos=0)
+    client.subscribe("frame/subdirectory", qos=0) # payload string must match a subdirectory of pic_dir
+    client.subscribe("frame/delete", qos=0) # delete current image, copy to dir set in config
+    client.subscribe("frame/text_on", qos=0) # toggle file name on and off. payload text show time in seconds
+    client.subscribe("frame/date_on", qos=0) # toggle date (exif if avail else file) on and off. payload show time
+    client.subscribe("frame/location_on", qos=0) # toggle location (if enabled) on and off. payload show time
+    client.subscribe("frame/text_off", qos=0) # turn all name, date, location off
+    client.subscribe("frame/text_refresh", qos=0) # restarts current slide showing text set above
     client.on_connect = on_connect
     client.on_message = on_message
-    client.publish("frame/paused", payload="off", qos=0)
+    client.publish("frame/paused", payload="off", qos=0) # un-pause the slideshow on start
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e)) # sometimes starts paused
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
+DISPLAY = pi3d.Display.create(x=config.DISPLAY_X, y=config.DISPLAY_Y,
+              w=config.DISPLAY_W, h=config.DISPLAY_H, frames_per_second=config.FPS,
               display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
@@ -414,7 +417,7 @@ textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 back_shader = pi3d.Shader("mat_flat")
-text_bkg = pi3d.Sprite(w=DISPLAY.width, h=100, y=-DISPLAY.height * 0.4 - 30, z=4.0)
+text_bkg = pi3d.Sprite(w=DISPLAY.width, h=90, y=-DISPLAY.height * 0.4 - 20, z=4.0)
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
 

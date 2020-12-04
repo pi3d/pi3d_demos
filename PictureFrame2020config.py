@@ -50,7 +50,9 @@ parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders
 parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times through before reshuffling")
 parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
 parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
+parse.add_argument(      "--show_text_sz",  default=50, type=int, help="text character size")
 parse.add_argument(      "--show_text",     default="name", help="show text, include combination of words: name, date, location")
+parse.add_argument(      "--text_width",    default=90, type=int, help="number of character before breaking into new line")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
@@ -64,8 +66,12 @@ parse.add_argument(      "--locale",        default="en_US.utf8", help="set the 
 parse.add_argument(      "--load_geoloc",   default=False, type=str_to_bool, help="load geolocation code")
 parse.add_argument(      "--geo_key",       default="picture_frame_park_grange", help="set the google key - change to something unique to you")
 parse.add_argument(      "--geo_path",      default="gpsdata.txt", help="set the local file to store data from google - ignored if --load_geoloc is not true")
+parse.add_argument(      "--display_x",     default=0, type=int, help="offset from left of screen (can be negative)")
+parse.add_argument(      "--display_y",     default=0, type=int, help="offset from top of screen (can be negative)")
+parse.add_argument(      "--display_w",     default=None, type=int, help="width of display surface (None will use max returned by hardware)")
+parse.add_argument(      "--display_h",     default=None, type=int, help="height of display surface")
 args = parse.parse_args()
-
+print(args.display_x)
 
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader
 
@@ -92,7 +98,9 @@ SHADER = args.shader
 RESHUFFLE_NUM = args.reshuffle_num
 SHOW_TEXT_TM = args.show_text_tm
 SHOW_TEXT_FM = args.show_text_fm
+SHOW_TEXT_SZ = args.show_text_sz
 SHOW_TEXT = parse_show_text(args.show_text)
+TEXT_WIDTH = args.text_width
 FIT = args.fit
 KENBURNS = args.kenburns
 TIME_DELAY = args.time_delay
@@ -106,6 +114,10 @@ LOCALE = args.locale
 LOAD_GEOLOC = args.load_geoloc
 GEO_KEY = args.geo_key
 GEO_PATH = args.geo_path
+DISPLAY_X = args.display_x
+DISPLAY_Y = args.display_y
+DISPLAY_W = args.display_w
+DISPLAY_H = args.display_h
 
 
 CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size

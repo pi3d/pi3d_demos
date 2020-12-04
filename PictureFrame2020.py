@@ -260,6 +260,7 @@ if config.USE_MQTT:
       # TODO not ideal to have global but probably only reasonable way to do it
       global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
+      TRUTH_VALS = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
       msg = message.payload.decode("utf-8")
       try:
         float_msg = float(msg)
@@ -295,14 +296,15 @@ if config.USE_MQTT:
           fade_time = float_msg
         delta_alpha = 1.0 / (config.FPS * fade_time)
       elif message.topic == "frame/shuffle":
-        shuffle = True if msg == "True" else False
+        msg_val = msg.lower()
+        shuffle = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else False
         reselect = True
       elif message.topic == "frame/quit":
         quit = True
       elif message.topic == "frame/paused":
         msg_val = msg.lower()
-        paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
-        paused = paused_vals[msg_val] if msg_val in paused_vals else not paused # toggle from previous value
+        #paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
+        paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
         next_pic_num -= 1
         refresh = True
       elif message.topic == "frame/back":
@@ -322,7 +324,7 @@ if config.USE_MQTT:
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
         iFiles.pop(pic_num)
         nFi -= 1
-        nexttm = time.time() - 86400.0
+        refresh = True
       elif message.topic == "frame/text_on":
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
@@ -339,8 +341,10 @@ if config.USE_MQTT:
           next_pic_num -= 1
           refresh = True
       elif message.topic == "frame/text_off":
-          config.SHOW_TEXT_TM = 0.0
           config.SHOW_TEXT = 0
+          next_pic_num -= 1
+          refresh = True
+      elif message.topic == "frame/text_refresh":
           next_pic_num -= 1
           refresh = True
 
@@ -355,33 +359,35 @@ if config.USE_MQTT:
 
     # set up MQTT listening
     client = mqtt.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) # replace with your own id
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) # replace with your own server
+    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
+    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    client.subscribe("frame/date_from", qos=0)
+    client.subscribe("frame/date_from", qos=0) # needs payload as 2019:06:01 or divided by "/", "-" or "."
     client.subscribe("frame/date_to", qos=0)
-    client.subscribe("frame/time_delay", qos=0)
-    client.subscribe("frame/fade_time", qos=0)
-    client.subscribe("frame/shuffle", qos=0)
+    client.subscribe("frame/time_delay", qos=0) # payload seconds for each slide
+    client.subscribe("frame/fade_time", qos=0) # payload seconds for fade time between slides
+    client.subscribe("frame/shuffle", qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
     client.subscribe("frame/quit", qos=0)
-    client.subscribe("frame/paused", qos=0)
+    client.subscribe("frame/paused", qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
     client.subscribe("frame/back", qos=0)
     client.subscribe("frame/next", qos=0)
-    client.subscribe("frame/subdirectory", qos=0)
-    client.subscribe("frame/delete", qos=0)
-    client.subscribe("frame/text_on", qos=0)
-    client.subscribe("frame/date_on", qos=0)
-    client.subscribe("frame/location_on", qos=0)
-    client.subscribe("frame/text_off", qos=0)
+    client.subscribe("frame/subdirectory", qos=0) # payload string must match a subdirectory of pic_dir
+    client.subscribe("frame/delete", qos=0) # delete current image, copy to dir set in config
+    client.subscribe("frame/text_on", qos=0) # toggle file name on and off. payload text show time in seconds
+    client.subscribe("frame/date_on", qos=0) # toggle date (exif if avail else file) on and off. payload show time
+    client.subscribe("frame/location_on", qos=0) # toggle location (if enabled) on and off. payload show time
+    client.subscribe("frame/text_off", qos=0) # turn all name, date, location off
+    client.subscribe("frame/text_refresh", qos=0) # restarts current slide showing text set above
     client.on_connect = on_connect
     client.on_message = on_message
-    client.publish("frame/paused", payload="off", qos=0)
+    client.publish("frame/paused", payload="off", qos=0) # un-pause the slideshow on start
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e)) # sometimes starts paused
 ##############################################
 
-DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
+DISPLAY = pi3d.Display.create(x=config.DISPLAY_X, y=config.DISPLAY_Y,
+              w=config.DISPLAY_W, h=config.DISPLAY_H, frames_per_second=config.FPS,
               display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
 CAMERA = pi3d.Camera(is_3d=False)
 
@@ -404,14 +410,14 @@ sbg = None # slide for foreground
 # PointText and TextBlock. If SHOW_TEXT_TM <= 0 then this is just used for no images message
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size)
-text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=50)
+text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=config.SHOW_TEXT_SZ)
 textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                           z=0.1, rot=0.0, char_count=199,
                           text_format="{}".format(" "), size=0.99,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
 back_shader = pi3d.Shader("mat_flat")
-text_bkg = pi3d.Sprite(w=DISPLAY.width, h=50, y=-DISPLAY.height * 0.4, z=4.0)
+text_bkg = pi3d.Sprite(w=DISPLAY.width, h=90, y=-DISPLAY.height * 0.4 - 20, z=4.0)
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
 
@@ -425,6 +431,7 @@ while DISPLAY.loop_running():
       sbg = sfg
       sfg = None
       start_pic_num = next_pic_num
+      loop_count = 0
       while sfg is None: # keep going through until a usable picture is found
         pic_num = next_pic_num
         sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
@@ -435,23 +442,25 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
-        if next_pic_num == start_pic_num: #i.e. no images found 
+        loop_count += 1
+        if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
           break
       # set the file name as the description
-      if config.SHOW_TEXT_TM > 0.0 or paused:
+      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
         txt = ""
+        gap = ""
         if (config.SHOW_TEXT & 1) == 1: # name
           txt += "{}".format(tidy_name(iFiles[pic_num][0]))
+          gap = " "
         if (config.SHOW_TEXT & 2) == 2: # date
-          txt += " {}".format(iFiles[pic_num][4])
+          txt += "{}{}".format(gap, iFiles[pic_num][4])
+          gap = " "
         if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-          txt += " {}".format(iFiles[pic_num][5])
+          txt += "{}{}".format(gap, iFiles[pic_num][5])
         if paused:
           txt += " PAUSED"
-        if txt == "":
-          txt = " " #TODO fix TextBlock to cope with zero length strings
-        textblock.set_text(text_format=txt)
+        textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
       else: # could have a NO IMAGES selected and being drawn
         textblock.set_text(text_format="{}".format(" "))
         textblock.colouring.set_colour(alpha=0.0)
@@ -514,7 +523,7 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < text_tm and config.SHOW_TEXT_TM > 0.0:
+  elif tm < text_tm and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
     # this sets alpha for the TextBlock from 0 to 1 then back to 0
     dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
     alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))

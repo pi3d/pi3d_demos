@@ -65,7 +65,7 @@ parse.add_argument(      "--delay_exif",    default=True, type=str_to_bool, help
 parse.add_argument(      "--locale",        default="en_US.utf8", help="set the locale")
 parse.add_argument(      "--load_geoloc",   default=False, type=str_to_bool, help="load geolocation code")
 parse.add_argument(      "--geo_key",       default="picture_frame_hello", help="set the Nominatim key - change to something unique to you")
-parse.add_argument(      "--geo_path",      default="gpsdata.txt", help="set the local file to store data from geopy - ignored if --load_geoloc is not true")
+parse.add_argument(      "--geo_path",      default="/home/pi/PictureFrame2020gpsdata.txt", help="set the local file to store data from geopy - ignored if --load_geoloc is not true")
 parse.add_argument(      "--display_x",     default=0, type=int, help="offset from left of screen (can be negative)")
 parse.add_argument(      "--display_y",     default=0, type=int, help="offset from top of screen (can be negative)")
 parse.add_argument(      "--display_w",     default=None, type=int, help="width of display surface (None will use max returned by hardware)")

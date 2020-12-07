@@ -527,7 +527,7 @@ while DISPLAY.loop_running():
     # this sets alpha for the TextBlock from 0 to 1 then back to 0
     dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
     ramp_pt = max(4.0, config.SHOW_TEXT_TM / 4.0)
-    alpha = max(0.0, min(1.0, ramp_pt - abs(ramp_pt * (1.0 - 2.0 * dt))))
+    alpha = max(0.0, min(1.0, ramp_pt * (1.0 - abs(1.0 - 2.0 * dt))))
     textblock.colouring.set_colour(alpha=alpha)
     text.regen()
     text_bkg.set_alpha(alpha * 0.6)

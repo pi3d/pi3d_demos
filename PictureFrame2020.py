@@ -19,6 +19,7 @@ import math
 import demo
 import pi3d
 import locale
+import subprocess
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
@@ -320,7 +321,8 @@ if config.USE_MQTT:
         f_name_to_delete = os.path.split(f_to_delete)[1]
         move_to_dir = os.path.expanduser("/home/pi/DeletedPictures")
         if not os.path.exists(move_to_dir):
-          os.makedirs(move_to_dir)
+          #os.makedirs(move_to_dir) # creates directory owned by root if picture frame run with sudo so...
+          os.system("sudo -u pi mkdir {}".format(move_to_dir))
         os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
         iFiles.pop(pic_num)
         nFi -= 1
@@ -362,7 +364,7 @@ if config.USE_MQTT:
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    client.subscribe("frame/date_from", qos=0) # needs payload as 2019:06:01 or divided by "/", "-" or "."
+    client.subscribe("frame/date_from", qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
     client.subscribe("frame/date_to", qos=0)
     client.subscribe("frame/time_delay", qos=0) # payload seconds for each slide
     client.subscribe("frame/fade_time", qos=0) # payload seconds for fade time between slides

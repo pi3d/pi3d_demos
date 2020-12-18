@@ -426,12 +426,12 @@ text_bkg.set_material((0, 0, 0))
 
 ####################### show time code #########################################
 tm_text = pi3d.PointText(font, CAMERA, max_chars=10, point_size=35)
-tm_textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 5, y=DISPLAY.height * 0.35,
+tm_textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 5, y=DISPLAY.height * 0.42,
                           z=0.1, rot=0.0, char_count=9,
                           text_format="{}".format(" "), size=0.99,
                           spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 tm_text.add_text_block(tm_textblock)
-tm_text_bkg = pi3d.Sprite(w=100, h=50, x=-DISPLAY.width * 0.5 + 30, y=DISPLAY.height * 0.35, z=4.0)
+tm_text_bkg = pi3d.Sprite(w=100, h=50, x=-DISPLAY.width * 0.5 + 30, y=DISPLAY.height * 0.42, z=4.0)
 tm_text_bkg.set_shader(back_shader)
 tm_text_bkg.set_material((0, 0, 0, 0.3))
 

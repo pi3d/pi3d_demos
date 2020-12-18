@@ -20,6 +20,7 @@ import demo
 import pi3d
 import locale
 import subprocess
+import threading
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
@@ -423,6 +424,29 @@ text_bkg = pi3d.Sprite(w=DISPLAY.width, h=90, y=-DISPLAY.height * 0.4 - 20, z=4.
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
 
+####################### show time code #########################################
+tm_text = pi3d.PointText(font, CAMERA, max_chars=10, point_size=35)
+tm_textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 5, y=DISPLAY.height * 0.4,
+                          z=0.1, rot=0.0, char_count=9,
+                          text_format="{}".format(" "), size=0.99,
+                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+tm_text.add_text_block(tm_textblock)
+tm_text_bkg = pi3d.Sprite(w=100, h=50, x=-DISPLAY.width * 0.5 + 30, y=DISPLAY.height * 0.4, z=4.0)
+tm_text_bkg.set_shader(back_shader)
+tm_text_bkg.set_material((0, 0, 0, 0.3))
+
+def update_tm_text():
+  while True:
+    time.sleep(5.0) # only showing HH.MM so accurate to 5s OK
+    tm = time.localtime()
+    tm_textblock.set_text(text_format="{:02d}:{:02d}".format(tm.tm_hour, tm.tm_min)) # or put colon in CODEPOINTS
+    tm_text.regen()
+    if quit:
+      break
+
+tm_thread = threading.Thread(target=update_tm_text)
+tm_thread.start()
+################################################################################
 
 num_run_through = 0
 while DISPLAY.loop_running():
@@ -537,7 +561,10 @@ while DISPLAY.loop_running():
       text_bkg.draw()
 
   text.draw()
-
+#############################time code########################################         
+  tm_text_bkg.draw()
+  tm_text.draw()
+##############################################################################
   if config.KEYBOARD:
     k = kbd.read()
     if k != -1:

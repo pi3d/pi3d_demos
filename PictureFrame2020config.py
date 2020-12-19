@@ -43,7 +43,7 @@ parse.add_argument(      "--mqtt_server",   default="localhost")
 parse.add_argument(      "--mqtt_port",     default=1883, type=int)
 parse.add_argument(      "--mqtt_login",    default="")
 parse.add_argument(      "--mqtt_password", default="")
-parse.add_argument("-n", "--recent_n",      default=10, type=int, help="when shuffling keep n most recent ones to play before the rest")
+parse.add_argument("-n", "--recent_n",      default=0, type=int, help="when shuffling keep n most recent ones to play before the rest")
 parse.add_argument("-o", "--font_file",     default="/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf")
 parse.add_argument("-p", "--pic_dir",       default="/home/pi/Pictures")
 parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders/blend_new")
@@ -64,7 +64,8 @@ parse.add_argument(      "--auto_resize",   default=True, type=str_to_bool, help
 parse.add_argument(      "--delay_exif",    default=True, type=str_to_bool, help="set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images.")
 parse.add_argument(      "--locale",        default="de_DE.UTF-8", help="set the locale")
 parse.add_argument(      "--load_geoloc",   default=True, type=str_to_bool, help="load geolocation code")
-parse.add_argument(      "--geo_key",       default="picture_frame_hello", help="set the Nominatim key - change to something unique to you")
+parse.add_argument(      "--geo_key",       default="pictureframe_says_hello", help="set the Nominatim key - change to something unique to you")
+parse.add_argument(      "--zoom",          default=18, type=int, help="Level of adress detail(3=country...18=building): 3,5,8,10,14,16,17,18")
 parse.add_argument(      "--geo_path",      default="/home/pi/PictureFrame2020gpsdata.txt", help="set the local file to store data from geopy - ignored if --load_geoloc is not true")
 parse.add_argument(      "--display_x",     default=0, type=int, help="offset from left of screen (can be negative)")
 parse.add_argument(      "--display_y",     default=0, type=int, help="offset from top of screen (can be negative)")
@@ -114,6 +115,7 @@ LOCALE = args.locale
 LOAD_GEOLOC = args.load_geoloc
 GEO_KEY = args.geo_key
 GEO_PATH = args.geo_path
+ZOOM = args.zoom
 DISPLAY_X = args.display_x
 DISPLAY_Y = args.display_y
 DISPLAY_W = args.display_w

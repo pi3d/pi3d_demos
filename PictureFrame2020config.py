@@ -43,6 +43,7 @@ parse.add_argument(      "--mqtt_server",   default="localhost")
 parse.add_argument(      "--mqtt_port",     default=1883, type=int)
 parse.add_argument(      "--mqtt_login",    default="")
 parse.add_argument(      "--mqtt_password", default="")
+parse.add_argument(      "--mqtt_id", default="", help="prepended onto all the message strings with a / separator added")
 parse.add_argument("-n", "--recent_n",      default=0, type=int, help="when shuffling keep n most recent ones to play before the rest")
 parse.add_argument("-o", "--font_file",     default="/home/pi/pi3d_demos/fonts/NotoSans-Regular.ttf")
 parse.add_argument("-p", "--pic_dir",       default="/home/pi/Pictures")
@@ -64,8 +65,9 @@ parse.add_argument(      "--auto_resize",   default=True, type=str_to_bool, help
 parse.add_argument(      "--delay_exif",    default=True, type=str_to_bool, help="set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images.")
 parse.add_argument(      "--locale",        default="en_US.utf8", help="set the locale")
 parse.add_argument(      "--load_geoloc",   default=False, type=str_to_bool, help="load geolocation code")
-parse.add_argument(      "--geo_key",       default="picture_frame_park_grange", help="set the google key - change to something unique to you")
-parse.add_argument(      "--geo_path",      default="gpsdata.txt", help="set the local file to store data from google - ignored if --load_geoloc is not true")
+parse.add_argument(      "--geo_key",       default="picture_frame_hello", help="set the Nominatim key - change to something unique to you")
+parse.add_argument(      "--geo_path",      default="/home/pi/PictureFrame2020gpsdata.txt", help="set the local file to store data from geopy - ignored if --load_geoloc is not true")
+parse.add_argument(      "--geo_zoom",      default=18, type=int, help="Level of adress detail(3=country...18=building): 3,5,8,10,14,16,17,18")
 parse.add_argument(      "--display_x",     default=0, type=int, help="offset from left of screen (can be negative)")
 parse.add_argument(      "--display_y",     default=0, type=int, help="offset from top of screen (can be negative)")
 parse.add_argument(      "--display_w",     default=None, type=int, help="width of display surface (None will use max returned by hardware)")
@@ -91,6 +93,7 @@ MQTT_SERVER = args.mqtt_server
 MQTT_PORT = args.mqtt_port
 MQTT_LOGIN = args.mqtt_login
 MQTT_PASSWORD = args.mqtt_password
+MQTT_ID = args.mqtt_id
 RECENT_N = args.recent_n
 FONT_FILE = args.font_file
 PIC_DIR = args.pic_dir
@@ -114,10 +117,11 @@ LOCALE = args.locale
 LOAD_GEOLOC = args.load_geoloc
 GEO_KEY = args.geo_key
 GEO_PATH = args.geo_path
+GEO_ZOOM = args.geo_zoom
 DISPLAY_X = args.display_x
 DISPLAY_Y = args.display_y
 DISPLAY_W = args.display_w
 DISPLAY_H = args.display_h
 
 
-CODEPOINTS = '1234567890AÄÀBCÇDÈÉÊEFGHIÍJKLMNÑOÓÖPQRSTUÚÙÜVWXYZ., _-/abcdefghijklmnñopqrstuvwxyzáéèêàçíóúäöüß' # limit to 49 ie 7x7 grid_size
+CODEPOINTS = "1234567890AÄÀÆÅÃBCÇDÈÉÊEËFGHIÏÍJKLMNÑOÓÖÔŌØPQRSTUÚÙÜVWXYZaáàãæåäbcçdeéèêëfghiíïjklmnñoóôōøöpqrsßtuúüvwxyz., _-+*()&/`´'" # limit to 121 ie 11x11 grid_size

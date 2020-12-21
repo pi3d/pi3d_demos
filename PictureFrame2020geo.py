@@ -54,7 +54,7 @@ def get_location(gps_info):
     language = locale.getlocale()[0][:2]
     try:
       geolocator = Nominatim(user_agent=config.GEO_KEY)
-      location = geolocator.reverse(geo_key, language=language).address.split(",")
+      location = geolocator.reverse(geo_key, language=language, zoom=config.GEO_ZOOM).address.split(",")
       location_split = [loc.strip() for loc in location]
       formatted_address = ""
       comma = ""

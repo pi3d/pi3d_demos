@@ -269,7 +269,11 @@ if config.USE_MQTT:
         float_msg = 0.0
       reselect = False
       refresh = False
-      if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
+      if config.MQTT_ID == "":
+        id = "frame/"
+      else:
+        id = "{}/frame/".format(config.MQTT_ID)
+      if message.topic == "{}date_from".format(id): # NB entered as mqtt string "2016:12:25"
         try:
           msg = msg.replace(".",":").replace("/",":").replace("-",":")
           df = msg.split(":")
@@ -279,7 +283,7 @@ if config.USE_MQTT:
         except:
           date_from = None
         reselect = True
-      elif message.topic == "frame/date_to":
+      elif message.topic == "{}date_to".format(id):
         try:
           msg = msg.replace(".",":").replace("/",":").replace("-",":")
           df = msg.split(":")
@@ -289,34 +293,34 @@ if config.USE_MQTT:
         except:
           date_from = None
         reselect = True
-      elif message.topic == "frame/time_delay":
+      elif message.topic == "{}time_delay".format(id):
         if float_msg > 0.0:
           time_delay = float_msg
-      elif message.topic == "frame/fade_time":
+      elif message.topic == "{}fade_time".format(id):
         if float_msg > 0.0:
           fade_time = float_msg
         delta_alpha = 1.0 / (config.FPS * fade_time)
-      elif message.topic == "frame/shuffle":
+      elif message.topic == "{}shuffle".format(id):
         msg_val = msg.lower()
         shuffle = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else False
         reselect = True
-      elif message.topic == "frame/quit":
+      elif message.topic == "{}quit".format(id):
         quit = True
-      elif message.topic == "frame/paused":
+      elif message.topic == "{}paused".format(id):
         msg_val = msg.lower()
         #paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
         paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
         next_pic_num -= 1
         refresh = True
-      elif message.topic == "frame/back":
+      elif message.topic == "{}back".format(id):
         next_pic_num -= 2
         refresh = True
-      elif message.topic == "frame/next":
+      elif message.topic == "{}next".format(id):
         refresh = True
-      elif message.topic == "frame/subdirectory":
+      elif message.topic == "{}subdirectory".format(id):
         subdirectory = msg
         reselect = True
-      elif message.topic == "frame/delete":
+      elif message.topic == "{}delete".format(id):
         f_to_delete = iFiles[pic_num][0]
         f_name_to_delete = os.path.split(f_to_delete)[1]
         move_to_dir = os.path.expanduser("/home/pi/DeletedPictures")
@@ -327,26 +331,26 @@ if config.USE_MQTT:
         iFiles.pop(pic_num)
         nFi -= 1
         refresh = True
-      elif message.topic == "frame/text_on":
+      elif message.topic == "{}text_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
           next_pic_num -= 1
           refresh = True
-      elif message.topic == "frame/date_on":
+      elif message.topic == "{}date_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 2
           next_pic_num -= 1
           refresh = True
-      elif message.topic == "frame/location_on":
+      elif message.topic == "{}location_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 4
           next_pic_num -= 1
           refresh = True
-      elif message.topic == "frame/text_off":
+      elif message.topic == "{}text_off".format(id):
           config.SHOW_TEXT = 0
           next_pic_num -= 1
           refresh = True
-      elif message.topic == "frame/text_refresh":
+      elif message.topic == "{}text_refresh".format(id):
           next_pic_num -= 1
           refresh = True
 
@@ -364,25 +368,29 @@ if config.USE_MQTT:
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    client.subscribe("frame/date_from", qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
-    client.subscribe("frame/date_to", qos=0)
-    client.subscribe("frame/time_delay", qos=0) # payload seconds for each slide
-    client.subscribe("frame/fade_time", qos=0) # payload seconds for fade time between slides
-    client.subscribe("frame/shuffle", qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
-    client.subscribe("frame/quit", qos=0)
-    client.subscribe("frame/paused", qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
-    client.subscribe("frame/back", qos=0)
-    client.subscribe("frame/next", qos=0)
-    client.subscribe("frame/subdirectory", qos=0) # payload string must match a subdirectory of pic_dir
-    client.subscribe("frame/delete", qos=0) # delete current image, copy to dir set in config
-    client.subscribe("frame/text_on", qos=0) # toggle file name on and off. payload text show time in seconds
-    client.subscribe("frame/date_on", qos=0) # toggle date (exif if avail else file) on and off. payload show time
-    client.subscribe("frame/location_on", qos=0) # toggle location (if enabled) on and off. payload show time
-    client.subscribe("frame/text_off", qos=0) # turn all name, date, location off
-    client.subscribe("frame/text_refresh", qos=0) # restarts current slide showing text set above
+    if config.MQTT_ID == "":
+      id = "frame/"
+    else:
+      id = "{}/frame/".format(config.MQTT_ID)
+    client.subscribe("{}date_from".format(id), qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
+    client.subscribe("{}date_to".format(id), qos=0)
+    client.subscribe("{}time_delay".format(id), qos=0) # payload seconds for each slide
+    client.subscribe("{}fade_time".format(id), qos=0) # payload seconds for fade time between slides
+    client.subscribe("{}shuffle".format(id), qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
+    client.subscribe("{}quit".format(id), qos=0)
+    client.subscribe("{}paused".format(id), qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
+    client.subscribe("{}back".format(id), qos=0)
+    client.subscribe("{}next".format(id), qos=0)
+    client.subscribe("{}subdirectory".format(id), qos=0) # payload string must match a subdirectory of pic_dir
+    client.subscribe("{}delete".format(id), qos=0) # delete current image, copy to dir set in config
+    client.subscribe("{}text_on".format(id), qos=0) # toggle file name on and off. payload text show time in seconds
+    client.subscribe("{}date_on".format(id), qos=0) # toggle date (exif if avail else file) on and off. payload show time
+    client.subscribe("{}location_on".format(id), qos=0) # toggle location (if enabled) on and off. payload show time
+    client.subscribe("{}text_off".format(id), qos=0) # turn all name, date, location off
+    client.subscribe("{}text_refresh".format(id), qos=0) # restarts current slide showing text set above
     client.on_connect = on_connect
     client.on_message = on_message
-    client.publish("frame/paused", payload="off", qos=0) # un-pause the slideshow on start
+    client.publish("{}paused".format(id), payload="off", qos=0) # un-pause the slideshow on start
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e)) # sometimes starts paused

@@ -254,6 +254,28 @@ if config.USE_MQTT:
   try:
     import paho.mqtt.client as mqtt
     def on_connect(client, userdata, flags, rc):
+      if config.MQTT_ID == "":
+        id = ""
+      else:
+        id = "{}/".format(config.MQTT_ID)
+      client.subscribe("{}date_from".format(id), qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
+      client.subscribe("{}date_to".format(id), qos=0)
+      client.subscribe("{}time_delay".format(id), qos=0) # payload seconds for each slide
+      client.subscribe("{}fade_time".format(id), qos=0) # payload seconds for fade time between slides
+      client.subscribe("{}shuffle".format(id), qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
+      client.subscribe("{}quit".format(id), qos=0)
+      client.subscribe("{}paused".format(id), qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
+      client.subscribe("{}back".format(id), qos=0)
+      client.subscribe("{}next".format(id), qos=0)
+      client.subscribe("{}subdirectory".format(id), qos=0) # payload string must match a subdirectory of pic_dir
+      client.subscribe("{}delete".format(id), qos=0) # delete current image, copy to dir set in config
+      client.subscribe("{}text_on".format(id), qos=0) # toggle file name on and off. payload text show time in seconds
+      client.subscribe("{}date_on".format(id), qos=0) # toggle date (exif if avail else file) on and off. payload show time
+      client.subscribe("{}location_on".format(id), qos=0) # toggle location (if enabled) on and off. payload show time
+      client.subscribe("{}text_off".format(id), qos=0) # turn all name, date, location off
+      client.subscribe("{}text_refresh".format(id), qos=0) # restarts current slide showing text set above
+      client.subscribe("{}brightness".format(id), qos=0) # set shader brightness
+      client.publish("{}paused".format(id), payload="off", qos=0) # un-pause the slideshow on start
       if config.VERBOSE:
         print("Connected to MQTT broker")
 
@@ -270,9 +292,9 @@ if config.USE_MQTT:
       reselect = False
       refresh = False
       if config.MQTT_ID == "":
-        id = "frame/"
+        id = ""
       else:
-        id = "{}/frame/".format(config.MQTT_ID)
+        id = "{}/".format(config.MQTT_ID)
       if message.topic == "{}date_from".format(id): # NB entered as mqtt string "2016:12:25"
         try:
           msg = msg.replace(".",":").replace("/",":").replace("-",":")
@@ -353,6 +375,8 @@ if config.USE_MQTT:
       elif message.topic == "{}text_refresh".format(id):
           next_pic_num -= 1
           refresh = True
+      elif message.topic == "{}brightness".format(id):
+          slide.unif[55] = float_msg
 
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
@@ -365,32 +389,11 @@ if config.USE_MQTT:
 
     # set up MQTT listening
     client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    if config.MQTT_ID == "":
-      id = "frame/"
-    else:
-      id = "{}/frame/".format(config.MQTT_ID)
-    client.subscribe("{}date_from".format(id), qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
-    client.subscribe("{}date_to".format(id), qos=0)
-    client.subscribe("{}time_delay".format(id), qos=0) # payload seconds for each slide
-    client.subscribe("{}fade_time".format(id), qos=0) # payload seconds for fade time between slides
-    client.subscribe("{}shuffle".format(id), qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
-    client.subscribe("{}quit".format(id), qos=0)
-    client.subscribe("{}paused".format(id), qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
-    client.subscribe("{}back".format(id), qos=0)
-    client.subscribe("{}next".format(id), qos=0)
-    client.subscribe("{}subdirectory".format(id), qos=0) # payload string must match a subdirectory of pic_dir
-    client.subscribe("{}delete".format(id), qos=0) # delete current image, copy to dir set in config
-    client.subscribe("{}text_on".format(id), qos=0) # toggle file name on and off. payload text show time in seconds
-    client.subscribe("{}date_on".format(id), qos=0) # toggle date (exif if avail else file) on and off. payload show time
-    client.subscribe("{}location_on".format(id), qos=0) # toggle location (if enabled) on and off. payload show time
-    client.subscribe("{}text_off".format(id), qos=0) # turn all name, date, location off
-    client.subscribe("{}text_refresh".format(id), qos=0) # restarts current slide showing text set above
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.publish("{}paused".format(id), payload="off", qos=0) # un-pause the slideshow on start
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e)) # sometimes starts paused
@@ -406,6 +409,7 @@ slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = config.EDGE_ALPHA
 slide.unif[54] = config.BLEND_TYPE
+slide.unif[55] = 1.0 # brightness used by shader [18][1]
 
 if config.KEYBOARD:
   kbd = pi3d.Keyboard()
@@ -501,15 +505,16 @@ while DISPLAY.loop_running():
     slide.unif[os1] = (wh_rat - 1.0) * 0.5
     slide.unif[os2] = 0.0
     if config.KENBURNS:
-        xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
+        ken_time = nexttm - time.time() # some time will have passed doing file loading etc
+        xstep, ystep = (slide.unif[i] * 2.0 / ken_time for i in (48, 49))
         slide.unif[48] = 0.0
         slide.unif[49] = 0.0
-        kb_up = not kb_up
+        kb_up = not kb_up # toggle direction for each slide
 
   if config.KENBURNS:
     t_factor = nexttm - tm
     if kb_up:
-      t_factor = time_delay - t_factor
+      t_factor = ken_time - t_factor
     slide.unif[48] = xstep * t_factor
     slide.unif[49] = ystep * t_factor
 

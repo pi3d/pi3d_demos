@@ -281,7 +281,7 @@ if config.USE_MQTT:
 
     def on_message(client, userdata, message):
       # TODO not ideal to have global but probably only reasonable way to do it
-      global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
+      global next_pic_num, iFiles, nFi, date_from, date_to, time_delay, text_start_tm
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
       TRUTH_VALS = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
       msg = message.payload.decode("utf-8")
@@ -330,10 +330,8 @@ if config.USE_MQTT:
         quit = True
       elif message.topic == "{}paused".format(id):
         msg_val = msg.lower()
-        #paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
         paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
-        next_pic_num -= 1
-        refresh = True
+        text_start_tm = -1.0
       elif message.topic == "{}back".format(id):
         next_pic_num -= 2
         refresh = True
@@ -344,34 +342,28 @@ if config.USE_MQTT:
         reselect = True
       elif message.topic == "{}delete".format(id):
         f_to_delete = iFiles[pic_num][0]
-        f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("/home/pi/DeletedPictures")
+        move_to_dir = os.path.expanduser("/home/pi/DeletedPictures") # NB hard coded - may not be suitable location
         if not os.path.exists(move_to_dir):
-          #os.makedirs(move_to_dir) # creates directory owned by root if picture frame run with sudo so...
-          os.system("sudo -u pi mkdir {}".format(move_to_dir))
-        os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
+          os.system("sudo -u pi mkdir {}".format(move_to_dir)) # problems with ownership using python func
+        os.system("sudo mv '{}' '{}'".format(f_to_delete, move_to_dir)) # and with SMB drives
         iFiles.pop(pic_num)
         nFi -= 1
         refresh = True
       elif message.topic == "{}text_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -1.0
       elif message.topic == "{}date_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 2
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -1.0
       elif message.topic == "{}location_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 4
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -1.0
       elif message.topic == "{}text_off".format(id):
           config.SHOW_TEXT = 0
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -1.0
       elif message.topic == "{}text_refresh".format(id):
           next_pic_num -= 1
           refresh = True
@@ -460,26 +452,7 @@ while DISPLAY.loop_running():
         if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
           break
-      # set the file name as the description
-      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
-        txt = ""
-        gap = ""
-        if (config.SHOW_TEXT & 1) == 1: # name
-          txt += "{}".format(tidy_name(iFiles[pic_num][0]))
-          gap = " "
-        if (config.SHOW_TEXT & 2) == 2: # date
-          txt += "{}{}".format(gap, iFiles[pic_num][4])
-          gap = " "
-        if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-          txt += "{}{}".format(gap, iFiles[pic_num][5])
-        if paused:
-          txt += " PAUSED"
-        textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
-      else: # could have a NO IMAGES selected and being drawn
-        textblock.set_text(text_format="{}".format(" "))
-        textblock.colouring.set_colour(alpha=0.0)
-        text_bkg.set_alpha(0.0)
-      text.regen()
+      text_start_tm = -1.0 # used as flag to run text setting
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
       if sfg is None:
@@ -488,7 +461,7 @@ while DISPLAY.loop_running():
       sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
-    text_tm = tm + config.SHOW_TEXT_TM
+    #text_start_tm = tm
     if sbg is None: # first time through
       sbg = sfg
     slide.set_textures([sfg, sbg])
@@ -509,7 +482,30 @@ while DISPLAY.loop_running():
         xstep, ystep = (slide.unif[i] * 2.0 / ken_time for i in (48, 49))
         slide.unif[48] = 0.0
         slide.unif[49] = 0.0
-        kb_up = not kb_up # toggle direction for each slide
+        #kb_up = not kb_up # toggle direction for each slide
+
+  if text_start_tm < 0.0:
+    # this might be triggered part way through display time use neg text_start_tm as flag
+    if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
+      txt = ""
+      gap = ""
+      if (config.SHOW_TEXT & 1) == 1: # name
+        txt += "{}".format(tidy_name(iFiles[pic_num][0]))
+        gap = " "
+      if (config.SHOW_TEXT & 2) == 2: # date
+        txt += "{}{}".format(gap, iFiles[pic_num][4])
+        gap = " "
+      if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
+        txt += "{}{}".format(gap, iFiles[pic_num][5])
+      if paused:
+        txt += " PAUSED"
+      textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
+    else: # could have a NO IMAGES selected and being drawn
+      textblock.set_text(text_format="{}".format(" "))
+      textblock.colouring.set_colour(alpha=0.0)
+      text_bkg.set_alpha(0.0)
+    text.regen()
+    text_start_tm = tm
 
   if config.KENBURNS:
     t_factor = nexttm - tm
@@ -538,9 +534,9 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < text_tm and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
+  elif tm < (text_start_tm + config.SHOW_TEXT_TM) and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
     # this sets alpha for the TextBlock from 0 to 1 then back to 0
-    dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
+    dt = (tm - text_start_tm + 0.1) / config.SHOW_TEXT_TM
     ramp_pt = max(4.0, config.SHOW_TEXT_TM / 4.0)
     alpha = max(0.0, min(1.0, ramp_pt * (a - abs(1.0 - 2.0 * dt)))) # cap text alpha at image alpha
     textblock.colouring.set_colour(alpha=alpha)

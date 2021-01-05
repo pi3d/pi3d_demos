@@ -331,7 +331,7 @@ if config.USE_MQTT:
       elif message.topic == "{}paused".format(id):
         msg_val = msg.lower()
         paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
-        text_start_tm = -1.0
+        text_start_tm = -0.1
       elif message.topic == "{}back".format(id):
         next_pic_num -= 2
         refresh = True
@@ -352,18 +352,18 @@ if config.USE_MQTT:
       elif message.topic == "{}text_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
-          text_start_tm = -1.0
+          text_start_tm = -0.1
       elif message.topic == "{}date_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 2
-          text_start_tm = -1.0
+          text_start_tm = -0.1
       elif message.topic == "{}location_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 4
-          text_start_tm = -1.0
+          text_start_tm = -0.1
       elif message.topic == "{}text_off".format(id):
           config.SHOW_TEXT = 0
-          text_start_tm = -1.0
+          text_start_tm = -0.1
       elif message.topic == "{}text_refresh".format(id):
           next_pic_num -= 1
           refresh = True
@@ -452,7 +452,7 @@ while DISPLAY.loop_running():
         if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
           break
-      text_start_tm = -1.0 # used as flag to run text setting
+      text_start_tm = -fade_time # used as flag for text setting and amount to delay start
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
       if sfg is None:
@@ -505,7 +505,7 @@ while DISPLAY.loop_running():
       textblock.colouring.set_colour(alpha=0.0)
       text_bkg.set_alpha(0.0)
     text.regen()
-    text_start_tm = tm
+    text_start_tm = tm - text_start_tm # i.e by setting to larger neg number delays text start
 
   if config.KENBURNS:
     t_factor = nexttm - tm

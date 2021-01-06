@@ -53,6 +53,7 @@ def get_location(gps_info):
   if geo_key not in gps_data:
     language = locale.getlocale()[0][:2]
     try:
+      #"""
       geolocator = Nominatim(user_agent=config.GEO_KEY)
       location = geolocator.reverse(geo_key, language=language, zoom=config.GEO_ZOOM).address.split(",")
       location_split = [loc.strip() for loc in location]
@@ -62,6 +63,25 @@ def get_location(gps_info):
         if any(c in config.CODEPOINTS for c in part):
           formatted_address = "{}{}{}".format(formatted_address, comma, part)
           comma = ", "
+      """
+      # alternative using OSM tags directly. NB you should comment out the section
+      # above from `geolocator = ..`, also your config.GEO_KEY should be your email address
+      import json
+      import urllib.request
+      URL = "https://nominatim.openstreetmap.org/reverse?format=geojson&lat={}&lon={}&zoom={}&email={}&accept-language={}"
+      with urllib.request.urlopen(URL.format(decimal_lat, decimal_lon, config.GEO_ZOOM, config.GEO_KEY, language)) as req:
+          data = json.loads(req.read().decode())
+      adr = data['features'][0]['properties']['address']
+      # change the line below to include the details you want. See nominatim.org/release-docs/develop/api/Reverse/
+      # because OSM doesn't use fixed tags you probably have to experiment!
+      # i.e. `suburb` will be invalid for rural images, `village` invalid for urban ones
+      if 'suburb' in adr and 'city' in adr:
+        formatted_address = "{}, {}, {}".format(adr['country'], adr['city'], adr['suburb'])
+      elif 'village' in adr and 'city' in adr:
+        formatted_address = "{}, {}, {}".format(adr['country'], adr['city'], adr['village'])
+      else:
+        formatted_address = ", ".join(adr.values())
+      """
       if len(formatted_address) > 0:
         gps_data[geo_key] = formatted_address
         with open(config.GEO_PATH, 'a+') as file:

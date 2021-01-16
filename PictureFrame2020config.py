@@ -23,6 +23,8 @@ def parse_show_text(txt):
         show_text |= 2
     if "location" in txt:
         show_text |= 4
+    if "folder" in txt:
+        show_text |= 8
     return show_text
 
 # NB the reason that absolute paths are used here is because relative ones can lead
@@ -38,7 +40,7 @@ parse.add_argument("-g", "--background",    default=(0.2, 0.2, 0.3, 1.0), type=s
 parse.add_argument("-i", "--no_files_img",  default="/home/pi/pi3d_demos/PictureFrame2020img.jpg", help="image to show if none selected")
 parse.add_argument("-j", "--blend_type",    default="blend", choices=["blend", "burn", "bump"], help="type of blend the shader can do")
 parse.add_argument("-k", "--keyboard",      default=False, type=str_to_bool, help="set to False when running headless to avoid curses error. True for debugging")
-parse.add_argument("-m", "--use_mqtt",      default=False)
+parse.add_argument("-m", "--use_mqtt",      default=True)
 parse.add_argument(      "--mqtt_server",   default="localhost")
 parse.add_argument(      "--mqtt_port",     default=1883, type=int)
 parse.add_argument(      "--mqtt_login",    default="")
@@ -49,25 +51,25 @@ parse.add_argument("-o", "--font_file",     default="/home/pi/pi3d_demos/fonts/N
 parse.add_argument("-p", "--pic_dir",       default="/home/pi/Pictures")
 parse.add_argument("-q", "--shader",        default="/home/pi/pi3d_demos/shaders/blend_new")
 parse.add_argument("-r", "--reshuffle_num", default=1, type=int, help="times through before reshuffling")
-parse.add_argument("-s", "--show_text_tm",  default=10.0, type=float, help="time to show text over the image")
-parse.add_argument(      "--show_text_fm",  default="%B %d, %Y", help="format to show date over the image")
-parse.add_argument(      "--show_text_sz",  default=50, type=int, help="text character size")
-parse.add_argument(      "--show_text",     default="name", help="show text, include combination of words: name, date, location")
+parse.add_argument("-s", "--show_text_tm",  default=6.0, type=float, help="time to show text over the image")
+parse.add_argument(      "--show_text_fm",  default="%b %d, %Y", help="format to show date over the image")
+parse.add_argument(      "--show_text_sz",  default=40, type=int, help="text character size")
+parse.add_argument(      "--show_text",     default="date folder location", help="show text, include combination of words: name, date, location")
 parse.add_argument(      "--text_width",    default=90, type=int, help="number of character before breaking into new line")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
-parse.add_argument("-v", "--time_delay",    default=30.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
-parse.add_argument("-w", "--fade_time",     default=4.0, type=float, help="change time during which slides overlap - can be changed by MQTT")
+parse.add_argument("-v", "--time_delay",    default=8.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
+parse.add_argument("-w", "--fade_time",     default=1.0, type=float, help="change time during which slides overlap - can be changed by MQTT")
 parse.add_argument("-x", "--shuffle",       default=True, type=str_to_bool, help="shuffle on reloading image files - can be changed by MQTT")
 parse.add_argument("-y", "--subdirectory",  default="", help="subdir of pic_dir - can be changed by MQTT")
 parse.add_argument("-z", "--blur_zoom",     default=1.0, type=float, help="must be >= 1.0 which expands the background to just fill the space around the image")
 parse.add_argument(      "--auto_resize",   default=True, type=str_to_bool, help="set this to false if you want to use 4K resolution on Raspberry Pi 4. You should ensure your images are the correct size for the display")
 parse.add_argument(      "--delay_exif",    default=True, type=str_to_bool, help="set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images.")
 parse.add_argument(      "--locale",        default="en_US.utf8", help="set the locale")
-parse.add_argument(      "--load_geoloc",   default=False, type=str_to_bool, help="load geolocation code")
+parse.add_argument(      "--load_geoloc",   default=True, type=str_to_bool, help="load geolocation code")
 parse.add_argument(      "--geo_key",       default="picture_frame_hello", help="set the Nominatim key - change to something unique to you")
 parse.add_argument(      "--geo_path",      default="/home/pi/PictureFrame2020gpsdata.txt", help="set the local file to store data from geopy - ignored if --load_geoloc is not true")
-parse.add_argument(      "--geo_zoom",      default=18, type=int, help="Level of address detail(3=country...18=building): 3,5,8,10,14,16,17,18")
+parse.add_argument(      "--geo_zoom",      default=10, type=int, help="Level of address detail(3=country...18=building): 3,5,8,10,14,16,17,18")
 parse.add_argument(      "--display_x",     default=0, type=int, help="offset from left of screen (can be negative)")
 parse.add_argument(      "--display_y",     default=0, type=int, help="offset from top of screen (can be negative)")
 parse.add_argument(      "--display_w",     default=None, type=int, help="width of display surface (None will use max returned by hardware)")
@@ -124,4 +126,4 @@ DISPLAY_W = args.display_w
 DISPLAY_H = args.display_h
 
 
-CODEPOINTS = "1234567890AÄÀÆÅÃBCÇDÈÉÊEËFGHIÏÍJKLMNÑOÓÖÔŌØPQRSTUÚÙÜVWXYZaáàãæåäbcçdeéèêëfghiíïjklmnñoóôōøöpqrsßtuúüvwxyz., _-+*()&/`´'" # limit to 121 ie 11x11 grid_size
+CODEPOINTS = "1234567890AÄÀÆÅÃBCÇDÈÉÊEËFGHIÏÍJKLMNÑOÓÖÔŌØPQRSTUÚÙÜVWXYZaáàãæåäbcçdeéèêëfghiíïjklmnñoóôōøöpqrsßtuúüvwxyz., _-+*()&/`´'•" # limit to 121 ie 11x11 grid_size

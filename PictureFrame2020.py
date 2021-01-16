@@ -20,6 +20,7 @@ import demo
 import pi3d
 import locale
 import subprocess
+import numpy as np
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
@@ -138,10 +139,9 @@ def tex_load(pic_num, iFiles, size=None):
     tex = None
   return tex
 
-def tidy_name(path_name):
-    name = os.path.basename(path_name)
-    name = ''.join([c for c in name if c in config.CODEPOINTS])
-    return name
+# --- Sanitize the specified string by removing any chars not found in config.CODEPOINTS
+def sanitize_string(string):
+    return ''.join([c for c in string if c in config.CODEPOINTS])
 
 def check_changes():
   global last_file_change
@@ -313,7 +313,7 @@ if config.USE_MQTT:
           if len(date_to) != 3:
             raise Exception("invalid date format")
         except:
-          date_from = None
+          date_to = None
         reselect = True
       elif message.topic == "{}time_delay".format(id):
         if float_msg > 0.0:
@@ -338,7 +338,7 @@ if config.USE_MQTT:
       elif message.topic == "{}next".format(id):
         refresh = True
       elif message.topic == "{}subdirectory".format(id):
-        subdirectory = msg
+        subdirectory = msg.strip()
         reselect = True
       elif message.topic == "{}delete".format(id):
         f_to_delete = iFiles[pic_num][0]
@@ -417,16 +417,26 @@ sbg = None # slide for foreground
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size)
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=config.SHOW_TEXT_SZ)
-textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
+textblock = pi3d.TextBlock(x=0, y=-DISPLAY.height // 2 + (config.SHOW_TEXT_SZ // 2) + 20,
                           z=0.1, rot=0.0, char_count=199,
                           text_format="{}".format(" "), size=0.99,
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+                          spacing="F", justify=0.5, space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
+
+"""
 back_shader = pi3d.Shader("mat_flat")
 text_bkg = pi3d.Sprite(w=DISPLAY.width, h=90, y=-DISPLAY.height * 0.4 - 20, z=4.0)
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
+"""
 
+bkg_ht = DISPLAY.height // 3
+text_bkg_array = np.zeros((bkg_ht, 1, 4), dtype=np.uint8)
+text_bkg_array[:,:,3] = np.linspace(0, 170, bkg_ht).reshape(-1, 1)
+text_bkg_tex = pi3d.Texture(text_bkg_array, blend=True, free_after_load=True)
+text_bkg = pi3d.Plane(w=DISPLAY.width, h=bkg_ht, y=-DISPLAY.height // 2 + bkg_ht // 2, z=4.0)
+back_shader = pi3d.Shader("uv_flat")
+text_bkg.set_draw_details(back_shader, [text_bkg_tex])
 
 num_run_through = 0
 while DISPLAY.loop_running():
@@ -484,22 +494,25 @@ while DISPLAY.loop_running():
         slide.unif[49] = 0.0
         #kb_up = not kb_up # toggle direction for each slide
 
-  if text_start_tm < 0.0:
-    # this might be triggered part way through display time use neg text_start_tm as flag
-    if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
-      txt = ""
-      gap = ""
-      if (config.SHOW_TEXT & 1) == 1: # name
-        txt += "{}".format(tidy_name(iFiles[pic_num][0]))
-        gap = " "
-      if (config.SHOW_TEXT & 2) == 2: # date
-        txt += "{}{}".format(gap, iFiles[pic_num][4])
-        gap = " "
-      if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-        txt += "{}{}".format(gap, iFiles[pic_num][5])
-      if paused:
-        txt += " PAUSED"
-      textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
+    if text_start_tm < 0.0:
+      info_strings = []
+      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
+        if (config.SHOW_TEXT & 1) == 1: # name
+          info_strings.append(sanitize_string(os.path.basename(iFiles[pic_num][0])))
+        if (config.SHOW_TEXT & 2) == 2: # date
+          info_strings.append(iFiles[pic_num][4])
+        if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
+          loc_string = sanitize_string(iFiles[pic_num][5].strip())
+          if loc_string:
+            info_strings.append(loc_string)
+        if (config.SHOW_TEXT & 8) == 8: # folder
+          info_strings.append(sanitize_string(os.path.basename(os.path.dirname(iFiles[pic_num][0]))))
+        if paused:
+          info_strings.append("PAUSED")
+
+        final_string = " • ".join(info_strings)
+        textblock.set_text(text_format=final_string, wrap=config.TEXT_WIDTH)
+
     else: # could have a NO IMAGES selected and being drawn
       textblock.set_text(text_format="{}".format(" "))
       textblock.colouring.set_colour(alpha=0.0)
@@ -541,7 +554,7 @@ while DISPLAY.loop_running():
     alpha = max(0.0, min(1.0, ramp_pt * (a - abs(1.0 - 2.0 * dt)))) # cap text alpha at image alpha
     textblock.colouring.set_colour(alpha=alpha)
     text.regen()
-    text_bkg.set_alpha(alpha * 0.6)
+    text_bkg.set_alpha(alpha)
     if len(textblock.text_format.strip()) > 0: #only draw background if text there
       text_bkg.draw()
 

@@ -57,8 +57,18 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 #####################################################
 # some functions to tidy subsequent code
 #####################################################
+
+# Concatenate the specified images horizontally. Clip the taller
+# image to the height of the shorter image.
+def create_image_pair(im1, im2):
+    sep = 8 # separation between the images
+    dst = Image.new('RGB', (im1.width + im2.width + sep, min(im1.height, im2.height)))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (im1.width + sep, 0))
+    return dst
+
 def tex_load(pic_num, iFiles, size=None):
-  global date_from, date_to
+  global date_from, date_to, next_pic_num
   if type(pic_num) is int:
     fname = iFiles[pic_num][0]
     orientation = iFiles[pic_num][1]
@@ -73,17 +83,38 @@ def tex_load(pic_num, iFiles, size=None):
       im = Image.open(fname)
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
       if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
-        (orientation, dt, fdt, location) = get_exif_info(fname, im)
+        (orientation, dt, fdt, location, aspect) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = fdt
         iFiles[pic_num][5] = location
+        iFiles[pic_num][6] = aspect
+
       if date_from is not None:
         if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
           return None
       if date_to is not None:
         if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
           return None
+
+    # If PORTRAIT_PAIRS active and this is a portrait pic, try to find another one to pair it with
+    if config.PORTRAIT_PAIRS and iFiles[pic_num][6] < 1.0:
+      im2 = None
+      # Search the whole list for another portrait image, starting with the "next"
+      # image in the sequence and wrapping back around at the end.
+      for file in iFiles[pic_num+1:] + iFiles[:pic_num]:
+        if file[6] < 1.0:
+          im2 = Image.open(file[0])
+          # Move the paired image just "before" the original image in the iFiles list
+          # This will ensure that it'll be the last one to be chosen again since it's
+          # already been viewed...
+          idx = iFiles.index(file) # find the newly paired file in the original collection
+          iFiles.insert(pic_num, iFiles.pop(idx)) # move it to just before the current file
+          if idx > pic_num: next_pic_num += 1 # if the image was pulled "up", advance the counter
+          break
+      if im2 is not None:
+        im = create_image_pair(im, im2)
+
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
@@ -176,18 +207,20 @@ def get_files(dt_from=None, dt_to=None):
               dt = None # if exif data not read - used for checking in tex_load
               fdt = None
               location = ""
+              aspect = 1.5 # assume landscape aspect until we determine otherwise
               if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                (orientation, dt, fdt, location) = get_exif_info(file_path_name)
+                (orientation, dt, fdt, location, aspect) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
-                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date]
+                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date, aspect]
                 file_list.append([file_path_name,
                                   orientation,
                                   os.path.getmtime(file_path_name),
                                   dt,
                                   fdt,
-                                  location])
+                                  location,
+                                  aspect])
   if shuffle:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
@@ -204,9 +237,11 @@ def get_exif_info(file_path_name, im=None):
   dt = os.path.getmtime(file_path_name) # so use file last modified date
   orientation = 1
   location = ""
+  aspect = 1.5 # assume landscape aspect until we determine otherwise
   try:
     if im is None:
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
+    aspect = im.width / im.height
     exif_data = im._getexif() # TODO check if/when this becomes proper function
     if EXIF_DATID in exif_data:
         exif_dt = time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S')
@@ -219,7 +254,7 @@ def get_exif_info(file_path_name, im=None):
     if config.VERBOSE:
       print('trying to read exif', e)
   fdt = time.strftime(config.SHOW_TEXT_FM, time.localtime(dt))
-  return (orientation, dt, fdt, location)
+  return (orientation, dt, fdt, location, aspect)
 
 def convert_heif(fname):
     try:

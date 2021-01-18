@@ -31,12 +31,13 @@ def parse_show_text(txt):
 #  to abiguity if the program is started automatically on boot.
 parse = argparse.ArgumentParser("start running a picture frame")
 parse.add_argument("-a", "--blur_amount",   default=12, type=float, help="larger values than 12 will increase processing load quite a bit")
-parse.add_argument("-b", "--blur_edges",    default=False, type=str_to_bool, help="use blurred version of image to fill edges - will override FIT = False")
+parse.add_argument("-b", "--blur_edges",    default=True, type=str_to_bool, help="use blurred version of image to fill edges - will override FIT = False")
 parse.add_argument("-c", "--check_dir_tm",  default=60.0, type=float, help="time in seconds between checking if the image directory has changed")
-parse.add_argument("-d", "--verbose",       default=False, type=str_to_bool, help="show try/exception messages")
+parse.add_argument("-d", "--verbose",       default=True, type=str_to_bool, help="show try/exception messages")
 parse.add_argument("-e", "--edge_alpha",    default=0.5, type=float, help="background colour at edge. 1.0 would show reflection of image")
 parse.add_argument("-f", "--fps",           default=20.0, type=float)
 parse.add_argument("-g", "--background",    default=(0.2, 0.2, 0.3, 1.0), type=str_to_tuple, help="RGBA to fill edges when fitting")
+parse.add_argument(      "--portrait_pairs",default=False, type=str_to_bool, help="show portrait images in pairs when possible")
 parse.add_argument("-i", "--no_files_img",  default="/home/pi/pi3d_demos/PictureFrame2020img.jpg", help="image to show if none selected")
 parse.add_argument("-j", "--blend_type",    default="blend", choices=["blend", "burn", "bump"], help="type of blend the shader can do")
 parse.add_argument("-k", "--keyboard",      default=False, type=str_to_bool, help="set to False when running headless to avoid curses error. True for debugging")
@@ -75,7 +76,6 @@ parse.add_argument(      "--display_y",     default=0, type=int, help="offset fr
 parse.add_argument(      "--display_w",     default=None, type=int, help="width of display surface (None will use max returned by hardware)")
 parse.add_argument(      "--display_h",     default=None, type=int, help="height of display surface")
 args = parse.parse_args()
-print(args.display_x)
 
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader
 
@@ -87,6 +87,7 @@ VERBOSE = args.verbose
 EDGE_ALPHA = args.edge_alpha
 FPS = args.fps
 BACKGROUND = args.background
+PORTRAIT_PAIRS = args.portrait_pairs
 NO_FILES_IMG = args.no_files_img
 BLEND_TYPE = BLEND_OPTIONS[args.blend_type]
 KEYBOARD = args.keyboard

@@ -26,6 +26,17 @@ from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 import PictureFrame2020config as config
 
+class Pic:
+  def __init__(self, fname, orientation=1, mtime=None, dt=None, fdt=None, location="", aspect=1.5):
+    self.fname = fname
+    self.orientation = orientation
+    self.mtime = mtime
+    self.dt = dt
+    self.fdt = fdt
+    self.location = location
+    self.aspect = aspect
+    self.shown = False
+
 try:
   locale.setlocale(locale.LC_TIME, config.LOCALE)
 except:
@@ -62,67 +73,17 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 # image to the height of the shorter image.
 def create_image_pair(im1, im2):
     sep = 8 # separation between the images
+    # scale widest image to same width as narrower to avoid drastic cropping on mismatched images
+    if im1.width > im2.width:
+      im1 = im1.resize((im2.width, int(im1.height * im2.width / im1.width)))
+    else:
+      im2 = im2.resize((im1.width, int(im2.height * im1.width / im2.width)))
     dst = Image.new('RGB', (im1.width + im2.width + sep, min(im1.height, im2.height)))
     dst.paste(im1, (0, 0))
     dst.paste(im2, (im1.width + sep, 0))
     return dst
 
-def tex_load(pic_num, iFiles, size=None):
-  global date_from, date_to, next_pic_num
-  if type(pic_num) is int:
-    fname = iFiles[pic_num][0]
-    orientation = iFiles[pic_num][1]
-  else: # allow file name to be passed to this function ie for missing file image
-    fname = pic_num
-    orientation = 1
-  try:
-    ext = os.path.splitext(fname)[1].lower()
-    if ext in ('.heif','.heic'):
-      im = convert_heif(fname)
-    else:
-      im = Image.open(fname)
-    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
-      if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
-        (orientation, dt, fdt, location, aspect) = get_exif_info(fname, im)
-        iFiles[pic_num][1] = orientation
-        iFiles[pic_num][3] = dt
-        iFiles[pic_num][4] = fdt
-        iFiles[pic_num][5] = location
-        iFiles[pic_num][6] = aspect
-
-      if date_from is not None:
-        if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
-          return None
-      if date_to is not None:
-        if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
-          return None
-
-    # If PORTRAIT_PAIRS active and this is a portrait pic, try to find another one to pair it with
-    if config.PORTRAIT_PAIRS and iFiles[pic_num][6] < 1.0:
-      im2 = None
-      # Search the whole list for another portrait image, starting with the "next"
-      # image in the sequence and wrapping back around at the end.
-      for file in iFiles[pic_num+1:] + iFiles[:pic_num]:
-        if file[6] < 1.0:
-          im2 = Image.open(file[0])
-          # Move the paired image just "before" the original image in the iFiles list
-          # This will ensure that it'll be the last one to be chosen again since it's
-          # already been viewed...
-          idx = iFiles.index(file) # find the newly paired file in the original collection
-          iFiles.insert(pic_num, iFiles.pop(idx)) # move it to just before the current file
-          if idx > pic_num: next_pic_num += 1 # if the image was pulled "up", advance the counter
-          break
-      if im2 is not None:
-        im = create_image_pair(im, im2)
-
-    (w, h) = im.size
-    max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
-    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
-        max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
-    if w > max_dimension:
-        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
-    elif h > max_dimension:
-        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
+def orientate_image(im, orientation):
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     elif orientation == 3:
@@ -137,14 +98,88 @@ def tex_load(pic_num, iFiles, size=None):
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
     elif orientation == 8:
         im = im.transpose(Image.ROTATE_90)
+    return im
+
+def tex_load(pic_num, iFiles, size=None):
+  global date_from, date_to, next_pic_num
+  if type(pic_num) is int:
+    #fname = iFiles[pic_num][0]
+    #orientation = iFiles[pic_num][1]
+    fname = iFiles[pic_num].fname
+    orientation = iFiles[pic_num].orientation
+    if iFiles[pic_num].shown:
+      return None # this image already show this round so skip
+  else: # allow file name to be passed to this function ie for missing file image
+    fname = pic_num
+    orientation = 1
+  try:
+    ext = os.path.splitext(fname)[1].lower()
+    if ext in ('.heif','.heic'):
+      im = convert_heif(fname)
+    else:
+      im = Image.open(fname)
+    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
+      if iFiles[pic_num].dt is None or iFiles[pic_num].fdt is None: # dt and fdt set to None before exif read
+        (orientation, dt, fdt, location, aspect) = get_exif_info(fname, im)
+        iFiles[pic_num].orientation = orientation
+        iFiles[pic_num].dt = dt
+        iFiles[pic_num].fdt = fdt
+        iFiles[pic_num].location = location
+        iFiles[pic_num].aspect = aspect
+
+      if date_from is not None:
+        if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
+          return None
+      if date_to is not None:
+        if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
+          return None
+
+    # If PORTRAIT_PAIRS active and this is a portrait pic, try to find another one to pair it with
+    if config.PORTRAIT_PAIRS and iFiles[pic_num].aspect < 1.0:
+      im2 = None
+      # Search the whole list for another portrait image, starting with the "next"
+      # assuming previous images in sequence have already been shown
+      # TODO poss very time consuming to call get_exif_info
+      # TODO back and next will bring up different image combinations, or maybe just fail
+      if pic_num < len(iFiles) - 1: # i.e can't do this on the last image in list
+        for f_rec in iFiles[pic_num + 1:]:
+          if f_rec.dt is None or f_rec.fdt is None: # dt and fdt set to None before exif read
+            (f_orientation, f_dt, f_fdt, f_location, f_aspect) = get_exif_info(f_rec.fname)
+            f_rec.orientation = f_orientation
+            f_rec.dt = f_dt
+            f_rec.fdt = f_fdt
+            f_rec.location = f_location
+            f_rec.aspect = f_aspect
+          if f_rec.aspect < 1.0 and not f_rec.shown:
+            im2 = Image.open(f_rec.fname)
+            f_rec.shown = True
+            break
+      if im2 is not None:
+        if orientation > 1:
+          im = orientate_image(im, orientation)
+        if f_rec.orientation > 1:
+          im2 = orientate_image(im2, f_rec.orientation)
+        im = create_image_pair(im, im2)
+        orientation = 1
+
+    (w, h) = im.size
+    max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
+    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
+        max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
+    if w > max_dimension:
+        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
+    elif h > max_dimension:
+        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
+    if orientation > 1:
+        im = orientate_image(im, orientation)
     if config.BLUR_EDGES and size is not None:
-      wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
+      wh_rat = (size[0] * im.height) / (size[1] * im.width)
       if abs(wh_rat - 1.0) > 0.01: # make a blurred background
-        (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
+        (sc_b, sc_f) = (size[1] / im.height, size[0] / im.width)
         if wh_rat > 1.0:
           (sc_b, sc_f) = (sc_f, sc_b) # swap round
         (w, h) =  (round(size[0] / sc_b / config.BLUR_ZOOM), round(size[1] / sc_b / config.BLUR_ZOOM))
-        (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
+        (x, y) = (round(0.5 * (im.width - w)), round(0.5 * (im.height - h)))
         box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
@@ -157,8 +192,8 @@ def tex_load(pic_num, iFiles, size=None):
         images are rescaled near the start of this try block if w or h > max_dimension
         so those lines might need changing too.
         """
-        im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
-                            round(0.5 * (im_b.size[1] - im.size[1]))))
+        im_b.paste(im, box=(round(0.5 * (im_b.width - im.width)),
+                            round(0.5 * (im_b.height - im.height))))
         im = im_b # have to do this as paste applies in place
     tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
                         free_after_load=True)
@@ -214,15 +249,15 @@ def get_files(dt_from=None, dt_to=None):
                   include_flag = False
               if include_flag:
                 # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date, aspect]
-                file_list.append([file_path_name,
-                                  orientation,
-                                  os.path.getmtime(file_path_name),
-                                  dt,
-                                  fdt,
-                                  location,
-                                  aspect])
+                file_list.append(Pic(file_path_name,
+                                    orientation,
+                                    os.path.getmtime(file_path_name),
+                                    dt,
+                                    fdt,
+                                    location,
+                                    aspect))
   if shuffle:
-    file_list.sort(key=lambda x: x[2]) # will be later files last
+    file_list.sort(key=lambda x: x.mtime) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
     temp_list_last = file_list[:-config.RECENT_N]
     random.seed()
@@ -248,6 +283,8 @@ def get_exif_info(file_path_name, im=None):
         dt = time.mktime(exif_dt)
     if EXIF_ORIENTATION in exif_data:
         orientation = int(exif_data[EXIF_ORIENTATION])
+        if orientation == 6 or orientation == 8:
+            aspect = 1.0 / aspect # image rotated 270 or 90 degrees
     if config.LOAD_GEOLOC and geo.EXIF_GPSINFO in exif_data:
       location = geo.get_location(exif_data[geo.EXIF_GPSINFO])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
@@ -376,7 +413,7 @@ if config.USE_MQTT:
         subdirectory = msg.strip()
         reselect = True
       elif message.topic == "{}delete".format(id):
-        f_to_delete = iFiles[pic_num][0]
+        f_to_delete = iFiles[pic_num].fname
         move_to_dir = os.path.expanduser("/home/pi/DeletedPictures") # NB hard coded - may not be suitable location
         if not os.path.exists(move_to_dir):
           os.system("sudo -u pi mkdir {}".format(move_to_dir)) # problems with ownership using python func
@@ -493,6 +530,8 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
+          for f_rec in iFiles:
+            f_rec.shown = False # reset all the portrait mode show in pairs
         loop_count += 1
         if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
@@ -533,20 +572,24 @@ while DISPLAY.loop_running():
       info_strings = []
       if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
         if (config.SHOW_TEXT & 1) == 1: # name
-          info_strings.append(sanitize_string(os.path.basename(iFiles[pic_num][0])))
+          info_strings.append(sanitize_string(os.path.basename(iFiles[pic_num].fname)))
         if (config.SHOW_TEXT & 2) == 2: # date
-          info_strings.append(iFiles[pic_num][4])
+          info_strings.append(iFiles[pic_num].fdt)
         if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-          loc_string = sanitize_string(iFiles[pic_num][5].strip())
+          loc_string = sanitize_string(iFiles[pic_num].location.strip())
           if loc_string:
             info_strings.append(loc_string)
         if (config.SHOW_TEXT & 8) == 8: # folder
-          info_strings.append(sanitize_string(os.path.basename(os.path.dirname(iFiles[pic_num][0]))))
+          info_strings.append(sanitize_string(os.path.basename(os.path.dirname(iFiles[pic_num].fname))))
         if paused:
           info_strings.append("PAUSED")
 
         final_string = " • ".join(info_strings)
         textblock.set_text(text_format=final_string, wrap=config.TEXT_WIDTH)
+
+        last_ch = len(final_string)
+        adj_y = text.locations[:last_ch,1].min() + DISPLAY.height // 2 # y pos of last char rel to bottom of screen
+        textblock.set_position(y = (textblock.y - adj_y + config.SHOW_TEXT_SZ))
 
     else: # could have a NO IMAGES selected and being drawn
       textblock.set_text(text_format="{}".format(" "))

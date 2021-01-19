@@ -35,7 +35,7 @@ class Pic:
     self.fdt = fdt
     self.location = location
     self.aspect = aspect
-    self.shown = False
+    self.shown_with = None # set to pic_num of image this was paired with
 
 try:
   locale.setlocale(locale.LC_TIME, config.LOCALE)
@@ -107,7 +107,7 @@ def tex_load(pic_num, iFiles, size=None):
     #orientation = iFiles[pic_num][1]
     fname = iFiles[pic_num].fname
     orientation = iFiles[pic_num].orientation
-    if iFiles[pic_num].shown:
+    if iFiles[pic_num].shown_with is not None:
       return None # this image already show this round so skip
   else: # allow file name to be passed to this function ie for missing file image
     fname = pic_num
@@ -150,9 +150,9 @@ def tex_load(pic_num, iFiles, size=None):
             f_rec.fdt = f_fdt
             f_rec.location = f_location
             f_rec.aspect = f_aspect
-          if f_rec.aspect < 1.0 and not f_rec.shown:
+          if f_rec.aspect < 1.0 and f_rec.shown_with is None:
             im2 = Image.open(f_rec.fname)
-            f_rec.shown = True
+            f_rec.shown_with = pic_num
             break
       if im2 is not None:
         if orientation > 1:
@@ -353,7 +353,7 @@ if config.USE_MQTT:
 
     def on_message(client, userdata, message):
       # TODO not ideal to have global but probably only reasonable way to do it
-      global next_pic_num, iFiles, nFi, date_from, date_to, time_delay, text_start_tm
+      global pic_num, next_pic_num, iFiles, nFi, date_from, date_to, time_delay, text_start_tm
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
       TRUTH_VALS = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
       msg = message.payload.decode("utf-8")
@@ -448,8 +448,15 @@ if config.USE_MQTT:
       if refresh:
         if next_pic_num < -1:
           next_pic_num = -1
-        nexttm = time.time() - 86400.0
-
+        nexttm = time.time() - 86400.0 # end current pic next frame,
+        # nexttm setting will start next image (next_pic_num + 1) on next frame
+        # reset Pic.shown_with for images previously paired with next pic
+        for pic in (pic_num, next_pic_num  + 1): 
+          pic %= len(iFiles)
+          for p in iFiles:
+            if p.shown_with == pic:
+              p.shown_with = None
+              break # shouldn't be possible to be more than one?
 
     # set up MQTT listening
     client = mqtt.Client()
@@ -531,7 +538,7 @@ while DISPLAY.loop_running():
             random.shuffle(iFiles)
           next_pic_num = 0
           for f_rec in iFiles:
-            f_rec.shown = False # reset all the portrait mode show in pairs
+            f_rec.shown_with = None # reset all the portrait mode show in pairs
         loop_count += 1
         if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0

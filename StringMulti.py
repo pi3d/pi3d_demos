@@ -59,12 +59,12 @@ font_path = os.path.abspath(os.path.join(working_directory, 'fonts', 'NotoSans-R
 
 # Create pointFont and the text manager to use it
 pointFont = pi3d.Font(font_path, font_colour, codepoints=list(range(32,128)))
-text = pi3d.PointText(pointFont, CAMERA, max_chars=220, point_size=64)
+text = pi3d.PointText(pointFont, CAMERA, max_chars=400, point_size=64)
 
 #Basic static text
-newtxt = pi3d.TextBlock(-100, -50, 0.1, 0.0, 14, text_format="Static string",
+basic_txt = pi3d.TextBlock(200, 150, 0.1, 0.0, 14, text_format="Static string",
           size=0.99, spacing="F", space=0.05, colour=(0.0, 1.0, 0.0, 1.0))
-text.add_text_block(newtxt)
+text.add_text_block(basic_txt)
 
 """The next three strings are formated with data from an object.  When the
 object data changes and the text block is regenerated, the string is
@@ -134,10 +134,17 @@ everythingColour = pi3d.TextBlockColourGradient((1-textAlpha,0.0,textAlpha,1.0),
 everythingText = pi3d.TextBlock(100, 200, 0.1, textRotation, 15, data_obj=eg_object,
           attr="angle", text_format="Angle: {:4.0f}", size=0.7, spacing="F", space=0.05,
           colour=everythingColour, justify=0.5 )
-#everythingText = TextBlock(100, 200, 0.1, textRotation, 15, data_obj=eg_object,
-#          attr="angle", text_format="Angle: {:2.3f}", size=0.7, spacing="C", space=0.6,
-#colour=(1.0, 1.0, 1.0, 0.5), justify=0.5 )
 text.add_text_block(everythingText)
+
+# String wrapping and justification
+wrap_string = "{}{} the quick brown fox-jumps_over-the_lazy dog"
+wrap_txt = pi3d.TextBlock(-300, 250, 0.1, 0.0, 60,
+                text_format=wrap_string,
+                spacing="F", space=0.05, justify=0.0)
+text.add_text_block(wrap_txt)
+wrap_list = [[30, "char"], [20, "char"], [15, "char"], # wrap= num character
+             [400, "pixels"], [267, "pixels"], [200, "pixels"]] # wrap_pixels = num pixels
+wrap_num = 0 # index to above list of options
 
 frame_count = 0
 end_time = time.time() + 1.0
@@ -185,7 +192,7 @@ while DISPLAY.loop_running():
 
   everythingText.set_text(space=textSize*0.25, set_pos=False, set_colour=False)
   everythingText.set_position(x=text_pos-50, y=150+(text_pos*0.2), rot=textRotation)
-  everythingColour.set_colour( (1.0, textAlpha , 0.0, 1.0), (0.0, textAlpha, 1.0, 1.0))
+  everythingColour.set_colour((1.0, textAlpha , 0.0, 1.0), (0.0, textAlpha, 1.0, 1.0))
 
   now = time.time()
   frame_count += 1
@@ -197,6 +204,12 @@ while DISPLAY.loop_running():
       eg_object.strA = "String moving"
     else: 
       eg_object.strA = "A moving string"
+    wrap_num = (wrap_num + 1) % len(wrap_list)
+    wrap = wrap_list[wrap_num]
+    if wrap[1] == "char":
+      wrap_txt.set_text(text_format=wrap_string.format(*wrap), wrap=wrap[0])
+    else:
+      wrap_txt.set_text(text_format=wrap_string.format(*wrap), wrap_pixels=wrap[0])
 
   text.regen()
   text.draw()

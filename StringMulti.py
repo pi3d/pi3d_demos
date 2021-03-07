@@ -137,7 +137,7 @@ everythingText = pi3d.TextBlock(100, 200, 0.1, textRotation, 15, data_obj=eg_obj
 text.add_text_block(everythingText)
 
 # String wrapping and justification
-wrap_string = "{}{} the quick brown fox-jumps_over-the_lazy dog"
+wrap_string = "{}{} the quick brown fox-jumps_over-the_lazy dog "
 wrap_txt = pi3d.TextBlock(-300, 250, 0.1, 0.0, 60,
                 text_format=wrap_string,
                 spacing="F", space=0.05, justify=0.0)

@@ -20,10 +20,22 @@ import demo
 import pi3d
 import locale
 import subprocess
+import numpy as np
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 import PictureFrame2020config as config
+
+class Pic:
+  def __init__(self, fname, orientation=1, mtime=None, dt=None, fdt=None, location="", aspect=1.5):
+    self.fname = fname
+    self.orientation = orientation
+    self.mtime = mtime
+    self.dt = dt
+    self.fdt = fdt
+    self.location = location
+    self.aspect = aspect
+    self.shown_with = None # set to pic_num of image this was paired with
 
 try:
   locale.setlocale(locale.LC_TIME, config.LOCALE)
@@ -56,41 +68,22 @@ next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directo
 #####################################################
 # some functions to tidy subsequent code
 #####################################################
-def tex_load(pic_num, iFiles, size=None):
-  global date_from, date_to
-  if type(pic_num) is int:
-    fname = iFiles[pic_num][0]
-    orientation = iFiles[pic_num][1]
-  else: # allow file name to be passed to this function ie for missing file image
-    fname = pic_num
-    orientation = 1
-  try:
-    ext = os.path.splitext(fname)[1].lower()
-    if ext in ('.heif','.heic'):
-      im = convert_heif(fname)
+
+# Concatenate the specified images horizontally. Clip the taller
+# image to the height of the shorter image.
+def create_image_pair(im1, im2):
+    sep = 8 # separation between the images
+    # scale widest image to same width as narrower to avoid drastic cropping on mismatched images
+    if im1.width > im2.width:
+      im1 = im1.resize((im2.width, int(im1.height * im2.width / im1.width)))
     else:
-      im = Image.open(fname)
-    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
-      if iFiles[pic_num][3] is None or iFiles[pic_num][4] is None: # dt and fdt set to None before exif read
-        (orientation, dt, fdt, location) = get_exif_info(fname, im)
-        iFiles[pic_num][1] = orientation
-        iFiles[pic_num][3] = dt
-        iFiles[pic_num][4] = fdt
-        iFiles[pic_num][5] = location
-      if date_from is not None:
-        if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
-          return None
-      if date_to is not None:
-        if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
-          return None
-    (w, h) = im.size
-    max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
-    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
-        max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
-    if w > max_dimension:
-        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
-    elif h > max_dimension:
-        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
+      im2 = im2.resize((im1.width, int(im2.height * im1.width / im2.width)))
+    dst = Image.new('RGB', (im1.width + im2.width + sep, min(im1.height, im2.height)))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (im1.width + sep, 0))
+    return dst
+
+def orientate_image(im, orientation):
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     elif orientation == 3:
@@ -105,14 +98,88 @@ def tex_load(pic_num, iFiles, size=None):
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
     elif orientation == 8:
         im = im.transpose(Image.ROTATE_90)
+    return im
+
+def tex_load(pic_num, iFiles, size=None):
+  global date_from, date_to, next_pic_num
+  if type(pic_num) is int:
+    #fname = iFiles[pic_num][0]
+    #orientation = iFiles[pic_num][1]
+    fname = iFiles[pic_num].fname
+    orientation = iFiles[pic_num].orientation
+    if iFiles[pic_num].shown_with is not None:
+      return None # this image already show this round so skip
+  else: # allow file name to be passed to this function ie for missing file image
+    fname = pic_num
+    orientation = 1
+  try:
+    ext = os.path.splitext(fname)[1].lower()
+    if ext in ('.heif','.heic'):
+      im = convert_heif(fname)
+    else:
+      im = Image.open(fname)
+    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
+      if iFiles[pic_num].dt is None or iFiles[pic_num].fdt is None: # dt and fdt set to None before exif read
+        (orientation, dt, fdt, location, aspect) = get_exif_info(fname, im)
+        iFiles[pic_num].orientation = orientation
+        iFiles[pic_num].dt = dt
+        iFiles[pic_num].fdt = fdt
+        iFiles[pic_num].location = location
+        iFiles[pic_num].aspect = aspect
+
+      if date_from is not None:
+        if dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
+          return None
+      if date_to is not None:
+        if dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
+          return None
+
+    # If PORTRAIT_PAIRS active and this is a portrait pic, try to find another one to pair it with
+    if config.PORTRAIT_PAIRS and iFiles[pic_num].aspect < 1.0:
+      im2 = None
+      # Search the whole list for another portrait image, starting with the "next"
+      # assuming previous images in sequence have already been shown
+      # TODO poss very time consuming to call get_exif_info
+      # TODO back and next will bring up different image combinations, or maybe just fail
+      if pic_num < len(iFiles) - 1: # i.e can't do this on the last image in list
+        for f_rec in iFiles[pic_num + 1:]:
+          if f_rec.dt is None or f_rec.fdt is None: # dt and fdt set to None before exif read
+            (f_orientation, f_dt, f_fdt, f_location, f_aspect) = get_exif_info(f_rec.fname)
+            f_rec.orientation = f_orientation
+            f_rec.dt = f_dt
+            f_rec.fdt = f_fdt
+            f_rec.location = f_location
+            f_rec.aspect = f_aspect
+          if f_rec.aspect < 1.0 and f_rec.shown_with is None:
+            im2 = Image.open(f_rec.fname)
+            f_rec.shown_with = pic_num
+            break
+      if im2 is not None:
+        if orientation > 1:
+          im = orientate_image(im, orientation)
+        if f_rec.orientation > 1:
+          im2 = orientate_image(im2, f_rec.orientation)
+        im = create_image_pair(im, im2)
+        orientation = 1
+
+    (w, h) = im.size
+    max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
+    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
+        max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
+    if w > max_dimension:
+        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
+    elif h > max_dimension:
+        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
+    if orientation > 1:
+        im = orientate_image(im, orientation)
     if config.BLUR_EDGES and size is not None:
-      wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
+      wh_rat = (size[0] * im.height) / (size[1] * im.width)
       if abs(wh_rat - 1.0) > 0.01: # make a blurred background
-        (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
+        (sc_b, sc_f) = (size[1] / im.height, size[0] / im.width)
         if wh_rat > 1.0:
           (sc_b, sc_f) = (sc_f, sc_b) # swap round
         (w, h) =  (round(size[0] / sc_b / config.BLUR_ZOOM), round(size[1] / sc_b / config.BLUR_ZOOM))
-        (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
+        (x, y) = (round(0.5 * (im.width - w)), round(0.5 * (im.height - h)))
         box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
@@ -125,8 +192,8 @@ def tex_load(pic_num, iFiles, size=None):
         images are rescaled near the start of this try block if w or h > max_dimension
         so those lines might need changing too.
         """
-        im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
-                            round(0.5 * (im_b.size[1] - im.size[1]))))
+        im_b.paste(im, box=(round(0.5 * (im_b.width - im.width)),
+                            round(0.5 * (im_b.height - im.height))))
         im = im_b # have to do this as paste applies in place
     tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
                         free_after_load=True)
@@ -138,10 +205,9 @@ def tex_load(pic_num, iFiles, size=None):
     tex = None
   return tex
 
-def tidy_name(path_name):
-    name = os.path.basename(path_name)
-    name = ''.join([c for c in name if c in config.CODEPOINTS])
-    return name
+# --- Sanitize the specified string by removing any chars not found in config.CODEPOINTS
+def sanitize_string(string):
+    return ''.join([c for c in string if c in config.CODEPOINTS])
 
 def check_changes():
   global last_file_change
@@ -176,20 +242,22 @@ def get_files(dt_from=None, dt_to=None):
               dt = None # if exif data not read - used for checking in tex_load
               fdt = None
               location = ""
+              aspect = 1.5 # assume landscape aspect until we determine otherwise
               if not config.DELAY_EXIF and EXIF_DATID is not None and EXIF_ORIENTATION is not None:
-                (orientation, dt, fdt, location) = get_exif_info(file_path_name)
+                (orientation, dt, fdt, location, aspect) = get_exif_info(file_path_name)
                 if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
                   include_flag = False
               if include_flag:
-                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date]
-                file_list.append([file_path_name,
-                                  orientation,
-                                  os.path.getmtime(file_path_name),
-                                  dt,
-                                  fdt,
-                                  location])
+                # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_formatted_date, aspect]
+                file_list.append(Pic(file_path_name,
+                                    orientation,
+                                    os.path.getmtime(file_path_name),
+                                    dt,
+                                    fdt,
+                                    location,
+                                    aspect))
   if shuffle:
-    file_list.sort(key=lambda x: x[2]) # will be later files last
+    file_list.sort(key=lambda x: x.mtime) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
     temp_list_last = file_list[:-config.RECENT_N]
     random.seed()
@@ -204,22 +272,26 @@ def get_exif_info(file_path_name, im=None):
   dt = os.path.getmtime(file_path_name) # so use file last modified date
   orientation = 1
   location = ""
+  aspect = 1.5 # assume landscape aspect until we determine otherwise
   try:
     if im is None:
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
+    aspect = im.width / im.height
     exif_data = im._getexif() # TODO check if/when this becomes proper function
     if EXIF_DATID in exif_data:
         exif_dt = time.strptime(exif_data[EXIF_DATID], '%Y:%m:%d %H:%M:%S')
         dt = time.mktime(exif_dt)
     if EXIF_ORIENTATION in exif_data:
         orientation = int(exif_data[EXIF_ORIENTATION])
+        if orientation == 6 or orientation == 8:
+            aspect = 1.0 / aspect # image rotated 270 or 90 degrees
     if config.LOAD_GEOLOC and geo.EXIF_GPSINFO in exif_data:
       location = geo.get_location(exif_data[geo.EXIF_GPSINFO])
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
       print('trying to read exif', e)
   fdt = time.strftime(config.SHOW_TEXT_FM, time.localtime(dt))
-  return (orientation, dt, fdt, location)
+  return (orientation, dt, fdt, location, aspect)
 
 def convert_heif(fname):
     try:
@@ -254,12 +326,34 @@ if config.USE_MQTT:
   try:
     import paho.mqtt.client as mqtt
     def on_connect(client, userdata, flags, rc):
+      if config.MQTT_ID == "":
+        id = ""
+      else:
+        id = "{}/".format(config.MQTT_ID)
+      client.subscribe("{}date_from".format(id), qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
+      client.subscribe("{}date_to".format(id), qos=0)
+      client.subscribe("{}time_delay".format(id), qos=0) # payload seconds for each slide
+      client.subscribe("{}fade_time".format(id), qos=0) # payload seconds for fade time between slides
+      client.subscribe("{}shuffle".format(id), qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
+      client.subscribe("{}quit".format(id), qos=0)
+      client.subscribe("{}paused".format(id), qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
+      client.subscribe("{}back".format(id), qos=0)
+      client.subscribe("{}next".format(id), qos=0)
+      client.subscribe("{}subdirectory".format(id), qos=0) # payload string must match a subdirectory of pic_dir
+      client.subscribe("{}delete".format(id), qos=0) # delete current image, copy to dir set in config
+      client.subscribe("{}text_on".format(id), qos=0) # toggle file name on and off. payload text show time in seconds
+      client.subscribe("{}date_on".format(id), qos=0) # toggle date (exif if avail else file) on and off. payload show time
+      client.subscribe("{}location_on".format(id), qos=0) # toggle location (if enabled) on and off. payload show time
+      client.subscribe("{}text_off".format(id), qos=0) # turn all name, date, location off
+      client.subscribe("{}text_refresh".format(id), qos=0) # restarts current slide showing text set above
+      client.subscribe("{}brightness".format(id), qos=0) # set shader brightness
+      client.publish("{}paused".format(id), payload="off", qos=0) # un-pause the slideshow on start
       if config.VERBOSE:
         print("Connected to MQTT broker")
 
     def on_message(client, userdata, message):
       # TODO not ideal to have global but probably only reasonable way to do it
-      global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
+      global pic_num, next_pic_num, iFiles, nFi, date_from, date_to, time_delay, text_start_tm
       global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory
       TRUTH_VALS = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
       msg = message.payload.decode("utf-8")
@@ -270,9 +364,9 @@ if config.USE_MQTT:
       reselect = False
       refresh = False
       if config.MQTT_ID == "":
-        id = "frame/"
+        id = ""
       else:
-        id = "{}/frame/".format(config.MQTT_ID)
+        id = "{}/".format(config.MQTT_ID)
       if message.topic == "{}date_from".format(id): # NB entered as mqtt string "2016:12:25"
         try:
           msg = msg.replace(".",":").replace("/",":").replace("-",":")
@@ -291,7 +385,7 @@ if config.USE_MQTT:
           if len(date_to) != 3:
             raise Exception("invalid date format")
         except:
-          date_from = None
+          date_to = None
         reselect = True
       elif message.topic == "{}time_delay".format(id):
         if float_msg > 0.0:
@@ -308,51 +402,45 @@ if config.USE_MQTT:
         quit = True
       elif message.topic == "{}paused".format(id):
         msg_val = msg.lower()
-        #paused_vals = {"on":True, "off":False, "true":True, "false":False, "yes":True, "no":False}
         paused = TRUTH_VALS[msg_val] if msg_val in TRUTH_VALS else not paused # toggle from previous value
-        next_pic_num -= 1
-        refresh = True
+        text_start_tm = -0.1
       elif message.topic == "{}back".format(id):
         next_pic_num -= 2
         refresh = True
       elif message.topic == "{}next".format(id):
         refresh = True
       elif message.topic == "{}subdirectory".format(id):
-        subdirectory = msg
+        subdirectory = msg.strip()
         reselect = True
       elif message.topic == "{}delete".format(id):
-        f_to_delete = iFiles[pic_num][0]
-        f_name_to_delete = os.path.split(f_to_delete)[1]
-        move_to_dir = os.path.expanduser("/home/pi/DeletedPictures")
+        f_to_delete = iFiles[pic_num].fname
+        move_to_dir = os.path.expanduser("/home/pi/DeletedPictures") # NB hard coded - may not be suitable location
         if not os.path.exists(move_to_dir):
-          #os.makedirs(move_to_dir) # creates directory owned by root if picture frame run with sudo so...
-          os.system("sudo -u pi mkdir {}".format(move_to_dir))
-        os.rename(f_to_delete, os.path.join(move_to_dir, f_name_to_delete))
+          os.system("sudo -u pi mkdir {}".format(move_to_dir)) # problems with ownership using python func
+        os.system("sudo mv '{}' '{}'".format(f_to_delete, move_to_dir)) # and with SMB drives
         iFiles.pop(pic_num)
         nFi -= 1
         refresh = True
       elif message.topic == "{}text_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 1
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -0.1
       elif message.topic == "{}date_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 2
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -0.1
       elif message.topic == "{}location_on".format(id):
           config.SHOW_TEXT_TM = float_msg if float_msg > 2.0 else 0.33 * config.TIME_DELAY
           config.SHOW_TEXT ^= 4
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -0.1
       elif message.topic == "{}text_off".format(id):
           config.SHOW_TEXT = 0
-          next_pic_num -= 1
-          refresh = True
+          text_start_tm = -0.1
       elif message.topic == "{}text_refresh".format(id):
           next_pic_num -= 1
           refresh = True
+      elif message.topic == "{}brightness".format(id):
+          slide.unif[55] = float_msg
 
       if reselect:
         iFiles, nFi = get_files(date_from, date_to)
@@ -360,37 +448,23 @@ if config.USE_MQTT:
       if refresh:
         if next_pic_num < -1:
           next_pic_num = -1
-        nexttm = time.time() - 86400.0
-
+        nexttm = time.time() - 86400.0 # end current pic next frame,
+        # nexttm setting will start next image (next_pic_num + 1) on next frame
+        # reset Pic.shown_with for images previously paired with next pic
+        for pic in (pic_num, next_pic_num  + 1): 
+          pic %= len(iFiles)
+          for p in iFiles:
+            if p.shown_with == pic:
+              p.shown_with = None
+              break # shouldn't be possible to be more than one?
 
     # set up MQTT listening
     client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD)
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60)
     client.loop_start()
-    if config.MQTT_ID == "":
-      id = "frame/"
-    else:
-      id = "{}/frame/".format(config.MQTT_ID)
-    client.subscribe("{}date_from".format(id), qos=0) # needs payload as 2019:06:01 or divided by ":", "/", "-" or "."
-    client.subscribe("{}date_to".format(id), qos=0)
-    client.subscribe("{}time_delay".format(id), qos=0) # payload seconds for each slide
-    client.subscribe("{}fade_time".format(id), qos=0) # payload seconds for fade time between slides
-    client.subscribe("{}shuffle".format(id), qos=0) # payload on, yes, true (not case sensitive) will set shuffle on and reshuffle
-    client.subscribe("{}quit".format(id), qos=0)
-    client.subscribe("{}paused".format(id), qos=0) # payload on, yes, true pause, off, no, false un-pause. Anything toggle state
-    client.subscribe("{}back".format(id), qos=0)
-    client.subscribe("{}next".format(id), qos=0)
-    client.subscribe("{}subdirectory".format(id), qos=0) # payload string must match a subdirectory of pic_dir
-    client.subscribe("{}delete".format(id), qos=0) # delete current image, copy to dir set in config
-    client.subscribe("{}text_on".format(id), qos=0) # toggle file name on and off. payload text show time in seconds
-    client.subscribe("{}date_on".format(id), qos=0) # toggle date (exif if avail else file) on and off. payload show time
-    client.subscribe("{}location_on".format(id), qos=0) # toggle location (if enabled) on and off. payload show time
-    client.subscribe("{}text_off".format(id), qos=0) # turn all name, date, location off
-    client.subscribe("{}text_refresh".format(id), qos=0) # restarts current slide showing text set above
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.publish("{}paused".format(id), payload="off", qos=0) # un-pause the slideshow on start
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e)) # sometimes starts paused
@@ -406,6 +480,7 @@ slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
 slide.set_shader(shader)
 slide.unif[47] = config.EDGE_ALPHA
 slide.unif[54] = config.BLEND_TYPE
+slide.unif[55] = 1.0 # brightness used by shader [18][1]
 
 if config.KEYBOARD:
   kbd = pi3d.Keyboard()
@@ -421,16 +496,26 @@ sbg = None # slide for foreground
 grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
 font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size)
 text = pi3d.PointText(font, CAMERA, max_chars=200, point_size=config.SHOW_TEXT_SZ)
-textblock = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
+textblock = pi3d.TextBlock(x=0, y=-DISPLAY.height // 2 + (config.SHOW_TEXT_SZ // 2) + 20,
                           z=0.1, rot=0.0, char_count=199,
                           text_format="{}".format(" "), size=0.99,
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+                          spacing="F", justify=0.5, space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
 text.add_text_block(textblock)
+
+"""
 back_shader = pi3d.Shader("mat_flat")
 text_bkg = pi3d.Sprite(w=DISPLAY.width, h=90, y=-DISPLAY.height * 0.4 - 20, z=4.0)
 text_bkg.set_shader(back_shader)
 text_bkg.set_material((0, 0, 0))
+"""
 
+bkg_ht = DISPLAY.height // 3
+text_bkg_array = np.zeros((bkg_ht, 1, 4), dtype=np.uint8)
+text_bkg_array[:,:,3] = np.linspace(0, 170, bkg_ht).reshape(-1, 1)
+text_bkg_tex = pi3d.Texture(text_bkg_array, blend=True, free_after_load=True)
+text_bkg = pi3d.Plane(w=DISPLAY.width, h=bkg_ht, y=-DISPLAY.height // 2 + bkg_ht // 2, z=4.0)
+back_shader = pi3d.Shader("uv_flat")
+text_bkg.set_draw_details(back_shader, [text_bkg_tex])
 
 num_run_through = 0
 while DISPLAY.loop_running():
@@ -452,30 +537,13 @@ while DISPLAY.loop_running():
             num_run_through = 0
             random.shuffle(iFiles)
           next_pic_num = 0
+          for f_rec in iFiles:
+            f_rec.shown_with = None # reset all the portrait mode show in pairs
         loop_count += 1
         if loop_count > nFi: #i.e. no images found where tex_load doesn't return None
           nFi = 0
           break
-      # set the file name as the description
-      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
-        txt = ""
-        gap = ""
-        if (config.SHOW_TEXT & 1) == 1: # name
-          txt += "{}".format(tidy_name(iFiles[pic_num][0]))
-          gap = " "
-        if (config.SHOW_TEXT & 2) == 2: # date
-          txt += "{}{}".format(gap, iFiles[pic_num][4])
-          gap = " "
-        if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
-          txt += "{}{}".format(gap, iFiles[pic_num][5])
-        if paused:
-          txt += " PAUSED"
-        textblock.set_text(text_format=txt, wrap=config.TEXT_WIDTH)
-      else: # could have a NO IMAGES selected and being drawn
-        textblock.set_text(text_format="{}".format(" "))
-        textblock.colouring.set_colour(alpha=0.0)
-        text_bkg.set_alpha(0.0)
-      text.regen()
+      text_start_tm = -fade_time # used as flag for text setting and amount to delay start
     if sfg is None:
       sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
       if sfg is None:
@@ -484,7 +552,7 @@ while DISPLAY.loop_running():
       sbg = sfg
 
     a = 0.0 # alpha - proportion front image to back
-    text_tm = tm + config.SHOW_TEXT_TM
+    #text_start_tm = tm
     if sbg is None: # first time through
       sbg = sfg
     slide.set_textures([sfg, sbg])
@@ -501,15 +569,46 @@ while DISPLAY.loop_running():
     slide.unif[os1] = (wh_rat - 1.0) * 0.5
     slide.unif[os2] = 0.0
     if config.KENBURNS:
-        xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
+        ken_time = nexttm - time.time() # some time will have passed doing file loading etc
+        xstep, ystep = (slide.unif[i] * 2.0 / ken_time for i in (48, 49))
         slide.unif[48] = 0.0
         slide.unif[49] = 0.0
-        kb_up = not kb_up
+        #kb_up = not kb_up # toggle direction for each slide
+
+    if text_start_tm < 0.0:
+      info_strings = []
+      if config.SHOW_TEXT > 0 or paused: #was SHOW_TEXT_TM > 0.0
+        if (config.SHOW_TEXT & 1) == 1: # name
+          info_strings.append(sanitize_string(os.path.basename(iFiles[pic_num].fname)))
+        if (config.SHOW_TEXT & 2) == 2: # date
+          info_strings.append(iFiles[pic_num].fdt)
+        if config.LOAD_GEOLOC and (config.SHOW_TEXT & 4) == 4: # location
+          loc_string = sanitize_string(iFiles[pic_num].location.strip())
+          if loc_string:
+            info_strings.append(loc_string)
+        if (config.SHOW_TEXT & 8) == 8: # folder
+          info_strings.append(sanitize_string(os.path.basename(os.path.dirname(iFiles[pic_num].fname))))
+        if paused:
+          info_strings.append("PAUSED")
+
+        final_string = " • ".join(info_strings)
+        textblock.set_text(text_format=final_string, wrap=config.TEXT_WIDTH)
+
+        last_ch = len(final_string)
+        adj_y = text.locations[:last_ch,1].min() + DISPLAY.height // 2 # y pos of last char rel to bottom of screen
+        textblock.set_position(y = (textblock.y - adj_y + config.SHOW_TEXT_SZ))
+
+    else: # could have a NO IMAGES selected and being drawn
+      textblock.set_text(text_format="{}".format(" "))
+      textblock.colouring.set_colour(alpha=0.0)
+      text_bkg.set_alpha(0.0)
+    text.regen()
+    text_start_tm = tm - text_start_tm # i.e by setting to larger neg number delays text start
 
   if config.KENBURNS:
     t_factor = nexttm - tm
     if kb_up:
-      t_factor = time_delay - t_factor
+      t_factor = ken_time - t_factor
     slide.unif[48] = xstep * t_factor
     slide.unif[49] = ystep * t_factor
 
@@ -533,14 +632,14 @@ while DISPLAY.loop_running():
     textblock.colouring.set_colour(alpha=1.0)
     next_tm = tm + 1.0
     text.regen()
-  elif tm < text_tm and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
+  elif tm < (text_start_tm + config.SHOW_TEXT_TM) and (config.SHOW_TEXT > 0 or paused):#config.SHOW_TEXT_TM > 0.0:
     # this sets alpha for the TextBlock from 0 to 1 then back to 0
-    dt = (config.SHOW_TEXT_TM - text_tm + tm + 0.1) / config.SHOW_TEXT_TM
+    dt = (tm - text_start_tm + 0.1) / config.SHOW_TEXT_TM
     ramp_pt = max(4.0, config.SHOW_TEXT_TM / 4.0)
     alpha = max(0.0, min(1.0, ramp_pt * (a - abs(1.0 - 2.0 * dt)))) # cap text alpha at image alpha
     textblock.colouring.set_colour(alpha=alpha)
     text.regen()
-    text_bkg.set_alpha(alpha * 0.6)
+    text_bkg.set_alpha(alpha)
     if len(textblock.text_format.strip()) > 0: #only draw background if text there
       text_bkg.draw()
 

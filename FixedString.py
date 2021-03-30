@@ -5,7 +5,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 FixedString should be faster for rendering large quantities of text as
 it only requires two triangles for the whole text rather than two triangles
-for each letter"""
+for each letter
+
+NB width argument used for str1a only available pi3d >= v2.44"""
 import demo
 import pi3d
 
@@ -29,11 +31,13 @@ str1 = pi3d.FixedString('fonts/NotoSans-Regular.ttf', mytext, font_size=32,
                         background_color=(200,140,20,235),
                         camera=CAMERA2D, shader=flatsh, f_type='SMOOTH')
 str1.sprite.position(-300, 0, 2) #NB note Shape methods act on FixedString.sprite
+
 # shadow outline FixedString to show up against light or dark backgrounds
-# try setting shadow_radius to 0 to see what the issue is
-str1a = pi3d.FixedString('fonts/NotoSans-Regular.ttf', mytext[:53], font_size=48, 
+# try setting shadow_radius to 0 to see what the issue is. Also NB use of justify and width arguments
+newtext = mytext[:100].replace('\n', ' ') + '...'
+str1a = pi3d.FixedString('fonts/NotoSans-Regular.ttf', newtext, font_size=48, 
                         color=(70, 70, 180, 255), background_color=None, shadow_radius=1, 
-                        camera=CAMERA2D, shader=flatsh, f_type='SMOOTH')
+                        camera=CAMERA2D, shader=flatsh, f_type='SMOOTH', justify='R', width=500)
 str1a.sprite.position(50, -150, 1) #NB note Shape methods act on FixedString.sprite
 
 str2 = pi3d.FixedString('fonts/NotoSerif-Regular.ttf', mytext, font_size=24, f_type='BUMP')

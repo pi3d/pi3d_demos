@@ -58,6 +58,7 @@ parse.add_argument(      "--show_text_sz",  default=40, type=int, help="text cha
 parse.add_argument(      "--show_text",     default="date folder location", help="show text, include combination of words: name, date, location")
 parse.add_argument(      "--text_width",    default=90, type=int, help="number of character before breaking into new line")
 parse.add_argument("-t", "--fit",           default=False, type=str_to_bool, help="shrink to fit screen i.e. don't crop")
+parse.add_argument(      "--fit_portrait",  default=True, type=str_to_bool, help="shrink to fit screen of portrait images i.e. don't crop")
 parse.add_argument("-u", "--kenburns",      default=False, type=str_to_bool, help="will set FIT->False and BLUR_EDGES->False")
 parse.add_argument("-v", "--time_delay",    default=8.0, type=float, help="time between consecutive slide starts - can be changed by MQTT")
 parse.add_argument("-w", "--fade_time",     default=1.0, type=float, help="change time during which slides overlap - can be changed by MQTT")
@@ -108,6 +109,7 @@ SHOW_TEXT_SZ = args.show_text_sz
 SHOW_TEXT = parse_show_text(args.show_text)
 TEXT_WIDTH = args.text_width
 FIT = args.fit
+FIT_PORTRAIT = args.fit_portrait
 KENBURNS = args.kenburns
 TIME_DELAY = args.time_delay
 FADE_TIME = args.fade_time

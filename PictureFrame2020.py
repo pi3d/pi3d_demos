@@ -559,7 +559,8 @@ while DISPLAY.loop_running():
     slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
     slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
     wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
-    if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
+    fit = config.FIT if iFiles[pic_num].aspect >= 1.0 else config.FIT_PORTRAIT
+    if (wh_rat > 1.0 and fit) or (wh_rat <= 1.0 and not fit):
       sz1, sz2, os1, os2 = 42, 43, 48, 49
     else:
       sz1, sz2, os1, os2 = 43, 42, 49, 48

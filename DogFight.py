@@ -518,7 +518,7 @@ while DISPLAY.loop_running() and not inputs.key_state("KEY_ESC"):
     b.update_position(mymap.calcHeight(b.x, b.z))
     b.draw()
   #do httprequest if thread not already started and enough time has elapsed
-  if not (thr.isAlive()) and (a.last_pos_time > (others["start"] + a.rtime)):
+  if not (thr.is_alive()) and (a.last_pos_time > (others["start"] + a.rtime)):
     thr = threading.Thread(target=json_load, args=(a, others))
     thr.daemon = True #allows the program to exit even if a Thread is still running
     thr.start()

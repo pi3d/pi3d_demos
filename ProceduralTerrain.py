@@ -61,7 +61,7 @@ class Noise3D():
     """ xy is 3D array of x,y values 
     """
     val = np.zeros(xy.shape[:2]) # ie same x,y dimensions
-    xy = np.array(xy, dtype=np.float) * self.freq
+    xy = np.array(xy, dtype=float) * self.freq
     per = int(self.freq * self.size)
     for o in range(self.octs):
       val += 0.5**o * self.noise(xy * 2**o, per * 2**o)
@@ -86,7 +86,7 @@ wh = hh = W / 2.0 # half size
 ws = hs = W / (IX - 1.0) # dist between each vert
 tx = tz = 1.0 / IX
 
-verts = np.zeros((IZ, IX, 3), dtype=np.float) # c order arrays 
+verts = np.zeros((IZ, IX, 3), dtype=float) # c order arrays 
 xy = np.array([[[x, y] for x in range(IX)] for y in range(IZ)])
 verts[:,:,0] = xy[:,:,0] * ws - wh
 verts[:,:,2] = xy[:,:,1] * hs - hh

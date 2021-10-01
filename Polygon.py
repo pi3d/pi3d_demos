@@ -10,6 +10,7 @@ negative to bring them nearer the camera.
 import demo
 import pi3d
 import numpy as np # only needed for the demo of random colours after pressing space
+import random
 
 display = pi3d.Display.create(frames_per_second=60, background=(0.3, 0.3, 0.2, 0.2)) # try using samples=4
 shader = pi3d.Shader('uv_flat')
@@ -49,9 +50,16 @@ edges.set_shader(lineshader)
 ''' add edges as child of poly '''
 poly.add_child(edges)
 
+''' demo Slice at same time '''
+sect = pi3d.Slice(inner=100.0, outer=300.0, x=300.0, y=100.0, z=4.0, start=0.0, end=100.0)
+sect.set_draw_details(shader, [tex], umult=8, vmult=8)
+
 kb = pi3d.Keyboard()
 sc = 1.0
+fr = 0
 while display.loop_running():
+  sect.draw()
+  sect.rotateIncZ(-0.07)
   poly.draw() # only draw, rotate, scale parent Shape
   poly.rotateIncZ(0.05)
   k = kb.read()
@@ -64,6 +72,12 @@ while display.loop_running():
     elif k == ord('s'):
       sc /= 1.02
       poly.scale(sc, sc, sc)
+  if fr > 100:
+    new_end = random.random() * 350.0 + 10.0
+    sect.reset_verts(end=new_end)
+    fr = 0
+  else:
+    fr += 1
 
 kb.close()
 display.destroy()

@@ -40,7 +40,7 @@ str1a = pi3d.FixedString('fonts/NotoSans-Regular.ttf', newtext, font_size=48,
                         camera=CAMERA2D, shader=flatsh, f_type='SMOOTH', justify='R', width=500)
 str1a.sprite.position(50, -150, 1) #NB note Shape methods act on FixedString.sprite
 
-str2 = pi3d.FixedString('fonts/NotoSerif-Regular.ttf', mytext, font_size=24, f_type='BUMP')
+str2 = pi3d.FixedString('fonts/NotoSerif-Regular.ttf', mytext, font_size=24, f_type='+BUMP')
 mycuboid = pi3d.Cuboid(camera=CAMERA, z=2, x=0.5)
 mycuboid.set_draw_details(shader, [tex, str2], 1.0, 0.0)
 #following is a bit low level but makes it fit nicely look in docs to see

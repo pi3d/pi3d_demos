@@ -46,13 +46,13 @@ class Noise3D():
       polyXY = 1.0 - 6.0 * distXY**5 + 15.0 * distXY**4 - 10.0 * distXY**3
       hashed = self.perm[
                 self.perm[
-                  self.perm[gridXY[:,:,0].astype(np.int) % per] +
-                            gridXY[:,:,1].astype(np.int) % per]]
+                  self.perm[gridXY[:,:,0].astype(int) % per] +
+                            gridXY[:,:,1].astype(int) % per]]
       grad = ((xy[:,:,0] - gridXY[:,:,0]) * self.dirs[hashed][:,:,0] +
               (xy[:,:,1] - gridXY[:,:,1]) * self.dirs[hashed][:,:,1])
       return polyXY[:,:,0] * polyXY[:,:,1] * grad
         
-    intXY = xy.astype(np.int)
+    intXY = xy.astype(int)
     return (surflet(intXY + [0, 0]) + surflet(intXY + [0, 1]) +
             surflet(intXY + [1, 0]) + surflet(intXY + [1, 1]))
 

@@ -25,7 +25,7 @@ import demo
 import pi3d
 
 # Setup display and initialise pi3d
-DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=30)
+DISPLAY = pi3d.Display.create(x=100, y=100, frames_per_second=300, use_sdl2=True)
 DISPLAY.set_background(0.4,0.8,0.8,1)      # r,g,b,alpha
 # yellowish directional light blueish ambient light
 pi3d.Light(lightpos=(1, -1, -3), lightcol=(1.0, 1.0, 0.8), lightamb=(0.25, 0.2, 0.3))
@@ -115,6 +115,7 @@ crab = False
 
 # Fetch key presses
 mykeys = pi3d.Keyboard()
+key_tm = 0.0
 mymouse = pi3d.Mouse(restrict=False)
 mymouse.start()
 
@@ -181,6 +182,7 @@ while DISPLAY.loop_running():
     elif k == 112:  #key p picture
       pi3d.screenshot("forestWalk" + str(scshots) + ".jpg")
       scshots += 1
+      time.sleep(0.1)
     elif k == 10:   #key RETURN
       mc = 0
     elif k == 27:  #Escape key
@@ -190,6 +192,9 @@ while DISPLAY.loop_running():
       break
     elif k == ord('f'):
       roll = 1.0
+    elif k == ord('m'):
+      print(f"FPS={DISPLAY.fps():5.1f}")
+      time.sleep(0.1)
 
 
     halfsize = mapsize / 2.0

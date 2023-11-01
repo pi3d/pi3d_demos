@@ -9,8 +9,7 @@ be done in the background.
 import random, time, glob, threading
 import demo
 import pi3d
-
-from six_mod.moves import queue
+import queue
 
 LOGGER = pi3d.Log(__name__, level='INFO', format='%(message)s')
 LOGGER.info('''#########################################################

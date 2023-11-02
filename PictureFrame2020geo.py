@@ -1,5 +1,6 @@
 import os
 import locale
+import PIL
 from PIL import ExifTags
 from geopy.geocoders import Nominatim ## NB other geo services will need different code
 import PictureFrame2020config as config
@@ -38,12 +39,22 @@ def get_location(gps_info):
   latRef = gps_info[EXIF_GPSINFO_LAT_REF]
   lon = gps_info[EXIF_GPSINFO_LON]
   lonRef = gps_info[EXIF_GPSINFO_LON_REF]
-  decimal_lat = ((lat[0][0] / lat[0][1])
-               + (lat[1][0] / lat[1][1] / 60)
-               + (lat[2][0] / lat[2][1] / 3600))
-  decimal_lon = ((lon[0][0] / lon[0][1])
-               + (lon[1][0] / lon[1][1] / 60)
-               + (lon[2][0] / lon[2][1] / 3600))
+
+  if isinstance(lat[0], PIL.TiffImagePlugin.IFDRational):
+    decimal_lat = (float(lat[0])
+                + (float(lat[1]) / 60)
+                + (float(lat[2]) / 3600))
+    decimal_lon = (float(lon[0])
+                + (float(lon[1]) / 60)
+                + (float(lon[2]) / 3600))
+  else:
+    decimal_lat = ((lat[0][0] / lat[0][1])
+                + (lat[1][0] / lat[1][1] / 60)
+                + (lat[2][0] / lat[2][1] / 3600))
+    decimal_lon = ((lon[0][0] / lon[0][1])
+                + (lon[1][0] / lon[1][1] / 60)
+                + (lon[2][0] / lon[2][1] / 3600))
+
   if latRef == 'S':
     decimal_lat = -decimal_lat
   if lonRef == 'W':

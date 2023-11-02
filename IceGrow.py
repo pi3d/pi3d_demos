@@ -10,7 +10,7 @@ import random
 import demo
 import pi3d
 
-DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20)
+DISPLAY = pi3d.Display.create(x=50, y=50, frames_per_second=20, use_sdl2=True)
 shader = pi3d.Shader("uv_reflect")
 tex = pi3d.Texture("textures/metalhull.jpg")
 bump = pi3d.Texture("textures/rocktile2.jpg")

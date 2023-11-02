@@ -41,10 +41,10 @@ class EgClass(object):
 
 eg_object = EgClass() # create an instance of the example class
 
-KEYBOARD = pi3d.Keyboard()
 BACKGROUND_COLOR = (0.0, 0.0, 0.0, 0.0)
 DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=30)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
+KEYBOARD = pi3d.Keyboard()
 
 QWIDTH = HWIDTH/2 # quarter width
 

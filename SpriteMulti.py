@@ -51,12 +51,11 @@ MAX_BUG_VELOCITY = 3.0
 min_size = float(MIN_BUG_SIZE) / MAX_BUG_SIZE
 max_size = 1.0
 
-KEYBOARD = pi3d.Keyboard()
 
 BACKGROUND_COLOR = (0.3, 0.3, 0.3, 0.0)
 DISPLAY = pi3d.Display.create(background=BACKGROUND_COLOR, frames_per_second=20)
 HWIDTH, HHEIGHT = DISPLAY.width / 2.0, DISPLAY.height / 2.0
-
+KEYBOARD = pi3d.Keyboard()
 CAMERA = pi3d.Camera(is_3d=False)
 shader = pi3d.Shader("uv_pointsprite")
 
